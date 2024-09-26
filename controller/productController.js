@@ -50,6 +50,14 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 require("dotenv").config();
 var randomstring = require("randomstring");
+// const moment = require('moment');
+
+const dtf = new Intl.DateTimeFormat(undefined, { timeZoneName: 'short' });
+const { timeZone } = dtf.resolvedOptions();
+console.log(timeZone)
+const moment = require('moment-timezone');
+moment.tz.setDefault(timeZone);
+
 
 exports.getProducts = async (req, res) => {
   try {
@@ -399,12 +407,10 @@ exports.createOffer = async (req, res) => {
     endDate.setMilliseconds(ms);
 
     // code for adding actual end time as it is
-    let OfferStartTime = new Date(offerStart)
-    OfferStartTime.setDate(OfferStartTime.getDate() + length_oftime);
-    console.log(OfferStartTime);
-    console.log(endDate);
+    const newDateStr = moment(offerStart).add(length_oftime, 'days').format('YYYY-MM-DD HH:mm:ss');
+ 
 
-    return
+    
     const offer_created = {
       product_id: product_id,
       title: title,
@@ -422,7 +428,7 @@ exports.createOffer = async (req, res) => {
       images_id: images_id,
       start_date: startDate,
       end_date: endDate,
-      actual_end_time:OfferStartTime,
+      actual_end_time:newDateStr,
       user_id: user_id,
       is_reactivable : is_reactivable, 
       is_psuggestion_enable : is_psuggestion_enable
@@ -504,7 +510,10 @@ exports.getOffers = async (req, res) => {
         success: false,
       });
     }
-
+    const now = moment();
+    console.log(now)
+    const nownow = now.format('YYYY-MM-DD HH:mm:ss');
+   
 
 
     var whereClause = "";
