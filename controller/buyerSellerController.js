@@ -1,0 +1,624 @@
+const Joi = require("joi");
+const jwt = require("jsonwebtoken");
+const path = require("path");
+require("dotenv").config();
+var randomstring = require("randomstring");
+var moment = require("moment");
+
+const {
+  insertPriceSuggestion,
+  updateStatus,
+  rejectStatus,
+  getPriceSuggestionSeller,
+  getPriceSuggestionBuyer,
+  getOffersDetailsByOfferId,
+  getOffersBySeller,
+  getMaxBidbyOfferID,
+  getSoldOffersBySeller,
+  getOffersByBuyerID,
+  getBidCountsByOfferID,
+  getBidDetailsByID,
+  getOffersByOfferId,
+  getOffersDetailsNotBoughtByOfferId
+} = require("../models/buyer_seller");
+
+const {
+  getOfferDetailsByID,
+  checkTransactionID,
+  insertTransaction,
+  getMainImage,
+} = require("../models/product");
+
+const { getUserNamebyId } = require("../models/users");
+
+exports.suggestPrice = async (req, res) => {
+  try {
+    const { seller_id, offer_id, buyer_id, status, price } = req.body;
+    const schema = Joi.alternatives(
+      Joi.object({
+        seller_id: Joi.number().required().empty(),
+        offer_id: Joi.number().required().empty(),
+        buyer_id: Joi.number().required().empty(),
+        price: Joi.number().required().empty(),
+        status: Joi.string().required().empty(),
+      })
+    );
+    const result = schema.validate(req.body);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      return res.json({
+        message: result.error.details[0].message,
+        error: message,
+        missingParams: result.error.details[0].message,
+        status: 200,
+        success: true,
+      });
+    }
+
+    const suggestPrice = {
+      buyer_id: buyer_id,
+      seller_id: seller_id,
+      offer_id: offer_id,
+      status: status,
+      price: price,
+    };
+    const resultInserted = await insertPriceSuggestion(suggestPrice);
+    if (resultInserted.affectedRows > 0) {
+      return res.json({
+        success: true,
+        message: "Price Suggested to Seller",
+        status: 200,
+        insertId: resultInserted.insertId,
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: "Some problem ocurred in Database while suggesting price",
+        status: 400,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    return res.json({
+      success: false,
+      message: "Internal server error",
+      error: err,
+      status: 500,
+    });
+  }
+};
+
+exports.acceptPrice = async (req, res) => {
+  try {
+    const { offer_id, seller, buyer, price } = req.body;
+    const schema = Joi.alternatives(
+      Joi.object({
+        offer_id: Joi.number().required().empty(),
+        seller: Joi.number().required().empty(),
+        buyer: Joi.number().required().empty(),
+        price: Joi.number().required().empty(),
+      })
+    );
+    const result = schema.validate(req.body);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      return res.json({
+        message: result.error.details[0].message,
+        error: message,
+        missingParams: result.error.details[0].message,
+        status: 200,
+        success: false,
+      });
+    }
+    var transactionId = "";
+    var doContinue = 1;
+    do {
+      transactionId = randomstring.generate({
+        length: 12,
+        charset: "alphanumeric",
+      });
+      const found = await checkTransactionID(transactionId);
+      if (found.length > 0) {
+        doContinue = 0;
+      }
+    } while (doContinue);
+
+    const length = await getOfferDetailsByID(offer_id);
+    if (length.length > 0) var product_id = length[0].product_id;
+
+    const transactionDetails = {
+      transaction_id: transactionId,
+      buyer_id: buyer,
+      seller_id: seller,
+      product_id: product_id,
+      offer_id: offer_id,
+      amount: price,
+      is_buy_now: 1,
+      is_max_bid: 0,
+      buy_status: 1,
+    };
+    const resultInserted = await insertTransaction(transactionDetails);
+    if (resultInserted.affectedRows > 0) {
+      const updateResult = await updateStatus(offer_id, buyer, seller);
+      if (updateResult.affectedRows > 0) {
+        return res.json({
+          success: true,
+          message: "Offer accepted by Seller",
+          status: 200,
+          insertId: resultInserted.insertId,
+        });
+      }
+    }
+  } catch (err) {
+    console.log(err);
+    return res.json({
+      success: false,
+      message: "Internal server error",
+      error: err,
+      status: 500,
+    });
+  }
+};
+
+exports.rejectPrice = async (req, res) => {
+  try {
+    const { offer_id, seller, buyer } = req.body;
+    const schema = Joi.alternatives(
+      Joi.object({
+        offer_id: Joi.number().required().empty(),
+        seller: Joi.number().required().empty(),
+        buyer: Joi.number().required().empty(),
+      })
+    );
+    const result = schema.validate(req.body);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      return res.json({
+        message: result.error.details[0].message,
+        error: message,
+        missingParams: result.error.details[0].message,
+        status: 200,
+        success: false,
+      });
+    }
+
+    const updateResult = await rejectStatus(offer_id, buyer, seller);
+    if (updateResult.affectedRows > 0) {
+      return res.json({
+        success: true,
+        message: "Offer Rejected by Seller",
+        status: 200,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    return res.json({
+      success: false,
+      message: "Internal server error",
+      error: err,
+      status: 500,
+    });
+  }
+};
+
+exports.getPriceSuggestedBySellerStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const schema = Joi.alternatives(
+      Joi.object({
+        status: Joi.string().required().empty(),
+      })
+    );
+    const result = schema.validate(req.body);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      return res.json({
+        message: result.error.details[0].message,
+        error: message,
+        missingParams: result.error.details[0].message,
+        status: 200,
+        success: false,
+      });
+    }
+
+    const authHeader = req.headers.authorization;
+    const token = authHeader.replace("Bearer ", "");
+    const decoded = jwt.decode(token);
+    const user_id = decoded["user_id"];
+
+    if (user_id === null || user_id === undefined || user_id === "") {
+      return res.json({
+        success: false,
+        message: "user id is Null",
+        error: err,
+        status: 500,
+      });
+    }
+
+    const prices = await getPriceSuggestionSeller(user_id, status);
+    if (prices.length > 0) {
+      var finalOutput = [];
+      for (el of prices) {
+        var tempObj = { ...el };
+        var offerId = el.offer_id;
+        var sellerId = el.seller_id;
+        var buyerId = el.buyer_id;
+
+        var offerDetails = await getOfferDetailsByID(offerId);
+        if (offerDetails.length > 0) {
+          var thumbnail = await getMainImage(offerDetails[0]?.images_id);
+          tempObj.name = offerDetails[0]?.title;
+          tempObj.end_date = offerDetails[0]?.end_date;
+          tempObj.fixed_offer_price = offerDetails[0]?.fixed_offer_price;
+          if (thumbnail.length > 0) {
+            tempObj.main_image = thumbnail[0]?.main_image;
+          }
+        }
+        var sellerNameArr = await getUserNamebyId(sellerId);
+        if (sellerNameArr.length > 0) {
+          tempObj.seller_name = sellerNameArr[0]?.name;
+        }
+        var buyerNameArr = await getUserNamebyId(buyerId);
+        if (buyerNameArr.length > 0) {
+          tempObj.buyer_name = buyerNameArr[0]?.name;
+        }
+        finalOutput.push(tempObj);
+      }
+      return res.json({
+        success: true,
+        message: "Offer Rejected by Seller",
+        status: 200,
+        prices: finalOutput,
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: "No Data Found",
+        status: 400,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    return res.json({
+      success: false,
+      message: "Internal server error",
+      error: err,
+      status: 500,
+    });
+  }
+};
+
+exports.getPriceSuggestedForBuyer = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader.replace("Bearer ", "");
+    const decoded = jwt.decode(token);
+    const user_id = decoded["user_id"];
+
+    if (user_id === null || user_id === undefined || user_id === "") {
+      return res.json({
+        success: false,
+        message: "user id is Null",
+        error: err,
+        status: 500,
+      });
+    }
+
+    const prices = await getPriceSuggestionBuyer(user_id);
+    if (prices.length > 0) {
+      var finalOutput = [];
+      for (el of prices) {
+        var tempObj = { ...el };
+        var offerId = el.offer_id;
+        var sellerId = el.seller_id;
+        var buyerId = el.buyer_id;
+
+        var offerDetails = await getOfferDetailsByID(offerId);
+        if (offerDetails.length > 0) {
+          var thumbnail = await getMainImage(offerDetails[0]?.images_id);
+          tempObj.name = offerDetails[0]?.title;
+          tempObj.end_date = offerDetails[0]?.end_date;
+          tempObj.fixed_offer_price = offerDetails[0]?.fixed_offer_price;
+          if (thumbnail.length > 0) {
+            tempObj.main_image = thumbnail[0]?.main_image;
+          }
+        }
+        var sellerNameArr = await getUserNamebyId(sellerId);
+        if (sellerNameArr.length > 0) {
+          tempObj.seller_name = sellerNameArr[0]?.name;
+        }
+        var buyerNameArr = await getUserNamebyId(buyerId);
+        if (buyerNameArr.length > 0) {
+          tempObj.buyer_name = buyerNameArr[0]?.name;
+        }
+        finalOutput.push(tempObj);
+      }
+      return res.json({
+        success: true,
+        message: "Offer Rejected by Seller",
+        status: 200,
+        prices: finalOutput,
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: "No Data Found",
+        status: 400,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    return res.json({
+      success: false,
+      message: "Internal server error",
+      error: err,
+      status: 500,
+    });
+  }
+};
+
+exports.getSellingSectionForSeller = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader.replace("Bearer ", "");
+    const decoded = jwt.decode(token);
+    const user_id = decoded["user_id"];
+
+    if (user_id === null || user_id === undefined || user_id === "") {
+      return res.json({
+        success: false,
+        message: "user id is Null",
+        error: err,
+        status: 500,
+      });
+    }
+
+    const offersDetails = await getOffersBySeller(user_id);
+    console.log(offersDetails);
+    console.log(new Date());
+    if (offersDetails.length > 0) {
+      var finalOutput = [];
+      for (el of offersDetails) {
+        var tempObj = { ...el };
+        var offerId = el.offer_id;
+        var buyer_id = 0;
+        var thumbnail = await getMainImage(el.images_id);
+        if (thumbnail.length > 0) {
+          tempObj.main_image = thumbnail[0]?.main_image;
+        }
+        var bidRes = await getMaxBidbyOfferID(offerId);
+        if (bidRes.length > 0) {
+          tempObj.price = bidRes[0]?.price;
+          buyer_id = bidRes[0]?.user_id;
+        } else if (el?.is_bid_or_fixed === 1) {
+          tempObj.price = el.buyto_price;
+          tempObj.start_price = el.start_price;
+        } else {
+          tempObj.price = el.fixed_offer_price;
+        }
+        tempObj.name = el.title;
+        var endDate = el.end_date;
+
+        if (bidRes.length > 0) {
+          var newEndDate = moment(endDate).format("YYYY-MM-DD");
+          var currDate = moment().format("YYYY-MM-DD");
+          console.log("EndDate", newEndDate);
+          console.log("currDate", currDate);
+
+          if (currDate > newEndDate) {
+            tempObj.status = "Not Sold";
+          } else {
+            tempObj.status = "Open";
+          }
+        }
+        if (buyer_id != 0) {
+          var buyerNameArr = await getUserNamebyId(buyer_id);
+          if (buyerNameArr.length > 0) {
+            tempObj.buyer_name = buyerNameArr[0]?.name;
+          }
+        }
+
+        finalOutput.push(tempObj);
+      }
+
+      return res.json({
+        success: true,
+        message: "Offer Rejected by Seller",
+        status: 200,
+        selling: finalOutput,
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: "No Data Found",
+        status: 400,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    return res.json({
+      success: false,
+      message: "Internal server error",
+      error: err,
+      status: 500,
+    });
+  }
+};
+
+exports.getSoldSectionForSeller = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader.replace("Bearer ", "");
+    const decoded = jwt.decode(token);
+    const user_id = decoded["user_id"];
+
+    if (user_id === null || user_id === undefined || user_id === "") {
+      return res.json({
+        success: false,
+        message: "user id is Null",
+        error: err,
+        status: 500,
+      });
+    }
+
+    const offersDetails = await getSoldOffersBySeller(user_id);
+    if (offersDetails.length > 0) {
+      var finalOutput = [];
+      for (el of offersDetails) {
+        var tempObj = { ...el };
+        var offerId = el.offer_id;
+        const OfferDetail = await getOffersDetailsByOfferId(offerId);
+        var buyerId =
+          el?.buyer_id === null || el?.buyer_id === undefined
+            ? 0
+            : el?.buyer_id;
+        if (OfferDetail.length > 0) {
+          tempObj.title = OfferDetail[0]?.title;
+          tempObj.end_date = OfferDetail[0]?.end_date;
+        }
+        var thumbnail = await getMainImage(OfferDetail[0]?.images_id);
+        if (thumbnail.length > 0) {
+          tempObj.main_image = thumbnail[0]?.main_image;
+        }
+        tempObj.status = "Wait for payment";
+        var bidRes = await getMaxBidbyOfferID(offerId);
+        if (bidRes.length > 0) {
+          tempObj.price = bidRes[0]?.price;
+          buyer_id = bidRes[0]?.user_id;
+        }
+
+        var buyerNameArr = await getUserNamebyId(buyerId);
+        if (buyerNameArr.length > 0) {
+          tempObj.buyer_name = buyerNameArr[0]?.name;
+        }
+
+        finalOutput.push(tempObj);
+      }
+
+      return res.json({
+        success: true,
+        message: "Offer bought by Seller",
+        status: 200,
+        selling: finalOutput,
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: "No Data Found",
+        status: 400,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    return res.json({
+      success: false,
+      message: "Internal server error",
+      error: err,
+      status: 500,
+    });
+  }
+};
+
+exports.getOffersByBuyer = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader.replace("Bearer ", "");
+    const decoded = jwt.decode(token);
+    const user_id = decoded["user_id"];
+
+    if (user_id === null || user_id === undefined || user_id === "") {
+      return res.json({
+        success: false,
+        message: "user id is Null",
+        error: err,
+        status: 500,
+      });
+    }
+
+    const offersDetails = await getOffersByBuyerID(user_id);
+
+    if (offersDetails.length > 0) {
+      var finalOutput = [];
+      for (el of offersDetails) {
+        var tempObj = { ...el };
+        var offerId = el.offer_id;
+        const OfferDetail = await getOffersByOfferId(offerId);
+       
+        if (OfferDetail.length > 0) {
+          tempObj.title = OfferDetail[0]?.title;
+          tempObj.end_date = OfferDetail[0]?.end_date;
+          tempObj.start_price = OfferDetail[0]?.start_price;
+          tempObj.offerStart = OfferDetail[0]?.offerStart;
+          tempObj.lengthOfTime = OfferDetail[0]?.length_oftime;
+          var thumbnail = await getMainImage(OfferDetail[0]?.images_id);
+          if (thumbnail.length > 0) {
+            tempObj.main_image = thumbnail[0]?.main_image;
+          }
+        }
+
+        var bidRes = await getMaxBidbyOfferID(offerId);
+       
+        if (bidRes.length > 0) {
+          tempObj.max_bid = bidRes[0]?.price;
+          buyer_id = bidRes[0]?.user_id;
+        }
+
+        var bidDetail = await getBidDetailsByID(offerId, user_id);
+        if (bidDetail.length > 0) {
+          tempObj.user_bid = bidDetail[0]?.bid;
+        }
+
+        var bidCount = await getBidCountsByOfferID(offerId);
+        if (bidCount.length > 0) {
+          tempObj.bid_count = bidCount[0]?.bid_count;
+        }
+
+        var endDate = OfferDetail[0]?.end_date;
+        if (OfferDetail[0].offfer_buy_status == 0) {
+          if (bidRes.length > 0) {
+            var newEndDate = moment(endDate).format("YYYY-MM-DD");
+            var currDate = moment().format("YYYY-MM-DD");
+            console.log("EndDate", newEndDate);
+            console.log("currDate", currDate);
+
+            if (currDate > newEndDate) {
+              tempObj.status = "Not Sold";
+            } else {
+              tempObj.status = "Open";
+            }
+          }
+        } else {
+          tempObj.status = "Finished";
+        }
+
+        var buyerNameArr = await getUserNamebyId(user_id);
+        if (buyerNameArr.length > 0) {
+          tempObj.buyer_name = buyerNameArr[0]?.name;
+        }
+
+        finalOutput.push(tempObj);
+      }
+
+      return res.json({
+        success: true,
+        message: "Offer bought by Seller",
+        status: 200,
+        selling: finalOutput,
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: "No Data Found",
+        status: 400,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    return res.json({
+      success: false,
+      message: "Internal server error",
+      error: err,
+      status: 500,
+    });
+  }
+};
