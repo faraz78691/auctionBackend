@@ -42,7 +42,9 @@ const {
   getOfferIdByAttributes,
   getOfferIdByConditions,
   getOfferIdByAuctionType,
-  getOffersByIDsWhereClause
+  getOffersByIDsWhereClause,
+  getOfferConditionsByID,
+  getSellerDetails
 } = require("../models/product");
 
 const Joi = require("joi");
@@ -50,13 +52,8 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 require("dotenv").config();
 var randomstring = require("randomstring");
-// const moment = require('moment');
+var moment = require('moment-timezone');
 
-const dtf = new Intl.DateTimeFormat(undefined, { timeZoneName: 'short' });
-const { timeZone } = dtf.resolvedOptions();
-console.log(timeZone)
-const moment = require('moment-timezone');
-moment.tz.setDefault(timeZone);
 
 
 exports.getProducts = async (req, res) => {
@@ -344,7 +341,7 @@ exports.createOffer = async (req, res) => {
       images_id,
       attributes,
       conditions,
-      is_reactivable, 
+      is_reactivable,
       is_psuggestion_enable
     } = req.body;
     const schema = Joi.alternatives(
@@ -407,10 +404,10 @@ exports.createOffer = async (req, res) => {
     endDate.setMilliseconds(ms);
 
     // code for adding actual end time as it is
-    const newDateStr = moment(offerStart).add(length_oftime, 'days').format('YYYY-MM-DD HH:mm:ss');
- 
+    // const newDateStr = moment(offerStart).add(length_oftime, 'days').format('YYYY-MM-DD HH:mm:ss');
 
-    
+
+
     const offer_created = {
       product_id: product_id,
       title: title,
@@ -428,10 +425,10 @@ exports.createOffer = async (req, res) => {
       images_id: images_id,
       start_date: startDate,
       end_date: endDate,
-      actual_end_time:newDateStr,
+      // actual_end_time:newDateStr,
       user_id: user_id,
-      is_reactivable : is_reactivable, 
-      is_psuggestion_enable : is_psuggestion_enable
+      is_reactivable: is_reactivable,
+      is_psuggestion_enable: is_psuggestion_enable
     };
     var offerId = 0;
     var attributesInserted = 0;
@@ -489,8 +486,8 @@ exports.createOffer = async (req, res) => {
 
 exports.getOffers = async (req, res) => {
   try {
-   
-  
+
+
     const { product_id, page, page_size } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
@@ -510,10 +507,10 @@ exports.getOffers = async (req, res) => {
         success: false,
       });
     }
-    const now = moment();
-    console.log(now)
-    const nownow = now.format('YYYY-MM-DD HH:mm:ss');
-   
+
+
+    var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+ 
 
 
     var whereClause = "";
@@ -522,15 +519,16 @@ exports.getOffers = async (req, res) => {
       product_id !== null &&
       product_id !== undefined
     ) {
-      whereClause = ` where product_id in  (${product_id})  and offfer_buy_status != '1' and end_date <= CURRENT_TIMESTAMP()`; //updated code 26-07-2024
+
+     whereClause = ` where product_id in  (${product_id})  and offfer_buy_status != '1' and TIMESTAMP(end_date) <= '${currDate}'`; //updated code 26-07-2024
     } else {
-      whereClause = ` where offfer_buy_status != '1' and end_date >= CURRENT_TIMESTAMP()`;
+
+      whereClause = ` where offfer_buy_status != '1' and TIMESTAMP(end_date) >= '${currDate}'`;
     }
 
     const offset = (parseInt(page) - 1) * parseInt(page_size);
     var offers = await getOffersByWhereClause(whereClause, page_size, offset);
-    console.log(offers)
-    console.log(offers)
+
     for (element of offers) {
       var startDateTime = element.start_date.toString();
       element.start_date = startDateTime;
@@ -540,7 +538,7 @@ exports.getOffers = async (req, res) => {
       time = hours.toString() + ":" + timeArray[1] + ":" + timeArray[1];
       element.remaining_time = time;
       if (element.product_id != 0) {
-        const countR = await getNoOfBids( element.id);
+        const countR = await getNoOfBids(element.id);
         //const maxBidR = await getMaxBidF(element.product_id);
         if (countR.length > 0) {
           element.count = countR[0].count;
@@ -620,13 +618,13 @@ exports.getOffersCountDown = async (req, res) => {
       var hours = Number(timeArray[0]) % 24;
       time = hours.toString() + ":" + timeArray[1] + ":" + timeArray[1];
       tempObj.remaining_time = time;
-     
-        const countR = await getNoOfBids( element.offer_id);
-        if (countR.length > 0) {
-          tempObj.bid_count = countR[0].count;
-          tempObj.max_bid = countR[0].max_bid;
-        }
-      
+
+      const countR = await getNoOfBids(element.offer_id);
+      if (countR.length > 0) {
+        tempObj.bid_count = countR[0].count;
+        tempObj.max_bid = countR[0].max_bid;
+      }
+
       countDownandBids.push(tempObj);
     }
     if (countDownandBids.length > 0) {
@@ -759,7 +757,8 @@ exports.getOffer = async (req, res) => {
       var categoryId = productDetails[0].category_id;
       const categoryDetails = await getCategorybyId(categoryId);
       var attributeDetails = await getOfferAttributesDetailsByID(offerId);
-
+      // adding code for getting offer conditions;
+      var conditions = await getOfferConditionsByID(offerId);
       var attributes = [];
       for (elem of attributeDetails) {
         const attributesValues = await getProductAttributeTypeMappingByIDP(
@@ -796,6 +795,7 @@ exports.getOffer = async (req, res) => {
       }
 
       const offerImages = await getOfferImages(offerRes[0].images_id);
+      const sellerDetails = await getSellerDetails(offerRes[0].user_id);
       return res.json({
         success: true,
         message: "Offer Details are as followed",
@@ -804,6 +804,8 @@ exports.getOffer = async (req, res) => {
         categoryDetails: categoryDetails,
         attributes: attributes,
         offerImages: offerImages,
+        conditions: conditions,
+        seller:sellerDetails,
         status: 200,
       });
     }
@@ -1147,6 +1149,7 @@ exports.getFavouriteOffers = async (req, res) => {
 
     const offset = (parseInt(page) - 1) * parseInt(page_size);
     var offers = await getOffersByWhereClause(whereClause, page_size, offset);
+    console.log(offers);
     for (element of offers) {
       var startDateTime = element.start_date.toString();
       element.start_date = startDateTime;
@@ -1172,6 +1175,9 @@ exports.getFavouriteOffers = async (req, res) => {
           }
         }
       }
+      const sellerDetails = await getSellerDetails(element.user_id);
+      element.sellername = sellerDetails[0].first_name + ' '+ sellerDetails[0].last_name;
+      element.sellerId = sellerDetails[0].id; 
       if (element.images_id > 0) {
         const imageR = await getMainImage(element.images_id);
         if (imageR.length > 0) {
@@ -1622,7 +1628,7 @@ exports.getOfferAdvancedFilter = async (req, res) => {
 
     // Function to get offer IDs for attributes
     const getOfferIdsForAttributes = async (product_id, attributes) => {
-    
+
       if (!attributes || attributes.length === 0) return [];
       const allOfferIds = [];
       for (const { key, ids } of attributes) {

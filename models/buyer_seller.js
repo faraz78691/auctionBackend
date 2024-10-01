@@ -64,13 +64,15 @@ module.exports = {
   },
   getOffersDetailsByOfferId: async (offer_id) => {
     return db.query(
-      `SELECT id as offer_id, title, end_date,is_bid_or_fixed,offerStart,length_oftime, fixed_offer_price, buyto_price, images_id, start_price  FROM offers_created WHERE id = ${offer_id}  and offfer_buy_status = 0 ORDER BY created_at DESC`
+      `SELECT id as offer_id, title, end_date,is_bid_or_fixed,offerStart,length_oftime, fixed_offer_price, buyto_price, images_id, start_price  FROM offers_created WHERE id = ${offer_id}  ORDER BY created_at DESC`
     );
   },
 
+  
+
   getSoldOffersBySeller: async (seller) => {
     return db.query(
-      `SELECT offer_id, seller_id, buyer_id, amount FROM buy_sell_transactions WHERE seller_id = ${seller} ORDER BY created_at DESC`
+      `SELECT offer_id,transaction_id , seller_id, buyer_id,created_at, amount FROM buy_sell_transactions WHERE seller_id = ${seller} ORDER BY created_at DESC`
     );
   },
 

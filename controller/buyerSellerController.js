@@ -28,6 +28,9 @@ const {
   insertTransaction,
   getMainImage,
 } = require("../models/product");
+const {
+  getData,insertData, updateData
+} = require("../models/common");
 
 const { getUserNamebyId } = require("../models/users");
 
@@ -374,8 +377,7 @@ exports.getSellingSectionForSeller = async (req, res) => {
     }
 
     const offersDetails = await getOffersBySeller(user_id);
-    console.log(offersDetails);
-    console.log(new Date());
+  
     if (offersDetails.length > 0) {
       var finalOutput = [];
       for (el of offersDetails) {
@@ -400,10 +402,9 @@ exports.getSellingSectionForSeller = async (req, res) => {
         var endDate = el.end_date;
 
         if (bidRes.length > 0) {
-          var newEndDate = moment(endDate).format("YYYY-MM-DD");
-          var currDate = moment().format("YYYY-MM-DD");
-          console.log("EndDate", newEndDate);
-          console.log("currDate", currDate);
+          var newEndDate = moment(endDate).tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
+          var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
+         
 
           if (currDate > newEndDate) {
             tempObj.status = "Not Sold";
@@ -447,6 +448,7 @@ exports.getSellingSectionForSeller = async (req, res) => {
 
 exports.getSoldSectionForSeller = async (req, res) => {
   try {
+    console.log("dfh");
     const authHeader = req.headers.authorization;
     const token = authHeader.replace("Bearer ", "");
     const decoded = jwt.decode(token);
@@ -462,11 +464,14 @@ exports.getSoldSectionForSeller = async (req, res) => {
     }
 
     const offersDetails = await getSoldOffersBySeller(user_id);
+    console.log("offersDetails",moment(offersDetails[0].created_at).format('YYYY-MM-DD HH:mm:ss'));
+    
     if (offersDetails.length > 0) {
       var finalOutput = [];
       for (el of offersDetails) {
         var tempObj = { ...el };
         var offerId = el.offer_id;
+        tempObj.boughtAt = moment(el.created_at).format('YYYY-MM-DD HH:mm:ss');
         const OfferDetail = await getOffersDetailsByOfferId(offerId);
         var buyerId =
           el?.buyer_id === null || el?.buyer_id === undefined
@@ -574,12 +579,12 @@ exports.getOffersByBuyer = async (req, res) => {
         }
 
         var endDate = OfferDetail[0]?.end_date;
+        // code changing to set status if user bid in offer and it get bought so changed to Finished
         if (OfferDetail[0].offfer_buy_status == 0) {
           if (bidRes.length > 0) {
             var newEndDate = moment(endDate).format("YYYY-MM-DD");
             var currDate = moment().format("YYYY-MM-DD");
-            console.log("EndDate", newEndDate);
-            console.log("currDate", currDate);
+           
 
             if (currDate > newEndDate) {
               tempObj.status = "Not Sold";
@@ -622,3 +627,218 @@ exports.getOffersByBuyer = async (req, res) => {
     });
   }
 };
+
+exports.getQuestionAnswerForSeller = async (req, res) => {
+  try {
+
+    const { offerId } = req.query;
+    const authHeader = req.headers.authorization;
+    const token = authHeader.replace("Bearer ", "");
+    const decoded = jwt.decode(token);
+    const user_id = decoded["user_id"];
+
+    if (user_id === null || user_id === undefined || user_id === "") {
+      return res.json({
+        success: false,
+        message: "user id is Null",
+        error: err,
+        status: 500,
+      });
+    }
+
+    const questionAnswer = await getData('question_answer',`where seller_id = ${user_id} and offer_id = ${offerId}`);
+
+    if (questionAnswer.length > 0) {
+      return res.json({
+        success: true,
+        message: "Found",
+        data:questionAnswer,
+        status: 200,
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: "No Data Found",
+        status: 400,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    return res.json({
+      success: false,
+      message: "Internal server error",
+      error: err,
+      status: 500,
+    });
+  }
+};
+
+exports.getQuestionAnswerForBuyer = async (req, res) => {
+  try {
+    const {offer_id,sellerId } = req.body;
+    const authHeader = req.headers.authorization;
+    const token = authHeader.replace("Bearer ", "");
+    const decoded = jwt.decode(token);
+    const user_id = decoded["user_id"];
+
+    if (user_id === null || user_id === undefined || user_id === "") {
+      return res.json({
+        success: false,
+        message: "user id is Null",
+        error: err,
+        status: 500,
+      });
+    }
+    const schema = Joi.alternatives(
+      Joi.object({
+        sellerId: Joi.number().required().empty(),
+        offer_id: Joi.number().required().empty()
+      })
+    );
+
+    const questionAnswer = await getData('question_answer',`where seller_id = ${sellerId} and offer_id = ${offer_id} and buyer_id = ${user_id}`);
+
+    if (questionAnswer.length > 0) {
+      return res.json({
+        success: true,
+        data:questionAnswer,
+        message: "No Data Found",
+        status: 400,
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: "No Data Found",
+        status: 400,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    return res.json({
+      success: false,
+      message: "Internal server error",
+      error: err,
+      status: 500,
+    });
+  }
+};
+
+exports.uploadBuyerQuestion = async (req, res) => {
+  try {
+    const { offer_id,sellerId, question } = req.body;
+    const authHeader = req.headers.authorization;
+    const token = authHeader.replace("Bearer ", "");
+    const decoded = jwt.decode(token);
+    const user_id = decoded["user_id"];
+
+    if (user_id === null || user_id === undefined || user_id === "") {
+      return res.json({
+        success: false,
+        message: "user id is Null",
+        error: err,
+        status: 500,
+      });
+    }
+    const schema = Joi.alternatives(
+      Joi.object({
+        offer_id: Joi.number().required().empty(),
+        question: Joi.string().required().empty(),
+        sellerId: Joi.number().required().empty(),
+      })
+    );
+    const result = schema.validate(req.body);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      return res.json({
+        message: result.error.details[0].message,
+        error: message,
+        missingParams: result.error.details[0].message,
+        status: 200,
+        success: false,
+      });
+    }
+
+    const userData = {
+      offer_id: offer_id,
+      seller_id: sellerId,
+      buyer_id: user_id,
+      question: question
+  };
+
+    const updateResult = await insertData('question_answer','', userData);
+    if (updateResult.affectedRows > 0) {
+      return res.json({
+        success: true,
+        message: "Submitted successfully",
+        status: 200,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    return res.json({
+      success: false,
+      message: "Internal server error",
+      error: err,
+      status: 500,
+    });
+  }
+};
+exports.uploadSellerAnswer = async (req, res) => {
+  try {
+    const {id,offer_id,answer } = req.body;
+    const authHeader = req.headers.authorization;
+    const token = authHeader.replace("Bearer ", "");
+    const decoded = jwt.decode(token);
+    const user_id = decoded["user_id"];
+
+    if (user_id === null || user_id === undefined || user_id === "") {
+      return res.json({
+        success: false,
+        message: "user id is Null",
+        error: err,
+        status: 500,
+      });
+    }
+    const schema = Joi.alternatives(
+      Joi.object({
+        id: Joi.number().required().empty(),
+        offer_id: Joi.number().required().empty(),
+        answer: Joi.string().required().empty(),
+      })
+    );
+    const result = schema.validate(req.body);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      return res.json({
+        message: result.error.details[0].message,
+        error: message,
+        missingParams: result.error.details[0].message,
+        status: 200,
+        success: false,
+      });
+    }
+
+    const userData = {
+      answer: answer
+  };
+
+    const updateResult = await updateData('question_answer',`where id =${id} and offer_id =${offer_id}`, userData);
+    if (updateResult.affectedRows > 0) {
+      return res.json({
+        success: true,
+        message: "Submitted successfully",
+        status: 200,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    return res.json({
+      success: false,
+      message: "Internal server error",
+      error: err,
+      status: 500,
+    });
+  }
+};
+
+

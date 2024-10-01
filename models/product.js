@@ -1,6 +1,6 @@
 const db = require("../utils/database");
-
-
+var moment = require('moment-timezone');
+var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
 module.exports = {
   getProductDetails: async () => {
     return db.query("select * from product");
@@ -113,6 +113,9 @@ module.exports = {
   getOfferAttributesDetailsByID: async (offer_id) => {
     return db.query("select * from offer_proattr_mapping where offer_id=?", [offer_id]);
   },
+  getOfferConditionsByID: async (offer_id) => {
+    return db.query("select * from offer_condition_mapping where offer_id=?", [offer_id]);
+  },
 
   getOfferAttributesDetailsByProductID: async (offer_id) => {
     return db.query("select * from offer_proattr_mapping where product_id =?", [offer_id]);
@@ -174,6 +177,9 @@ module.exports = {
 
   getSubAttributesByID: async (id) => {
     return db.query(`select * from  sub_attribute_mapping where attribute_mapping_id  = '${id}'`);
+  },
+  getSellerDetails: async (id) => {
+    return db.query(`select id,first_name,last_name , location from  users where id = '${id}'`);
   },
 
   getSubAttributesHeadingByIDValue: async (attributeId, attributeValue) => {
@@ -240,7 +246,8 @@ module.exports = {
 
 
   getOffersAutoUpdate: async () => {
-    return db.query(`select id, user_id, product_id from offers_created where is_bid_or_fixed=1 and offfer_buy_status=0 and end_date < CURRENT_TIMESTAMP `);
+    console.log(currDate);
+    return db.query(`select id, user_id, product_id from offers_created where is_bid_or_fixed=1 and offfer_buy_status=0 and TIMESTAMP(end_date) < '${currDate}'`);
   },
 
   getMaxBidOnOffer:async(offer_id) =>{

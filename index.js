@@ -39,7 +39,7 @@ app.get('/',(req,res) => {
     
   })
   
-  //setInterval(updateOfferExpired, 60000);
+  setInterval(updateOfferExpired, 600000);
 
 
 app.listen(5000, function () {
