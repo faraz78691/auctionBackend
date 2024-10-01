@@ -68,7 +68,7 @@ module.exports = {
     );
   },
 
-  
+
 
   getSoldOffersBySeller: async (seller) => {
     return db.query(
@@ -98,6 +98,62 @@ module.exports = {
   getBidCountsByOfferID: async (offerId) => {
     return db.query(
       `SELECT count(*) as bid_count FROM user_bids WHERE offer_id = ${offerId}`
+    );
+  },
+  getQuestionAnsForSeller: async (offerId, sellerID) => {
+    return db.query(
+      `SELECT 
+      qa.id,
+      qa.offer_id,
+      qa.seller_id,
+      CONCAT(seller.first_name, ' ', seller.last_name) AS seller_name,
+      qa.buyer_id,
+      CONCAT(buyer.first_name, ' ', buyer.last_name) AS buyer_name,
+      qa.question,
+      qa.answer,
+      qa.status,
+      qa.created_at,
+      qa.updated_at
+  FROM 
+      question_answer qa
+  JOIN 
+      users seller ON qa.seller_id = seller.id
+  JOIN 
+      users buyer ON qa.buyer_id = buyer.id
+  WHERE 
+      qa.seller_id = ${sellerID}
+  AND 
+      qa.offer_id = ${offerId};
+  `
+    );
+  },
+  getQuestionAnsForBuyer: async (offerId, sellerID, buyerId) => {
+    return db.query(
+      `SELECT 
+      qa.id,
+      qa.offer_id,
+      qa.seller_id,
+      CONCAT(seller.first_name, ' ', seller.last_name) AS seller_name,
+      qa.buyer_id,
+      CONCAT(buyer.first_name, ' ', buyer.last_name) AS buyer_name,
+      qa.question,
+      qa.answer,
+      qa.status,
+      qa.created_at,
+      qa.updated_at
+  FROM 
+      question_answer qa
+  JOIN 
+      users seller ON qa.seller_id = seller.id
+  JOIN 
+      users buyer ON qa.buyer_id = buyer.id
+  WHERE 
+      qa.seller_id = ${sellerID}
+  AND 
+      qa.offer_id = ${offerId}
+  AND 
+      qa.buyer_id = ${buyerId};
+  `
     );
   },
 };

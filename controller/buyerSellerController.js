@@ -19,7 +19,9 @@ const {
   getBidCountsByOfferID,
   getBidDetailsByID,
   getOffersByOfferId,
-  getOffersDetailsNotBoughtByOfferId
+  getOffersDetailsNotBoughtByOfferId,
+  getQuestionAnsForSeller,
+  getQuestionAnsForBuyer
 } = require("../models/buyer_seller");
 
 const {
@@ -646,7 +648,7 @@ exports.getQuestionAnswerForSeller = async (req, res) => {
       });
     }
 
-    const questionAnswer = await getData('question_answer',`where seller_id = ${user_id} and offer_id = ${offerId}`);
+    const questionAnswer = await getQuestionAnsForSeller(offerId,user_id);
 
     if (questionAnswer.length > 0) {
       return res.json({
@@ -696,7 +698,7 @@ exports.getQuestionAnswerForBuyer = async (req, res) => {
       })
     );
 
-    const questionAnswer = await getData('question_answer',`where seller_id = ${sellerId} and offer_id = ${offer_id} and buyer_id = ${user_id}`);
+    const questionAnswer = await getQuestionAnsForBuyer(offer_id,sellerId,user_id);
 
     if (questionAnswer.length > 0) {
       return res.json({
