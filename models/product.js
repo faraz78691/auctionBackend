@@ -255,9 +255,7 @@ module.exports = {
     return db.query(`select user_id, bid from user_bids where offer_id = ${offer_id} and bid =${max_bid[0].max}`);
   },
 
-  getSearchByProduct: async (search) => {
-    console.log(search);
-    
+  getSearchByProduct: async (search) => {    
     const category = await db.query(`SELECT category.id, category.cat_name FROM category WHERE cat_name LIKE "${search}%" LIMIT 2`);
     const product = await db.query(`SELECT product.id, product.name FROM product WHERE name LIKE "${search}%" LIMIT 8`);
     const data = {
