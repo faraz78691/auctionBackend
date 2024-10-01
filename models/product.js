@@ -256,6 +256,8 @@ module.exports = {
   },
 
   getSearchByProduct: async (search) => {
+    console.log(search);
+    
     const category = await db.query(`SELECT category.id, category.cat_name FROM category WHERE cat_name LIKE "${search}%" LIMIT 2`);
     const product = await db.query(`SELECT product.id, product.name FROM product WHERE name LIKE "${search}%" LIMIT 8`);
     const data = {
