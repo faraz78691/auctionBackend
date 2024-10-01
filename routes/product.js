@@ -21,5 +21,6 @@ router.post('/getSubAttributes', productController.getSubAttributes);
 router.post('/getAttributesMapping', productController.getAttributesMapping);
 router.get('/getCategories', productController.getCategories); 
 router.post('/getOfferAdvancedFilter', productController.getOfferAdvancedFilter);
+router.post('/getProductBySearch', productController.getProductBySearch);
 
 module.exports = router;

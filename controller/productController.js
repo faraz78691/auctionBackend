@@ -44,7 +44,8 @@ const {
   getOfferIdByAuctionType,
   getOffersByIDsWhereClause,
   getOfferConditionsByID,
-  getSellerDetails
+  getSellerDetails,
+  getSearchByProduct
 } = require("../models/product");
 
 const Joi = require("joi");
@@ -1754,6 +1755,51 @@ exports.getOfferAdvancedFilter = async (req, res) => {
     }
   } catch (err) {
     console.log(err);
+    return res.json({
+      success: false,
+      message: "Internal server error",
+      error: err,
+      status: 500,
+    });
+  }
+};
+
+exports.getProductBySearch = async (req, res) => {
+  try {
+    const { search } = req.body;
+    const schema = Joi.alternatives(
+      Joi.object({
+        search: Joi.string().optional().allow("").allow(null),
+      })
+    );
+    const result = schema.validate(req.body);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      return res.json({
+        message: result.error.details[0].message,
+        error: message,
+        missingParams: result.error.details[0].message,
+        status: 200,
+        success: false,
+      });
+    }
+
+    var products = await getSearchByProduct(search);    
+    if (products.category.length > 0 || products.product.length > 0) {
+      return res.json({
+        success: true,
+        message: "Product fetched successfully",
+        subAttributes: products,
+        status: 200,
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: "No Product Found",
+        status: 400,
+      });
+    }
+  } catch (err) {
     return res.json({
       success: false,
       message: "Internal server error",

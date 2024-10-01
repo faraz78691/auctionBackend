@@ -21,10 +21,10 @@ module.exports = {
     return db.query("select offer_id  from offer_proattr_mapping where product_id=? and attribute_id IN (?)", [product_id, ids]);
   },
 
-  getOfferIdByConditions :async (product_id, ids) => {
+  getOfferIdByConditions: async (product_id, ids) => {
     return db.query("SELECT offer_id FROM offer_condition_mapping WHERE product_id = ? AND condition_id IN (?)", [product_id, ids]);
   },
-  getOfferIdByAuctionType :async (product_id, ids) => {
+  getOfferIdByAuctionType: async (product_id, ids) => {
     return db.query("SELECT id FROM offers_created WHERE product_id = ? AND is_bid_or_fixed IN (?)", [product_id, ids]);
   },
 
@@ -57,7 +57,7 @@ module.exports = {
 
   getNoOfBids: async (offer_id) => {
     // removing product_id no need of this
-    return db.query("select count(*) as count, max(bid) as max_bid from user_bids where offer_id =?", [ offer_id]);
+    return db.query("select count(*) as count, max(bid) as max_bid from user_bids where offer_id =?", [offer_id]);
   },
 
   getMainImage: async (id) => {
@@ -221,8 +221,8 @@ module.exports = {
     return db.query(`select offer_id  from ${table_name} where product_id=? and attribute_id IN (?)`, [product_id, ids]);
   },
 
-  getOffersByIDs :async (ids) => {
-    return db.query("SELECT * FROM offers_created WHERE offfer_buy_status != 1 AND id IN (?)", [ ids]);
+  getOffersByIDs: async (ids) => {
+    return db.query("SELECT * FROM offers_created WHERE offfer_buy_status != 1 AND id IN (?)", [ids]);
   },
 
   getOffersByIDsWhereClause: async (ids, limit, offset) => {
@@ -250,9 +250,19 @@ module.exports = {
     return db.query(`select id, user_id, product_id from offers_created where is_bid_or_fixed=1 and offfer_buy_status=0 and TIMESTAMP(end_date) < '${currDate}'`);
   },
 
-  getMaxBidOnOffer:async(offer_id) =>{
-    var max_bid =  await db.query(`select max(bid) as max from user_bids where offer_id = ${offer_id}`);
+  getMaxBidOnOffer: async (offer_id) => {
+    var max_bid = await db.query(`select max(bid) as max from user_bids where offer_id = ${offer_id}`);
     return db.query(`select user_id, bid from user_bids where offer_id = ${offer_id} and bid =${max_bid[0].max}`);
+  },
+
+  getSearchByProduct: async (search) => {
+    const category = await db.query(`SELECT category.id, category.cat_name FROM category WHERE cat_name LIKE "${search}%" LIMIT 2`);
+    const product = await db.query(`SELECT product.id, product.name FROM product WHERE name LIKE "${search}%" LIMIT 8`);
+    const data = {
+      category: category,
+      product: product
+    }
+    return data;
   }
 
 }                       

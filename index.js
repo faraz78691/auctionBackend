@@ -19,6 +19,9 @@ app.use(express.urlencoded({limit: '50mb', extended:true, parameterLimit: 100000
 // app.use(express.static(__dirname + '/public'));
 app.use(express.static("public"))
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.use('/product',product)
 app.use('/user',user);
 app.use('/buyer', buyer_seller)
