@@ -1,4 +1,5 @@
 const db = require('../utils/database');
+
 module.exports={
     insertData :(async (table, where, data) => {
         

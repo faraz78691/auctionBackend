@@ -55,8 +55,6 @@ require("dotenv").config();
 var randomstring = require("randomstring");
 var moment = require('moment-timezone');
 
-
-
 exports.getProducts = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
@@ -746,7 +744,7 @@ exports.createUserBids = async (req, res) => {
 exports.getOffer = async (req, res) => {
   try {
     const { offerId } = req.query;
-
+    
     var offerRes = await getOfferDetailsByID(offerId);
     if (offerRes.length > 0) {
       var startDateTime = offerRes[0].start_date.toString();
@@ -757,43 +755,93 @@ exports.getOffer = async (req, res) => {
       const productDetails = await getProductDetailsByID(productId);
       var categoryId = productDetails[0].category_id;
       const categoryDetails = await getCategorybyId(categoryId);
-      var attributeDetails = await getOfferAttributesDetailsByID(offerId);
-      // adding code for getting offer conditions;
-      var conditions = await getOfferConditionsByID(offerId);
-      var attributes = [];
-      for (elem of attributeDetails) {
-        const attributesValues = await getProductAttributeTypeMappingByIDP(
-          productId,
-          elem.attribute_id
-        );
-        if (attributesValues.length > 0) {
-          var attributeId = attributesValues[0].attribute_id;
-          var attributeName = attributesValues[0].attribute_value_name;
-          var subAttributesHeading = attributesValues[0].sub_attribute_heading;
-          const tempDetails = await getProductTypeAttribute(
-            productId,
-            attributeId
-          );
+      
+      
+      // var attributeDetails = await getOfferAttributesDetailsByID(offerId);
+      
+      // // adding code for getting offer conditions;
+      // var conditions = await getOfferConditionsByID(offerId);
+      // var attributes = [];
+      // for (elem of attributeDetails) {
+      //   const attributesValues = await getProductAttributeTypeMappingByIDP(
+      //     productId,
+      //     elem.attribute_id
+      //   );
+      //   if (attributesValues.length > 0) {
+      //     var attributeId = attributesValues[0].attribute_id;
+      //     var attributeName = attributesValues[0].attribute_value_name;
+          
+      //     var subAttributesHeading = attributesValues[0].sub_attribute_heading;
+      //     const tempDetails = await getProductTypeAttribute(
+      //       productId,
+      //       attributeId
+      //     );
 
-          var subAttributeId = elem.subattribute_id;
-          var subAttributeName = "";
-          if (subAttributeId > 0) {
-            const result = await getSubAttributesByIID(subAttributeId);
-            if (result.length > 0) {
-              subAttributeName = result[0].value;
-            }
-          }
-          const tempObj = {
-            ...elem,
-            ...tempDetails[0],
-            attributeName,
-            subAttributesHeading,
-            subAttributeName,
-          };
+      //     var subAttributeId = elem.subattribute_id;
+      //     var subAttributeName = "";
+      //     if (subAttributeId > 0) {
+      //       const result = await getSubAttributesByIID(subAttributeId);
+      //       if (result.length > 0) {
+      //         subAttributeName = result[0].value;
+      //       }
+      //     }
+      //     const tempObj = {
+      //       ...elem,
+      //       ...tempDetails[0],
+      //       attributeName,
+      //       subAttributesHeading,
+      //       subAttributeName,
+      //     };
 
-          attributes.push(tempObj);
+      //     attributes.push(tempObj);
+      //   }
+      // }      
+
+      const attributeDetails = await getOfferAttributesDetailsByID(offerId);
+
+      // Get offer conditions if needed (you can remove this if not used later).
+      const conditions = await getOfferConditionsByID(offerId);
+      
+      const attributes = await Promise.all(attributeDetails.map(async (elem) => {
+        const attributesValues = await getProductAttributeTypeMappingByIDP(productId, elem.attribute_id);
+      
+        // Check if attributesValues is empty and skip processing if it is
+        if (attributesValues.length === 0) {
+          return null; // Return null for filtering later
         }
-      }
+      
+        const {
+          attribute_id: attributeId,
+          attribute_value_name: attributeName,
+          sub_attribute_heading: subAttributesHeading,
+        } = attributesValues[0];
+      
+        const tempDetails = await getProductTypeAttribute(productId, attributeId);
+        
+        // Initialize subAttributeName
+        let subAttributeName = "";
+        const { subattribute_id: subAttributeId } = elem;
+      
+        // Only fetch sub attributes if subAttributeId is greater than 0
+        if (subAttributeId > 0) {
+          const result = await getSubAttributesByIID(subAttributeId);
+          if (result.length > 0) {
+            subAttributeName = result[0].value;
+          }
+        }
+      
+        // Return the constructed object for this attribute
+        return {
+          ...elem,
+          ...tempDetails[0],
+          attributeName,
+          subAttributesHeading,
+          subAttributeName,
+        };
+      }));
+      
+      // Filter out any null values that were returned
+      const filteredAttributes = attributes.filter(attribute => attribute !== null);      
 
       const offerImages = await getOfferImages(offerRes[0].images_id);
       const sellerDetails = await getSellerDetails(offerRes[0].user_id);
@@ -803,7 +851,7 @@ exports.getOffer = async (req, res) => {
         offerRes: offerRes,
         productDetails: productDetails,
         categoryDetails: categoryDetails,
-        attributes: attributes,
+        attributes: filteredAttributes,
         offerImages: offerImages,
         conditions: conditions,
         seller:sellerDetails,

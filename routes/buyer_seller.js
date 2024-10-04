@@ -1,7 +1,6 @@
 const express = require('express');
 const buyerSellerController = require('../controller/buyerSellerController');
 const router = express.Router();
-const upload_files = require('../middleware/upload')
 
 router.post('/suggestPrice', buyerSellerController.suggestPrice);
 router.post('/acceptPrice', buyerSellerController.acceptPrice);
@@ -15,5 +14,5 @@ router.post('/getQuestionAnswerForBuyer', buyerSellerController.getQuestionAnswe
 router.get('/getQuestionAnswerForSeller', buyerSellerController.getQuestionAnswerForSeller);
 router.get('/getSoldSectionForSeller', buyerSellerController.getSoldSectionForSeller);
 router.get('/getOffersByBuyer', buyerSellerController.getOffersByBuyer);
-module.exports = router;
+
 module.exports = router;

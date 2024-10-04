@@ -7,7 +7,6 @@ const getPagination = (page, size) => {
     return { limit, offset };
 };
 
-
 function sendOTP(mobileNumber = '') {
     const options = {
         'method': 'POST',
@@ -34,8 +33,7 @@ function sendOTP(mobileNumber = '') {
             });
         }
     });
-}
-
+};
 
 module.exports = {
     getPagination,

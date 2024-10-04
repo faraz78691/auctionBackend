@@ -1,6 +1,6 @@
-const multer=require('multer')
-const path=require('path')  
-const hash = require('random-hash'); 
+const multer = require('multer')
+const path = require('path')
+const hash = require('random-hash');
 const fs = require("fs");
 
 const images = "public/images/";
@@ -28,8 +28,7 @@ const storage_profile = multer.diskStorage({
       destination = video;
 
     }
-    else if(ext === ".kml" || ext === ".geojson")
-    {
+    else if (ext === ".kml" || ext === ".geojson") {
       destination = data;
     }
     else {
@@ -44,6 +43,6 @@ const storage_profile = multer.diskStorage({
   },
 });
 
-
 const upload_files = multer({ storage: storage_profile });
-module.exports=upload_files;
+
+module.exports = upload_files;

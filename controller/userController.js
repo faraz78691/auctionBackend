@@ -37,6 +37,7 @@ function randomStringAsBase64Url(size) {
 function betweenRandomNumber(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
+
 const saltRounds = 10;
 const base_url = "localhost:4000";
 
@@ -642,7 +643,6 @@ exports.userProfile = async (req, res) => {
   }
 };
 
-//--------------------------------------------------
 exports.forgetPassword = async (req, res) => {
   const { email } = req.body;
   try {
@@ -1015,7 +1015,6 @@ exports.insertUserProfileC = async (req, res) => {
   }
 };
 
-
 exports.updateUserProfileC = async (req, res) => {
   try {
     const { user_id, profile_name, address, city, state, country } = req.body;
@@ -1126,8 +1125,3 @@ exports.getUserRoleProfile = async (req, res) => {
     });
   }
 };
-
-
-
-
-

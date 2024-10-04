@@ -30,6 +30,7 @@ const {
   insertTransaction,
   getMainImage,
 } = require("../models/product");
+
 const {
   getData,insertData, updateData
 } = require("../models/common");
@@ -785,6 +786,7 @@ exports.uploadBuyerQuestion = async (req, res) => {
     });
   }
 };
+
 exports.uploadSellerAnswer = async (req, res) => {
   try {
     const {id,offer_id,answer } = req.body;
@@ -842,5 +844,3 @@ exports.uploadSellerAnswer = async (req, res) => {
     });
   }
 };
-
-
