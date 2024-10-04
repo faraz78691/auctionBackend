@@ -17,7 +17,9 @@ const {
   insertUserProfileM,
   updateUserProfile,
   updateUserM,
-  getuserProfileDetails
+  getuserProfileDetails,
+  fetchAllUsers,
+  fetchAllUsersOffers
 } = require("../models/users");
 
 const Joi = require("joi");
@@ -128,9 +130,9 @@ exports.signup = async (req, res) => {
         role_id: Joi.number().required(),
         phone_number: Joi.number().required(),
         company_reg_no: Joi.string().empty().required(),
-        signing_authority : Joi.string().empty().required(),
-        city : Joi.string().empty().required(),
-        postal_code :Joi.string().empty().required(),
+        signing_authority: Joi.string().empty().required(),
+        city: Joi.string().empty().required(),
+        postal_code: Joi.string().empty().required(),
       })
     );
     const result = schema.validate(req.body);
@@ -147,8 +149,8 @@ exports.signup = async (req, res) => {
     } else {
       const result1 = await fetchUserByEmail(email);
 
-      console.log(result1,"result1result1result1")
-      
+      console.log(result1, "result1result1result1")
+
       if (result1.length === 0) {
         bcrypt.genSalt(saltRounds, async function (err, salt) {
           bcrypt.hash(password, salt, async function (err, hash) {
@@ -169,10 +171,10 @@ exports.signup = async (req, res) => {
               country: country,
               role_id: role_id,
               phone_number: phone_number,
-              company_reg_no : company_reg_no,
-              signing_authority : signing_authority,
-              city : city,
-              postal_code : postal_code
+              company_reg_no: company_reg_no,
+              signing_authority: signing_authority,
+              city: city,
+              postal_code: postal_code
             };
             console.log(user);
             const result = await addUser(user);
@@ -295,7 +297,7 @@ exports.login = async (req, res) => {
           await updateLoginStatusByEmail(email);
           const token = jwt.sign(
             {
-                user_id: result[0].id,
+              user_id: result[0].id,
             },
             "SecretKey",
             { expiresIn: "24h" }
@@ -506,14 +508,14 @@ exports.verifyhomeUser = async (req, res) => {
         console.log("updateVerifyUser Run");
         if (resultUpdate.affectedRows) {
           res.sendFile(path.join(__dirname, '../view/verify.html')); //updated code
-         // res.sendFile(__dirname + "../view/verify.html");
+          // res.sendFile(__dirname + "../view/verify.html");
         } else {
           res.sendFile(path.join(__dirname, '../view/notverify.html'));//updated code
           //res.sendFile(__dirname + "../view/notverify.html");
         }
       } else {
         res.sendFile(path.join(__dirname, '../view/notverify.html'));//updated code
-      //  res.sendFile(__dirname + "../view/notverify.html");
+        //  res.sendFile(__dirname + "../view/notverify.html");
         // console.log("this file");
       }
     }
@@ -995,13 +997,13 @@ exports.insertUserProfileC = async (req, res) => {
     const resultInserted = await insertUserProfileM(role_data);
     if (resultInserted.affectedRows > 0) {
 
-      const resultUpdate =  await updateUserM(role_data);
+      const resultUpdate = await updateUserM(role_data);
       return res.json({
         success: true,
         message: "User profile created",
         status: 200,
         rowsAffected: resultInserted.affectedRows,
-        resultUpdate : resultUpdate.affectedRows
+        resultUpdate: resultUpdate.affectedRows
       });
     }
   } catch (err) {
@@ -1061,13 +1063,13 @@ exports.updateUserProfileC = async (req, res) => {
     };
     const resultInserted = await updateUserProfile(role_data);
     if (resultInserted.affectedRows > 0) {
-      const resultUpdate =  await updateUserM(role_data);
+      const resultUpdate = await updateUserM(role_data);
       return res.json({
         success: true,
         message: "User profile updated",
         status: 200,
         rowsAffected: resultInserted.affectedRows,
-        updateRows : resultUpdate.affectedRows
+        updateRows: resultUpdate.affectedRows
       });
     }
   } catch (err) {
@@ -1100,21 +1102,21 @@ exports.getUserRoleProfile = async (req, res) => {
     const userDetails = await getuserProfileDetails(user_id);
     if (userDetails.length > 0) {
 
-          res.json({
-            success: true,
-            status: 200,
-            msg: "Role Found for User",
-            userDetails: userDetails, 
-          });
-       
-      } else {
-        return res.json({
-          success: false,
-          status: 500,
-          msg: "No roles assigned to User",
-        });
-      }
-    
+      res.json({
+        success: true,
+        status: 200,
+        msg: "Role Found for User",
+        userDetails: userDetails,
+      });
+
+    } else {
+      return res.json({
+        success: false,
+        status: 500,
+        msg: "No roles assigned to User",
+      });
+    }
+
   } catch (err) {
     console.log(err);
     return res.json({

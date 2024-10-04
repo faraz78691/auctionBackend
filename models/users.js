@@ -112,7 +112,8 @@ module.exports = {
     ]);
   },
 
-  getUserNamebyId : async(id) => {
-    return db.query(`select concat(first_name, " ", last_name) as name from  users where  id=${id}` );
-  },
+  getUserNamebyId: async (id) => {
+    return db.query(`select concat(first_name, " ", last_name) as name from  users where  id=${id}`);
+  }
+
 };

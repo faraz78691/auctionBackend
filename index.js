@@ -5,6 +5,7 @@ const buyer_seller = require('./routes/buyer_seller')
 
 const { updateOfferExpired } = require('./helper/offerControl')
 
+const admin = require('./routes/admin');
 const product = require('./routes/product');
 const moovPayment = require('./routes/moov_paymentgetway');
 const app = express();
@@ -21,10 +22,11 @@ app.use(express.static("public"))
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use('/admin', admin);
 app.use('/product', product);
 app.use('/moov', moovPayment);
 app.use('/user', user);
-app.use('/buyer', buyer_seller)
+app.use('/buyer', buyer_seller);
 
 app.get('/', (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*', 'http://98.80.36.64:5000', { reconnect: true })

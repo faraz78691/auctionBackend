@@ -509,7 +509,7 @@ exports.getOffers = async (req, res) => {
 
 
     var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
- 
+
 
 
     var whereClause = "";
@@ -519,7 +519,7 @@ exports.getOffers = async (req, res) => {
       product_id !== undefined
     ) {
 
-     whereClause = ` where product_id in  (${product_id})  and offfer_buy_status != '1' and TIMESTAMP(end_date) <= '${currDate}'`; //updated code 26-07-2024
+      whereClause = ` where product_id in  (${product_id})  and offfer_buy_status != '1' and TIMESTAMP(end_date) <= '${currDate}'`; //updated code 26-07-2024
     } else {
 
       whereClause = ` where offfer_buy_status != '1' and TIMESTAMP(end_date) >= '${currDate}'`;
@@ -744,7 +744,7 @@ exports.createUserBids = async (req, res) => {
 exports.getOffer = async (req, res) => {
   try {
     const { offerId } = req.query;
-    
+
     var offerRes = await getOfferDetailsByID(offerId);
     if (offerRes.length > 0) {
       var startDateTime = offerRes[0].start_date.toString();
@@ -755,10 +755,10 @@ exports.getOffer = async (req, res) => {
       const productDetails = await getProductDetailsByID(productId);
       var categoryId = productDetails[0].category_id;
       const categoryDetails = await getCategorybyId(categoryId);
-      
-      
+
+
       // var attributeDetails = await getOfferAttributesDetailsByID(offerId);
-      
+
       // // adding code for getting offer conditions;
       // var conditions = await getOfferConditionsByID(offerId);
       // var attributes = [];
@@ -770,7 +770,7 @@ exports.getOffer = async (req, res) => {
       //   if (attributesValues.length > 0) {
       //     var attributeId = attributesValues[0].attribute_id;
       //     var attributeName = attributesValues[0].attribute_value_name;
-          
+
       //     var subAttributesHeading = attributesValues[0].sub_attribute_heading;
       //     const tempDetails = await getProductTypeAttribute(
       //       productId,
@@ -801,27 +801,27 @@ exports.getOffer = async (req, res) => {
 
       // Get offer conditions if needed (you can remove this if not used later).
       const conditions = await getOfferConditionsByID(offerId);
-      
+
       const attributes = await Promise.all(attributeDetails.map(async (elem) => {
         const attributesValues = await getProductAttributeTypeMappingByIDP(productId, elem.attribute_id);
-      
+
         // Check if attributesValues is empty and skip processing if it is
         if (attributesValues.length === 0) {
           return null; // Return null for filtering later
         }
-      
+
         const {
           attribute_id: attributeId,
           attribute_value_name: attributeName,
           sub_attribute_heading: subAttributesHeading,
         } = attributesValues[0];
-      
+
         const tempDetails = await getProductTypeAttribute(productId, attributeId);
-        
+
         // Initialize subAttributeName
         let subAttributeName = "";
         const { subattribute_id: subAttributeId } = elem;
-      
+
         // Only fetch sub attributes if subAttributeId is greater than 0
         if (subAttributeId > 0) {
           const result = await getSubAttributesByIID(subAttributeId);
@@ -829,7 +829,7 @@ exports.getOffer = async (req, res) => {
             subAttributeName = result[0].value;
           }
         }
-      
+
         // Return the constructed object for this attribute
         return {
           ...elem,
@@ -839,9 +839,9 @@ exports.getOffer = async (req, res) => {
           subAttributeName,
         };
       }));
-      
+
       // Filter out any null values that were returned
-      const filteredAttributes = attributes.filter(attribute => attribute !== null);      
+      const filteredAttributes = attributes.filter(attribute => attribute !== null);
 
       const offerImages = await getOfferImages(offerRes[0].images_id);
       const sellerDetails = await getSellerDetails(offerRes[0].user_id);
@@ -854,7 +854,7 @@ exports.getOffer = async (req, res) => {
         attributes: filteredAttributes,
         offerImages: offerImages,
         conditions: conditions,
-        seller:sellerDetails,
+        seller: sellerDetails,
         status: 200,
       });
     }
@@ -1225,8 +1225,8 @@ exports.getFavouriteOffers = async (req, res) => {
         }
       }
       const sellerDetails = await getSellerDetails(element.user_id);
-      element.sellername = sellerDetails[0].first_name + ' '+ sellerDetails[0].last_name;
-      element.sellerId = sellerDetails[0].id; 
+      element.sellername = sellerDetails[0].first_name + ' ' + sellerDetails[0].last_name;
+      element.sellerId = sellerDetails[0].id;
       if (element.images_id > 0) {
         const imageR = await getMainImage(element.images_id);
         if (imageR.length > 0) {
@@ -1832,7 +1832,7 @@ exports.getProductBySearch = async (req, res) => {
       });
     }
 
-    var products = await getSearchByProduct(search);    
+    var products = await getSearchByProduct(search);
     if (products.category.length > 0 || products.product.length > 0) {
       return res.json({
         success: true,
