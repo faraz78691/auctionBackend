@@ -82,15 +82,15 @@ exports.signup = async (req, res) => {
       first_name,
       last_name,
       company,
-      address,
-      city,
+      street,
+      street_number,
       state,
       country,
       role_id,
       phone_number,
       company_reg_no,
       signing_authority,
-      location,
+      city,
       postal_code
     } = req.body;
     const actToken = betweenRandomNumber(10000000, 99999999);
@@ -121,15 +121,15 @@ exports.signup = async (req, res) => {
         }),
 
         company: Joi.string().empty().required(),
-        address: Joi.string().empty().required(),
-        city: Joi.string().empty().required(),
+        street: Joi.string().empty().required(),
+        street_number: Joi.number().empty().required(),
         state: Joi.string().empty().required(),
         country: Joi.string().empty().required(),
         role_id: Joi.number().required(),
         phone_number: Joi.number().required(),
         company_reg_no: Joi.string().empty().required(),
         signing_authority : Joi.string().empty().required(),
-        location : Joi.string().empty().required(),
+        city : Joi.string().empty().required(),
         postal_code :Joi.string().empty().required(),
       })
     );
@@ -163,15 +163,15 @@ exports.signup = async (req, res) => {
               act_token: actToken,
               status: status,
               login_status: login_status,
-              address: address,
-              city: city,
+              street: street,
+              street_number: street_number,
               state: state,
               country: country,
               role_id: role_id,
               phone_number: phone_number,
               company_reg_no : company_reg_no,
               signing_authority : signing_authority,
-              location : location,
+              city : city,
               postal_code : postal_code
             };
             console.log(user);
