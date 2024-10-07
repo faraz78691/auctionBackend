@@ -179,7 +179,7 @@ module.exports = {
     return db.query(`select * from  sub_attribute_mapping where attribute_mapping_id  = '${id}'`);
   },
   getSellerDetails: async (id) => {
-    return db.query(`select id,first_name,last_name , location from  users where id = '${id}'`);
+    return db.query(`select id,first_name,last_name , concat(street_number, " ", street, " ", city, " ", state, " ", country, " ", postal_code ) AS address from  users where id = '${id}'`);
   },
 
   getSubAttributesHeadingByIDValue: async (attributeId, attributeValue) => {
