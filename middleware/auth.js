@@ -10,11 +10,9 @@ const auth = async (req, res, next) => {
       const bearer = bearerHeader.split(" ");
       req.token = bearer[1];
       const verifyUser = jwt.verify(req.token, 'SecretKey')
-      console.log(verifyUser, " <= verify user")
-      const user = await fetchUserById(verifyUser.data.id);
-      console.log(user, "user");
-
+      const user = await fetchUserById(verifyUser.user_id);
       if (user !== null) {
+        req.user = user[0];
         next();
       } else {
         return res.json({

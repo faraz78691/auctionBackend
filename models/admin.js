@@ -60,8 +60,20 @@ module.exports = {
         return db.query(`SELECT id, attribute_name, heading, input_type FROM product_type_attribute where product_id = ${product_id}`);
     },
 
+    findProductById: async (product_id) => {
+        return db.query(`SELECT * FROM product WHERE id = ${product_id}`);
+    },
+
+    findTypeAttributesByIdAndProductId: async (product_id, attribute_id) => {
+        return db.query(`SELECT * FROM product_type_attribute WHERE product_id = ${product_id} AND id = ${attribute_id}`);
+    },
+
     addProductAttribute: async (data) => {
         return db.query("insert into product_attributes_mapping set ?", [data]);
+    },
+
+    findAttributesByAttributesTypeId: async (attribute_id) => {
+        return db.query(`SELECT * FROM product_attributes_mapping WHERE attribute_id = ${attribute_id}`);
     }
 
 };

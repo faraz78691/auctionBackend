@@ -15,5 +15,4 @@ router.post('/insertUserProfileC', userController.insertUserProfileC);
 router.post('/updateUserProfileC', userController.updateUserProfileC);
 router.get('/getUserRoleProfile', userController.getUserRoleProfile);
 
-
 module.exports = router;

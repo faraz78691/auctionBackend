@@ -32,6 +32,10 @@ module.exports = {
     return db.query("select id, attribute_value_name, is_sub_attribute, sub_attribute_heading from product_attributes_mapping where product_id= ? and attribute_id = ?", [product_id, attribute_id]);
   },
 
+  findProductById: async (product_id) => {
+    return db.query(`SELECT * FROM product WHERE id = ${product_id}`);
+  },
+
   insertOfferCreated: async (data) => {
     return db.query("insert into offers_created set ?", [data]);
   },
@@ -178,6 +182,7 @@ module.exports = {
   getSubAttributesByID: async (id) => {
     return db.query(`select * from  sub_attribute_mapping where attribute_mapping_id  = '${id}'`);
   },
+
   getSellerDetails: async (id) => {
     return db.query(`select id,first_name,last_name , location from  users where id = '${id}'`);
   },
@@ -246,7 +251,6 @@ module.exports = {
 
 
   getOffersAutoUpdate: async () => {
-    console.log(currDate);
     return db.query(`select id, user_id, product_id from offers_created where is_bid_or_fixed=1 and offfer_buy_status=0 and TIMESTAMP(end_date) < '${currDate}'`);
   },
 
@@ -263,6 +267,18 @@ module.exports = {
       product: product
     }
     return data;
+  },
+
+  getOffers: async (currDate) => {
+    return db.query(`SELECT offers_created.*, product.name AS product_name FROM offers_created LEFT JOIN product ON product.id = offers_created.product_id WHERE offfer_buy_status != '1' AND is_reactivable = 1 AND TIMESTAMP(end_date) <= '${currDate}' AND no_of_times_reactivated != 0`);
+  },
+
+  updateOfferEndDate: async (offer_id, newEndDate, noOfReactivations) => {
+    return db.query('UPDATE offers_created SET end_date = ?, no_of_times_reactivated = ? WHERE id = ?', [newEndDate, noOfReactivations, offer_id]);
+  },
+
+  getLatestOffer: async () => {
+    return db.query(`SELECT offers_created.*, product.name AS product_name FROM offers_created LEFT JOIN product ON product.id = offers_created.product_id WHERE offfer_buy_status != 1 AND is_reactivable = 1`);
   }
 
 }                       
