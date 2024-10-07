@@ -20,6 +20,6 @@ router.get('/getProductByCategoryId', adminAuth, adminController.getProductByCat
 router.post('/addProductTypeAttributes', adminAuth, adminController.addProductTypeAttributes);
 router.get('/getTypeAttributesByProductId', adminAuth, adminController.getTypeAttributesByProductId);
 router.post('/addProductAttributes', adminAuth, adminController.addProductAttributes);
-router.post('/getAttributesByProductId', adminAuth, adminController.getAttributesByProductId);
+router.get('/getAttributesByAttributeTypeId', adminAuth, adminController.getAttributesByAttributeTypeId);
 
 module.exports = router;

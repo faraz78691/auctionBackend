@@ -2,7 +2,7 @@ const Joi = require("joi");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const { findEmail, updateLoginStatusById, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, addProductAttribute } = require("../models/admin");
+const { findEmail, updateLoginStatusById, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId,  addProductAttribute, findAttributesByAttributesTypeId } = require("../models/admin");
 
 exports.login = async (req, res) => {
     try {
@@ -531,32 +531,41 @@ exports.addProductAttributes = async (req, res) => {
             });
         }
 
-        const product = await findProductAndCategoryById(product_id, category_id);
+        const product = await findProductById(product_id);
         if (product.length > 0) {
-            const attribute = {
-                product_id: product_id,
-                attribute_id: attribute_id,
-                attribute_value_name: attribute_value_name,
-            }
-            const addProductTypeAttribute = await addProductAttribute(attribute);
-            if (addProductTypeAttribute.affectedRows == 1) {
-                return res.json({
-                    success: true,
-                    message: "Product type attributes add successfully",
-                    subAttributes: addProductTypeAttribute.insertId,
-                    status: 200,
-                });
+            const attribute = await findTypeAttributesByIdAndProductId(product_id, attribute_id);
+            if (attribute.length > 0) {
+                const data = {
+                    product_id: product_id,
+                    attribute_id: attribute_id,
+                    attribute_value_name: attribute_value_name,
+                }
+                const addProductTypeAttribute = await addProductAttribute(data);
+                if (addProductTypeAttribute.affectedRows == 1) {
+                    return res.json({
+                        success: true,
+                        message: "Product attributes add successfully",
+                        subAttributes: addProductTypeAttribute.insertId,
+                        status: 200,
+                    });
+                } else {
+                    return res.json({
+                        success: false,
+                        message: "product attribute failed to add",
+                        status: 400,
+                    });
+                }
             } else {
                 return res.json({
                     success: false,
-                    message: "product type attribute failed to add",
+                    message: "Attribute id is wrong or the attribute id not add in this product id",
                     status: 400,
                 });
             }
         } else {
             return res.json({
                 success: false,
-                message: "Product id is wrong or the prodcut id not add in this category id",
+                message: "Product id is wrong",
                 status: 400,
             });
         }
@@ -570,12 +579,12 @@ exports.addProductAttributes = async (req, res) => {
     }
 };
 
-exports.getAttributesByProductId = async (req, res) => {
+exports.getAttributesByAttributeTypeId = async (req, res) => {
     try {
-        const { product_id } = req.query;
+        const { attribute_id } = req.query;
         const schema = Joi.alternatives(
             Joi.object({
-                product_id: Joi.number().required().empty(),
+                attribute_id: Joi.number().required().empty(),
             })
         );
         const result = schema.validate(req.query);
@@ -589,19 +598,18 @@ exports.getAttributesByProductId = async (req, res) => {
                 success: false,
             });
         }
-
-        var getAttribute = await findTypeAttributesByProductId(product_id);
-        if (getAttribute.length > 0) {
+        var getAttributes = await findAttributesByAttributesTypeId(attribute_id);
+        if (getAttributes.length > 0) {
             return res.json({
                 success: true,
-                message: "Product Attributes fetched successfully",
-                typeAttributes: getAttribute,
+                message: "Attributes fetched successfully",
+                typeAttributes: getAttributes,
                 status: 200,
             });
         } else {
             return res.json({
                 success: false,
-                message: "Product Id Wrong",
+                message: "Attribute Id Wrong",
                 status: 400,
             });
         }

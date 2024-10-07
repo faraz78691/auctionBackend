@@ -4,6 +4,7 @@ const {
   getProductTypeAttributeByID,
   insertOfferImages,
   getProductAttributeTypeMapping,
+  findProductById,
   insertOfferCreated,
   getOffersByWhereClause,
   getNoOfBids,
@@ -45,7 +46,10 @@ const {
   getOffersByIDsWhereClause,
   getOfferConditionsByID,
   getSellerDetails,
-  getSearchByProduct
+  getSearchByProduct,
+  getOffers,
+  updateOfferEndDate,
+  getLatestOffer
 } = require("../models/product");
 
 const Joi = require("joi");
@@ -322,50 +326,59 @@ exports.uploadOfferImages = async (req, res) => {
 
 exports.createOffer = async (req, res) => {
   try {
+    const user_id = req.user.id;
     const {
       product_id,
       title,
       product_type,
       condition_desc,
-      offerStart,
       reference_no,
       is_bid_or_fixed,
       start_price,
-      start_date,
       increase_step,
       buyto_price,
       fixed_offer_price,
       duration,
       length_oftime,
       images_id,
-      attributes,
-      conditions,
+      offer_start,
+      start_date,
+      delivery_type,
+      offfer_buy_status,
       is_reactivable,
-      is_psuggestion_enable
+      no_of_times_reactivated,
+      is_psuggestion_enable,
+      attributes,
+      conditions
     } = req.body;
+
     const schema = Joi.alternatives(
       Joi.object({
         product_id: Joi.number().required().empty(),
         title: Joi.string().required().empty(),
         product_type: Joi.string().required().empty(),
-        offerStart: Joi.string().required().empty(),
         condition_desc: Joi.string().required().empty(),
         reference_no: Joi.string().optional().allow(null).allow(""),
         is_bid_or_fixed: Joi.string().required().empty(),
         start_price: Joi.number().optional().allow(null).allow(""),
         increase_step: Joi.number().optional().allow(null).allow(""),
-        start_date: Joi.string().required().empty(),
         buyto_price: Joi.number().optional().allow(null).allow(""),
         fixed_offer_price: Joi.number().optional().allow(null).allow(""),
         duration: Joi.number().required().empty(),
         length_oftime: Joi.number().required().empty(),
         images_id: Joi.number().required().empty(),
+        offer_start: Joi.string().required().empty(),
+        start_date: Joi.string().required().empty(),
+        delivery_type: Joi.number().required().empty(),
+        offfer_buy_status: Joi.number().required().empty(),
+        is_reactivable: Joi.number().required().empty(),
+        no_of_times_reactivated: Joi.number().required().empty(),
+        is_psuggestion_enable: Joi.number().required().empty(),
         attributes: Joi.string().empty().required(),
         conditions: Joi.string().empty().required(),
-        is_reactivable: Joi.number().required().empty(),
-        is_psuggestion_enable: Joi.number().required().empty(),
       })
     );
+
     const result = schema.validate(req.body);
     if (result.error) {
       const message = result.error.details.map((i) => i.message).join(",");
@@ -378,102 +391,97 @@ exports.createOffer = async (req, res) => {
       });
     }
 
-    const authHeader = req.headers.authorization;
-    const jwtToken = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(jwtToken);
-    const user_id = decoded.user_id;
+    const findProduct = await findProductById(product_id);
+    if (findProduct.length > 0) {
+      const itemsJson = JSON.parse(attributes);
+      const condJson = JSON.parse(conditions);
+      const offerStart = new Date(offer_start);
+      const startDate = new Date(start_date); //date -- YYYY-MM-DD
+      const endDate = new Date(
+        startDate.getFullYear(),
+        startDate.getMonth(),
+        startDate.getDate() + Number(length_oftime),
+        startDate.getHours(),
+        startDate.getMinutes(),
+        startDate.getSeconds(),
+        startDate.getMilliseconds()
+      );
 
-    const itemsJson = JSON.parse(attributes);
-    console.log(itemsJson);
-    const condJson = JSON.parse(conditions);
-    const startDate = new Date(start_date); //date -- YYYY-MM-DD
-    let hour = startDate.getHours();
-    let minutes = startDate.getMinutes();
-    let seconds = startDate.getSeconds();
-    let ms = startDate.getMilliseconds();
+      const offer_created = {
+        product_id: product_id,
+        title: title,
+        product_type: product_type,
+        condition_desc: condition_desc,
+        reference_no: reference_no,
+        is_bid_or_fixed: is_bid_or_fixed,
+        start_price: start_price,
+        increase_step: increase_step,
+        buyto_price: buyto_price,
+        fixed_offer_price: fixed_offer_price,
+        duration: duration,
+        length_oftime: length_oftime,
+        images_id: images_id,
+        offerStart: offerStart,
+        start_date: startDate,
+        end_date: endDate,
+        delivery_type: delivery_type,
+        user_id: user_id,
+        offfer_buy_status: offfer_buy_status,
+        is_reactivable: is_reactivable,
+        no_of_times_reactivated: no_of_times_reactivated,
+        is_psuggestion_enable: is_psuggestion_enable
+      };
 
-    endDate = new Date(
-      startDate.getFullYear(),
-      startDate.getMonth(),
-      startDate.getDate() + Number(length_oftime)
-    );
-    endDate.setHours(hour);
-    endDate.setMinutes(minutes);
-    endDate.setSeconds(seconds);
-    endDate.setMilliseconds(ms);
+      var offerId = 0;
+      var attributesInserted = 0;
+      var condInserted = 0;
+      const resultInserted = await insertOfferCreated(offer_created);
+      if (resultInserted.affectedRows > 0) {
+        offerId = resultInserted.insertId;
+        if (itemsJson.length > 0) {
+          for (element of itemsJson) {
+            const attributesData = {
+              offer_id: offerId,
+              product_id: product_id,
+              attribute_id: element.attribute_id,
+              attribute_value: element.attribute_value,
+              subattribute_id: element.subattribute_id,
+            };
 
-    // code for adding actual end time as it is
-    // const newDateStr = moment(offerStart).add(length_oftime, 'days').format('YYYY-MM-DD HH:mm:ss');
-
-
-
-    const offer_created = {
-      product_id: product_id,
-      title: title,
-      product_type: product_type,
-      condition_desc: condition_desc,
-      reference_no: reference_no,
-      offerStart: offerStart,
-      is_bid_or_fixed: is_bid_or_fixed,
-      start_price: start_price,
-      increase_step: increase_step,
-      buyto_price: buyto_price,
-      fixed_offer_price: fixed_offer_price,
-      duration: duration,
-      length_oftime: length_oftime,
-      images_id: images_id,
-      start_date: startDate,
-      end_date: endDate,
-      // actual_end_time:newDateStr,
-      user_id: user_id,
-      is_reactivable: is_reactivable,
-      is_psuggestion_enable: is_psuggestion_enable
-    };
-    var offerId = 0;
-    var attributesInserted = 0;
-    var condInserted = 0;
-    const resultInserted = await insertOfferCreated(offer_created);
-    if (resultInserted.affectedRows > 0) {
-      offerId = resultInserted.insertId;
-      if (itemsJson.length > 0) {
-        for (element of itemsJson) {
-          const attributesData = {
-            offer_id: offerId,
-            product_id: product_id,
-            attribute_id: element.attribute_id,
-            attribute_value: element.attribute_value,
-            subattribute_id: element.subattribute_id,
-          };
-
-          const insertedRows = await insertAttributOffers(attributesData);
-          attributesInserted = attributesInserted + insertedRows.affectedRows;
+            const insertedRows = await insertAttributOffers(attributesData);
+            attributesInserted = attributesInserted + insertedRows.affectedRows;
+          }
         }
-      }
 
-      if (condJson.length > 0) {
-        for (element of condJson) {
-          const condData = {
-            offer_id: offerId,
-            product_id: product_id,
-            condition_id: element.condition_id,
-            condition_value: element.condition_value,
-          };
-
-          const insertedRows = await insertConditionOffers(condData);
-          condInserted = condInserted + insertedRows.affectedRows;
+        if (condJson.length > 0) {
+          for (element of condJson) {
+            const condData = {
+              offer_id: offerId,
+              product_id: product_id,
+              condition_id: element.condition_id,
+              condition_value: element.condition_value,
+            };
+            const insertedRows = await insertConditionOffers(condData);
+            condInserted = condInserted + insertedRows.affectedRows;
+          }
         }
+        return res.json({
+          success: true,
+          message: "Offer Created",
+          status: 200,
+          insertId: offerId,
+          attributesInserted: attributesInserted,
+          conditionsInserted: condInserted,
+        });
       }
+    } else {
       return res.json({
-        success: true,
-        message: "Offer Created",
-        status: 200,
-        insertId: offerId,
-        attributesInserted: attributesInserted,
-        conditionsInserted: condInserted,
+        success: false,
+        message: "Product id is wrong",
+        status: 400,
       });
     }
   } catch (err) {
-    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",
@@ -485,8 +493,6 @@ exports.createOffer = async (req, res) => {
 
 exports.getOffers = async (req, res) => {
   try {
-
-
     const { product_id, page, page_size } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
@@ -507,10 +513,28 @@ exports.getOffers = async (req, res) => {
       });
     }
 
+    var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
 
-    var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+    const offer = await getOffers(currDate);
 
+    for (let element of offer) {
+      const startDate = new Date(element.end_date);
+      const newEndDate = new Date(
+        startDate.getFullYear(),
+        startDate.getMonth(),
+        startDate.getDate() + Number(element.length_oftime), // Add length of time (in days)
+        startDate.getHours(),
+        startDate.getMinutes(),
+        startDate.getSeconds(),
+        startDate.getMilliseconds()
+      );
 
+      // Update the number of times the offer has been reactivated, but ensure it doesn't go below zero
+      element.no_of_times_reactivated = element.no_of_times_reactivated > 0 ? element.no_of_times_reactivated - 1 : 0;
+
+      // Update the offer's end date and reactivation count in the database
+      await updateOfferEndDate(element.id, newEndDate, element.no_of_times_reactivated);
+    }
 
     var whereClause = "";
     if (
@@ -518,10 +542,8 @@ exports.getOffers = async (req, res) => {
       product_id !== null &&
       product_id !== undefined
     ) {
-
-      whereClause = ` where product_id in  (${product_id})  and offfer_buy_status != '1' and TIMESTAMP(end_date) <= '${currDate}'`; //updated code 26-07-2024
+      whereClause = `WHERE product_id IN (${product_id}) and offfer_buy_status != '1' and TIMESTAMP(end_date) >= '${currDate}'`; //updated code 26-07-2024
     } else {
-
       whereClause = ` where offfer_buy_status != '1' and TIMESTAMP(end_date) >= '${currDate}'`;
     }
 
@@ -575,7 +597,6 @@ exports.getOffers = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",
@@ -744,7 +765,6 @@ exports.createUserBids = async (req, res) => {
 exports.getOffer = async (req, res) => {
   try {
     const { offerId } = req.query;
-
     var offerRes = await getOfferDetailsByID(offerId);
     if (offerRes.length > 0) {
       var startDateTime = offerRes[0].start_date.toString();
