@@ -6,12 +6,15 @@ const {
   getProductAttributeTypeMapping,
   findProductById,
   insertOfferCreated,
+  updateOfferById,
   getOffersByWhereClause,
   getOffersByCategoryWhereClause,
   getNoOfBids,
   getMainImage,
   insertAttributOffers,
   insertConditionOffers,
+  updateAttributOffers,
+  updateConditionOffers,
   getCountDownByOfferId,
   getOfferRecord,
   insertBidByUser,
@@ -344,10 +347,7 @@ exports.createOffer = async (req, res) => {
       images_id,
       offer_start,
       start_date,
-      delivery_type,
-      offfer_buy_status,
       is_reactivable,
-      no_of_times_reactivated,
       is_psuggestion_enable,
       attributes,
       conditions
@@ -370,10 +370,7 @@ exports.createOffer = async (req, res) => {
         images_id: Joi.number().required().empty(),
         offer_start: Joi.string().required().empty(),
         start_date: Joi.string().required().empty(),
-        delivery_type: Joi.number().required().empty(),
-        offfer_buy_status: Joi.number().required().empty(),
         is_reactivable: Joi.number().required().empty(),
-        no_of_times_reactivated: Joi.number().required().empty(),
         is_psuggestion_enable: Joi.number().required().empty(),
         attributes: Joi.string().empty().required(),
         conditions: Joi.string().empty().required(),
@@ -425,11 +422,8 @@ exports.createOffer = async (req, res) => {
         offerStart: offerStart,
         start_date: startDate,
         end_date: endDate,
-        delivery_type: delivery_type,
         user_id: user_id,
-        offfer_buy_status: offfer_buy_status,
         is_reactivable: is_reactivable,
-        no_of_times_reactivated: no_of_times_reactivated,
         is_psuggestion_enable: is_psuggestion_enable
       };
 
@@ -483,6 +477,172 @@ exports.createOffer = async (req, res) => {
       });
     }
   } catch (err) {
+    console.log(err);
+    
+    return res.json({
+      success: false,
+      message: "Internal server error",
+      error: err,
+      status: 500,
+    });
+  }
+};
+
+exports.updateOffer = async (req, res) => {
+  try {
+    const {
+      offer_id,
+      product_id,
+      title,
+      product_type,
+      condition_desc,
+      reference_no,
+      is_bid_or_fixed,
+      start_price,
+      increase_step,
+      buyto_price,
+      fixed_offer_price,
+      duration,
+      length_oftime,
+      images_id,
+      offer_start,
+      start_date,
+      is_reactivable,
+      is_psuggestion_enable,
+      attributes,
+      conditions
+    } = req.body;
+
+    const schema = Joi.alternatives(
+      Joi.object({
+        offer_id: Joi.number().required().empty(),
+        product_id: Joi.number().required().empty(),
+        title: Joi.string().required().empty(),
+        product_type: Joi.string().required().empty(),
+        condition_desc: Joi.string().required().empty(),
+        reference_no: Joi.string().optional().allow(null).allow(""),
+        is_bid_or_fixed: Joi.string().required().empty(),
+        start_price: Joi.number().optional().allow(null).allow(""),
+        increase_step: Joi.number().optional().allow(null).allow(""),
+        buyto_price: Joi.number().optional().allow(null).allow(""),
+        fixed_offer_price: Joi.number().optional().allow(null).allow(""),
+        duration: Joi.number().required().empty(),
+        length_oftime: Joi.number().required().empty(),
+        images_id: Joi.number().required().empty(),
+        offer_start: Joi.string().required().empty(),
+        start_date: Joi.string().required().empty(),
+        is_reactivable: Joi.number().required().empty(),
+        is_psuggestion_enable: Joi.number().required().empty(),
+        attributes: Joi.string().empty().required(),
+        conditions: Joi.string().empty().required(),
+      })
+    );
+
+    const result = schema.validate(req.body);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      return res.json({
+        message: result.error.details[0].message,
+        error: message,
+        missingParams: result.error.details[0].message,
+        status: 200,
+        success: false,
+      });
+    }
+
+    const findProduct = await findProductById(product_id);
+    if (findProduct.length > 0) {
+      const itemsJson = JSON.parse(attributes);
+      const condJson = JSON.parse(conditions);
+      const offerStart = new Date(offer_start);
+      const startDate = new Date(start_date); //date -- YYYY-MM-DD
+      const endDate = new Date(
+        startDate.getFullYear(),
+        startDate.getMonth(),
+        startDate.getDate() + Number(length_oftime),
+        startDate.getHours(),
+        startDate.getMinutes(),
+        startDate.getSeconds(),
+        startDate.getMilliseconds()
+      );
+
+      const offer_update = {
+        product_id: product_id,
+        title: title,
+        product_type: product_type,
+        condition_desc: condition_desc,
+        reference_no: reference_no,
+        is_bid_or_fixed: is_bid_or_fixed,
+        start_price: start_price,
+        increase_step: increase_step,
+        buyto_price: buyto_price,
+        fixed_offer_price: fixed_offer_price,
+        duration: duration,
+        length_oftime: length_oftime,
+        images_id: images_id,
+        offerStart: offerStart,
+        start_date: startDate,
+        end_date: endDate,
+        is_reactivable: is_reactivable,
+        is_psuggestion_enable: is_psuggestion_enable
+      };
+
+      var offerId = 0;
+      var attributesUpdate = 0;
+      var condUpdate = 0;
+      const resultUpdate = await updateOfferById(offer_update, offer_id);
+      if (resultUpdate.affectedRows > 0) {
+        offerId = offer_id;
+        if (itemsJson.length > 0) {
+          for (element of itemsJson) {
+            const attributesData = {
+              product_id: product_id,
+              attribute_id: element.attribute_id,
+              attribute_value: element.attribute_value,
+              subattribute_id: element.subattribute_id,
+            };
+
+            const updateRows = await updateAttributOffers(attributesData, offerId);
+            attributesUpdate = attributesUpdate + updateRows.affectedRows;
+          }
+        }
+
+        if (condJson.length > 0) {
+          for (element of condJson) {
+            const condData = {
+              product_id: product_id,
+              condition_id: element.condition_id,
+              condition_value: element.condition_value,
+            };
+            const updateRows = await updateConditionOffers(condData, offerId);
+            condUpdate = condUpdate + updateRows.affectedRows;
+          }
+        }
+        return res.json({
+          success: true,
+          message: "Offer Successfully Update",
+          status: 200,
+          insertId: offerId,
+          attributesUpdate: attributesUpdate,
+          conditionsInserted: condUpdate,
+        });
+      } else {
+        return res.json({
+          success: false,
+          message: "Offer Not Update",
+          status: 400,
+        });
+      }
+    } else {
+      return res.json({
+        success: false,
+        message: "Product id is wrong",
+        status: 400,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+
     return res.json({
       success: false,
       message: "Internal server error",

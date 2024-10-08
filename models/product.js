@@ -40,6 +40,10 @@ module.exports = {
     return db.query("insert into offers_created set ?", [data]);
   },
 
+  updateOfferById: async (data, offer_id) => {
+    return db.query("update offers_created set ? where id = ?", [data, offer_id]);
+  },
+
   getOffersByWhereClause: async (where, limit, offset) => {
     return db.query(`select id,
                               product_id,
@@ -95,6 +99,13 @@ module.exports = {
     return db.query("insert into offer_condition_mapping set ?", [data]);
   },
 
+  updateAttributOffers: async (data, offer_id) => {
+    return db.query("update IGNORE offer_proattr_mapping set ? where offer_id = ?", [data, offer_id]);
+  },
+
+  updateConditionOffers: async (data, offer_id) => {
+    return db.query("update IGNORE offer_condition_mapping set ? where offer_id = ?", [data, offer_id]);
+  },
 
   getCountDownByOfferId: async (offerId) => {
     return db.query(`select FLOOR(HOUR(TIMEDIFF(end_date,CURRENT_TIMESTAMP))/24) as remaining_days,

@@ -9,6 +9,7 @@ router.post('/uploadOfferImages', upload_files.fields([{ name: "main_image" }, {
 router.post('/getProductsAttrByProductID', productController.getProductsAttrByProductID);
 router.post('/getProductsAttrTypeByProductID', productController.getProductsAttrTypeByProductID);
 router.post('/createOffer', auth, productController.createOffer);
+router.post('/updateOffer', auth, productController.updateOffer);
 router.post('/getOffers', productController.getOffers);
 router.post('/getOffersCountDown', productController.getOffersCountDown);
 router.post('/createUserBids', productController.createUserBids);
