@@ -7,6 +7,7 @@ const {
   findProductById,
   insertOfferCreated,
   getOffersByWhereClause,
+  getOffersByCategoryWhereClause,
   getNoOfBids,
   getMainImage,
   insertAttributOffers,
@@ -1864,6 +1865,100 @@ exports.getProductBySearch = async (req, res) => {
       return res.json({
         success: false,
         message: "No Product Found",
+        status: 400,
+      });
+    }
+  } catch (err) {
+    return res.json({
+      success: false,
+      message: "Internal server error",
+      error: err,
+      status: 500,
+    });
+  }
+};
+
+exports.getOffersByCategoryId = async (req, res) => {
+  try {
+    const { category_id, page, page_size } = req.body;
+    const schema = Joi.alternatives(
+      Joi.object({
+        category_id: Joi.number().optional().allow("").allow(null),
+        page: Joi.number().required().empty(),
+        page_size: Joi.number().required().empty(),
+      })
+    );
+    const result = schema.validate(req.body);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      return res.json({
+        message: result.error.details[0].message,
+        error: message,
+        missingParams: result.error.details[0].message,
+        status: 200,
+        success: false,
+      });
+    }
+
+    var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
+
+    var whereClause = "";
+    if (
+      category_id.length > 0 &&
+      category_id !== null &&
+      category_id !== undefined
+    ) {
+      whereClause = `WHERE product.category_id IN (${category_id}) and offfer_buy_status != '1' and TIMESTAMP(end_date) >= '${currDate}'`; //updated code 26-07-2024
+    } else {
+      whereClause = ` where offfer_buy_status != '1' and TIMESTAMP(end_date) >= '${currDate}'`;
+    }
+
+    const offset = (parseInt(page) - 1) * parseInt(page_size);
+    var offers = await getOffersByCategoryWhereClause(whereClause, page_size, offset);
+
+    for (element of offers) {
+      var startDateTime = element.start_date.toString();
+      element.start_date = startDateTime;
+      var time = element.remaining_time;
+      var timeArray = time.split(":");
+      var hours = Number(timeArray[0]) % 24;
+      time = hours.toString() + ":" + timeArray[1] + ":" + timeArray[1];
+      element.remaining_time = time;
+      if (element.product_id != 0) {
+        const countR = await getNoOfBids(element.id);
+        //const maxBidR = await getMaxBidF(element.product_id);
+        if (countR.length > 0) {
+          element.count = countR[0].count;
+          element.max_bid = countR[0].max_bid;
+        }
+
+        const categoryRes = await getCategoryIdByProductId(element.product_id);
+        if (categoryRes.length > 0) {
+          var categoryId = categoryRes[0].category_id;
+          const categoryNameRes = await getCategorybyId(categoryId);
+          if (categoryNameRes.length > 0) {
+            element.category_name = categoryNameRes[0].cat_name;
+          }
+        }
+      }
+      if (element.images_id > 0) {
+        const imageR = await getMainImage(element.images_id);
+        if (imageR.length > 0) {
+          element.main_image_link = imageR[0].main_image;
+        }
+      }
+    }
+    if (offers.length > 0) {
+      return res.json({
+        success: true,
+        message: "Offer Sorted by time",
+        offers: offers,
+        status: 200,
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: "No Offers Found",
         status: 400,
       });
     }

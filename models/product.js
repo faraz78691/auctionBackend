@@ -56,7 +56,26 @@ module.exports = {
                               fixed_offer_price,duration,offfer_buy_status,
                               user_id
                               from offers_created ${where}
-                              ORDER BY  remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset};`);
+                              ORDER BY remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset};`);
+  },
+
+  getOffersByCategoryWhereClause: async (where, limit, offset) => {
+    return db.query(`select offers_created.id,
+      offers_created.product_id,
+      offers_created.title, 
+      offers_created.product_type,
+      offers_created.images_id,
+      offers_created.offerStart,
+      offers_created.is_bid_or_fixed,
+      offers_created.start_date,
+      offers_created.length_oftime,
+      FLOOR(HOUR(TIMEDIFF(offers_created.end_date,CURRENT_TIMESTAMP))/24) as remaining_days,
+      (TIMEDIFF(offers_created.end_date,CURRENT_TIMESTAMP)) as remaining_time,
+      offers_created.start_price, offers_created.increase_step, offers_created.buyto_price,
+      offers_created.fixed_offer_price,offers_created.duration,offers_created.offfer_buy_status,
+      offers_created.user_id
+      from offers_created LEFT JOIN product ON product.id = offers_created.product_id ${where}
+      ORDER BY remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset};`);
   },
 
   getNoOfBids: async (offer_id) => {
