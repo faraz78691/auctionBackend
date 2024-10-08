@@ -54,6 +54,7 @@ module.exports = {
                               is_bid_or_fixed,
                               start_date,
                               length_oftime,
+                              end_date,
                               FLOOR(HOUR(TIMEDIFF(end_date,CURRENT_TIMESTAMP))/24) as remaining_days,
                               (TIMEDIFF(end_date,CURRENT_TIMESTAMP)) as remaining_time,
                               start_price, increase_step, buyto_price,
@@ -303,8 +304,8 @@ module.exports = {
     return db.query(`SELECT offers_created.*, product.name AS product_name FROM offers_created LEFT JOIN product ON product.id = offers_created.product_id WHERE offfer_buy_status != '1' AND is_reactivable = 1 AND TIMESTAMP(end_date) <= '${currDate}' AND no_of_times_reactivated != 0`);
   },
 
-  updateOfferEndDate: async (offer_id, newEndDate, noOfReactivations) => {
-    return db.query('UPDATE offers_created SET end_date = ?, no_of_times_reactivated = ? WHERE id = ?', [newEndDate, noOfReactivations, offer_id]);
+  updateOfferEndDate: async (offer_id, offerStartDate, newEndDate, noOfReactivations) => {
+    return db.query('UPDATE offers_created SET end_date = ?, offerStart = ?, no_of_times_reactivated = ? WHERE id = ?', [newEndDate, offerStartDate, noOfReactivations, offer_id]);
   },
 
   getLatestOffer: async () => {

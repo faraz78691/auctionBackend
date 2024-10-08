@@ -393,7 +393,6 @@ exports.createOffer = async (req, res) => {
     if (findProduct.length > 0) {
       const itemsJson = JSON.parse(attributes);
       const condJson = JSON.parse(conditions);
-      const offerStart = new Date(offer_start);
       const startDate = new Date(start_date); //date -- YYYY-MM-DD
       const endDate = new Date(
         startDate.getFullYear(),
@@ -419,7 +418,7 @@ exports.createOffer = async (req, res) => {
         duration: duration,
         length_oftime: length_oftime,
         images_id: images_id,
-        offerStart: offerStart,
+        offerStart: offer_start,
         start_date: startDate,
         end_date: endDate,
         user_id: user_id,
@@ -478,7 +477,7 @@ exports.createOffer = async (req, res) => {
     }
   } catch (err) {
     console.log(err);
-    
+
     return res.json({
       success: false,
       message: "Internal server error",
@@ -690,11 +689,35 @@ exports.getOffers = async (req, res) => {
         startDate.getMilliseconds()
       );
 
+      const now = new Date(element.offerStart); // Get the initial date from `element.offerStart`
+      const offerStartDate = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + Number(element.length_oftime), // Add `length_oftime` days to the current date
+        now.getHours(),
+        now.getMinutes(),
+        now.getSeconds()
+      );
+
+      // Format the date to `YYYY-MM-DD HH:MM:SS`
+      const formattedDate =
+        offerStartDate.getFullYear() +
+        '-' +
+        String(offerStartDate.getMonth() + 1).padStart(2, '0') + // Month is 0-indexed
+        '-' +
+        String(offerStartDate.getDate()).padStart(2, '0') +
+        ' ' +
+        String(offerStartDate.getHours()).padStart(2, '0') +
+        ':' +
+        String(offerStartDate.getMinutes()).padStart(2, '0') +
+        ':' +
+        String(offerStartDate.getSeconds()).padStart(2, '0');
+
       // Update the number of times the offer has been reactivated, but ensure it doesn't go below zero
       element.no_of_times_reactivated = element.no_of_times_reactivated > 0 ? element.no_of_times_reactivated - 1 : 0;
 
       // Update the offer's end date and reactivation count in the database
-      await updateOfferEndDate(element.id, newEndDate, element.no_of_times_reactivated);
+      await updateOfferEndDate(element.id, formattedDate, newEndDate, element.no_of_times_reactivated);
     }
 
     var whereClause = "";
