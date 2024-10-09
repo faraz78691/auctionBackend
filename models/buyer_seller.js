@@ -76,9 +76,9 @@ module.exports = {
     );
   },
 
-  getMaxBidbyOfferID: async (offerId) => {
+  getMaxBidbyOfferID: async (offer_id) => {
     return db.query(
-      `SELECT max(bid) as price, user_id FROM user_bids WHERE offer_id = ${offerId} GROUP BY user_id`
+      `SELECT user_id, (SELECT SUM(count) FROM user_bids WHERE offer_id = ${offer_id}) AS count, MAX(bid) AS max_bid FROM user_bids WHERE offer_id = ${offer_id} GROUP BY user_id ORDER BY max_bid DESC LIMIT 1`
     );
   },
 
@@ -95,11 +95,6 @@ module.exports = {
     );
   },
 
-  getBidCountsByOfferID: async (offerId) => {
-    return db.query(
-      `SELECT count(*) as bid_count FROM user_bids WHERE offer_id = ${offerId}`
-    );
-  },
   getQuestionAnsForSeller: async (offerId, sellerID) => {
     return db.query(
       `SELECT 

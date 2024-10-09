@@ -1126,3 +1126,7 @@ exports.getUserRoleProfile = async (req, res) => {
     });
   }
 };
+
+exports.notification = async(req, res) => {
+
+};

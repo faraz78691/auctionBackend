@@ -16,7 +16,6 @@ const {
   getMaxBidbyOfferID,
   getSoldOffersBySeller,
   getOffersByBuyerID,
-  getBidCountsByOfferID,
   getBidDetailsByID,
   getOffersByOfferId,
   getOffersDetailsNotBoughtByOfferId,
@@ -548,9 +547,12 @@ exports.getOffersByBuyer = async (req, res) => {
     if (offersDetails.length > 0) {
       var finalOutput = [];
       for (el of offersDetails) {
-        var tempObj = { ...el };
+        const userObj = {}
+        var tempObj = { ...el, userObj };
         var offerId = el.offer_id;
         const OfferDetail = await getOffersByOfferId(offerId);
+        console.log(OfferDetail);
+
         if (OfferDetail.length > 0) {
           tempObj.title = OfferDetail[0]?.title;
           tempObj.end_date = OfferDetail[0]?.end_date;
@@ -566,18 +568,14 @@ exports.getOffersByBuyer = async (req, res) => {
         var bidRes = await getMaxBidbyOfferID(offerId);
 
         if (bidRes.length > 0) {
-          tempObj.max_bid = bidRes[0]?.price;
-          buyer_id = bidRes[0]?.user_id;
+          userObj.max_bid = bidRes[0]?.max_bid;
+          userObj.bid_count = bidRes[0]?.count;
+          userObj.user_id = bidRes[0]?.user_id;
         }
 
         var bidDetail = await getBidDetailsByID(offerId, user_id);
         if (bidDetail.length > 0) {
           tempObj.user_bid = bidDetail[0]?.bid;
-        }
-
-        var bidCount = await getBidCountsByOfferID(offerId);
-        if (bidCount.length > 0) {
-          tempObj.bid_count = bidCount[0]?.bid_count;
         }
 
         if (OfferDetail.length > 0) {
@@ -604,7 +602,6 @@ exports.getOffersByBuyer = async (req, res) => {
         if (buyerNameArr.length > 0) {
           tempObj.buyer_name = buyerNameArr[0]?.name;
         }
-
         finalOutput.push(tempObj);
       }
 
@@ -612,7 +609,7 @@ exports.getOffersByBuyer = async (req, res) => {
         success: true,
         message: "Offer bought by Seller",
         status: 200,
-        selling: finalOutput,
+        selling: finalOutput
       });
     } else {
       return res.json({

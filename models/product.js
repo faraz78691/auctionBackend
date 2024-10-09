@@ -87,7 +87,7 @@ module.exports = {
 
   getNoOfBids: async (offer_id) => {
     // removing product_id no need of this
-    return db.query("select count(*) as count, max(bid) as max_bid from user_bids where offer_id =?", [offer_id]);
+    return db.query(`SELECT user_id, (SELECT SUM(count) FROM user_bids WHERE offer_id = ${offer_id}) AS count, MAX(bid) AS max_bid FROM user_bids WHERE offer_id = ${offer_id} GROUP BY user_id ORDER BY max_bid DESC LIMIT 1`);
   },
 
   getMainImage: async (id) => {
