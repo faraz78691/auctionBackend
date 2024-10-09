@@ -25,6 +25,7 @@ const {
   getProductDetailsByID,
   getOfferDetailsByID,
   getOfferAttributesDetailsByID,
+  getMaxBidbyOfferID,
   getOfferImages,
   getProductTypeAttribute,
   getProductAttributeTypeMappingByIDP,
@@ -958,48 +959,6 @@ exports.getOffer = async (req, res) => {
       const productDetails = await getProductDetailsByID(productId);
       var categoryId = productDetails[0].category_id;
       const categoryDetails = await getCategorybyId(categoryId);
-
-
-      // var attributeDetails = await getOfferAttributesDetailsByID(offerId);
-
-      // // adding code for getting offer conditions;
-      // var conditions = await getOfferConditionsByID(offerId);
-      // var attributes = [];
-      // for (elem of attributeDetails) {
-      //   const attributesValues = await getProductAttributeTypeMappingByIDP(
-      //     productId,
-      //     elem.attribute_id
-      //   );
-      //   if (attributesValues.length > 0) {
-      //     var attributeId = attributesValues[0].attribute_id;
-      //     var attributeName = attributesValues[0].attribute_value_name;
-
-      //     var subAttributesHeading = attributesValues[0].sub_attribute_heading;
-      //     const tempDetails = await getProductTypeAttribute(
-      //       productId,
-      //       attributeId
-      //     );
-
-      //     var subAttributeId = elem.subattribute_id;
-      //     var subAttributeName = "";
-      //     if (subAttributeId > 0) {
-      //       const result = await getSubAttributesByIID(subAttributeId);
-      //       if (result.length > 0) {
-      //         subAttributeName = result[0].value;
-      //       }
-      //     }
-      //     const tempObj = {
-      //       ...elem,
-      //       ...tempDetails[0],
-      //       attributeName,
-      //       subAttributesHeading,
-      //       subAttributeName,
-      //     };
-
-      //     attributes.push(tempObj);
-      //   }
-      // }      
-
       const attributeDetails = await getOfferAttributesDetailsByID(offerId);
 
       // Get offer conditions if needed (you can remove this if not used later).
@@ -1045,7 +1004,7 @@ exports.getOffer = async (req, res) => {
 
       // Filter out any null values that were returned
       const filteredAttributes = attributes.filter(attribute => attribute !== null);
-
+      const bidRes = await getMaxBidbyOfferID(offerId);
       const offerImages = await getOfferImages(offerRes[0].images_id);
       const sellerDetails = await getSellerDetails(offerRes[0].user_id);
       return res.json({
@@ -1058,11 +1017,11 @@ exports.getOffer = async (req, res) => {
         offerImages: offerImages,
         conditions: conditions,
         seller: sellerDetails,
+        max_bid: bidRes.length > 0 ? bidRes[0]?.price : 0,
         status: 200,
       });
     }
   } catch (err) {
-    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",

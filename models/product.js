@@ -150,6 +150,13 @@ module.exports = {
   getOfferAttributesDetailsByID: async (offer_id) => {
     return db.query("select * from offer_proattr_mapping where offer_id=?", [offer_id]);
   },
+
+  getMaxBidbyOfferID: async (offer_id) => {
+    return db.query(
+      `SELECT max(bid) as price, user_id FROM user_bids WHERE offer_id = ${offer_id} GROUP BY user_id`
+    );
+  },
+
   getOfferConditionsByID: async (offer_id) => {
     return db.query("select * from offer_condition_mapping where offer_id=?", [offer_id]);
   },
