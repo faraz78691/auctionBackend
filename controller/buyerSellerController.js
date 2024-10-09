@@ -32,7 +32,7 @@ const {
 } = require("../models/product");
 
 const {
-  getData,insertData, updateData
+  getData, insertData, updateData
 } = require("../models/common");
 
 const { getUserNamebyId } = require("../models/users");
@@ -380,7 +380,7 @@ exports.getSellingSectionForSeller = async (req, res) => {
     }
 
     const offersDetails = await getOffersBySeller(user_id);
-  
+
     if (offersDetails.length > 0) {
       var finalOutput = [];
       for (el of offersDetails) {
@@ -407,7 +407,7 @@ exports.getSellingSectionForSeller = async (req, res) => {
         if (bidRes.length > 0) {
           var newEndDate = moment(endDate).tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
           var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
-         
+
 
           if (currDate > newEndDate) {
             tempObj.status = "Not Sold";
@@ -467,8 +467,8 @@ exports.getSoldSectionForSeller = async (req, res) => {
     }
 
     const offersDetails = await getSoldOffersBySeller(user_id);
-    console.log("offersDetails",moment(offersDetails[0].created_at).format('YYYY-MM-DD HH:mm:ss'));
-    
+    console.log("offersDetails", moment(offersDetails[0].created_at).format('YYYY-MM-DD HH:mm:ss'));
+
     if (offersDetails.length > 0) {
       var finalOutput = [];
       for (el of offersDetails) {
@@ -551,7 +551,6 @@ exports.getOffersByBuyer = async (req, res) => {
         var tempObj = { ...el };
         var offerId = el.offer_id;
         const OfferDetail = await getOffersByOfferId(offerId);
-       
         if (OfferDetail.length > 0) {
           tempObj.title = OfferDetail[0]?.title;
           tempObj.end_date = OfferDetail[0]?.end_date;
@@ -565,7 +564,7 @@ exports.getOffersByBuyer = async (req, res) => {
         }
 
         var bidRes = await getMaxBidbyOfferID(offerId);
-       
+
         if (bidRes.length > 0) {
           tempObj.max_bid = bidRes[0]?.price;
           buyer_id = bidRes[0]?.user_id;
@@ -581,22 +580,24 @@ exports.getOffersByBuyer = async (req, res) => {
           tempObj.bid_count = bidCount[0]?.bid_count;
         }
 
-        var endDate = OfferDetail[0]?.end_date;
-        // code changing to set status if user bid in offer and it get bought so changed to Finished
-        if (OfferDetail[0].offfer_buy_status == 0) {
-          if (bidRes.length > 0) {
-            var newEndDate = moment(endDate).format("YYYY-MM-DD");
-            var currDate = moment().format("YYYY-MM-DD");
-           
+        if (OfferDetail.length > 0) {
+          var endDate = OfferDetail[0]?.end_date;
+          // code changing to set status if user bid in offer and it get bought so changed to Finished
+          if (OfferDetail[0].offfer_buy_status == 0) {
+            if (bidRes.length > 0) {
+              var newEndDate = moment(endDate).format("YYYY-MM-DD");
+              var currDate = moment().format("YYYY-MM-DD");
 
-            if (currDate > newEndDate) {
-              tempObj.status = "Not Sold";
-            } else {
-              tempObj.status = "Open";
+
+              if (currDate > newEndDate) {
+                tempObj.status = "Not Sold";
+              } else {
+                tempObj.status = "Open";
+              }
             }
+          } else {
+            tempObj.status = "Finished";
           }
-        } else {
-          tempObj.status = "Finished";
         }
 
         var buyerNameArr = await getUserNamebyId(user_id);
@@ -649,13 +650,13 @@ exports.getQuestionAnswerForSeller = async (req, res) => {
       });
     }
 
-    const questionAnswer = await getQuestionAnsForSeller(offerId,user_id);
+    const questionAnswer = await getQuestionAnsForSeller(offerId, user_id);
 
     if (questionAnswer.length > 0) {
       return res.json({
         success: true,
         message: "Found",
-        data:questionAnswer,
+        data: questionAnswer,
         status: 200,
       });
     } else {
@@ -678,7 +679,7 @@ exports.getQuestionAnswerForSeller = async (req, res) => {
 
 exports.getQuestionAnswerForBuyer = async (req, res) => {
   try {
-    const {offer_id,sellerId } = req.body;
+    const { offer_id, sellerId } = req.body;
     const authHeader = req.headers.authorization;
     const token = authHeader.replace("Bearer ", "");
     const decoded = jwt.decode(token);
@@ -699,12 +700,12 @@ exports.getQuestionAnswerForBuyer = async (req, res) => {
       })
     );
 
-    const questionAnswer = await getQuestionAnsForBuyer(offer_id,sellerId,user_id);
+    const questionAnswer = await getQuestionAnsForBuyer(offer_id, sellerId, user_id);
 
     if (questionAnswer.length > 0) {
       return res.json({
         success: true,
-        data:questionAnswer,
+        data: questionAnswer,
         message: "No Data Found",
         status: 400,
       });
@@ -728,7 +729,7 @@ exports.getQuestionAnswerForBuyer = async (req, res) => {
 
 exports.uploadBuyerQuestion = async (req, res) => {
   try {
-    const { offer_id,sellerId, question } = req.body;
+    const { offer_id, sellerId, question } = req.body;
     const authHeader = req.headers.authorization;
     const token = authHeader.replace("Bearer ", "");
     const decoded = jwt.decode(token);
@@ -766,9 +767,9 @@ exports.uploadBuyerQuestion = async (req, res) => {
       seller_id: sellerId,
       buyer_id: user_id,
       question: question
-  };
+    };
 
-    const updateResult = await insertData('question_answer','', userData);
+    const updateResult = await insertData('question_answer', '', userData);
     if (updateResult.affectedRows > 0) {
       return res.json({
         success: true,
@@ -789,7 +790,7 @@ exports.uploadBuyerQuestion = async (req, res) => {
 
 exports.uploadSellerAnswer = async (req, res) => {
   try {
-    const {id,offer_id,answer } = req.body;
+    const { id, offer_id, answer } = req.body;
     const authHeader = req.headers.authorization;
     const token = authHeader.replace("Bearer ", "");
     const decoded = jwt.decode(token);
@@ -824,9 +825,9 @@ exports.uploadSellerAnswer = async (req, res) => {
 
     const userData = {
       answer: answer
-  };
+    };
 
-    const updateResult = await updateData('question_answer',`where id =${id} and offer_id =${offer_id}`, userData);
+    const updateResult = await updateData('question_answer', `where id =${id} and offer_id =${offer_id}`, userData);
     if (updateResult.affectedRows > 0) {
       return res.json({
         success: true,

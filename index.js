@@ -1,27 +1,56 @@
 const express = require("express");
+const http = require('http');
+const { Server } = require('socket.io');
 const cors = require('cors');
+const app = express();
+
+// Setup HTTP server
+const server = http.createServer(app);
+
+// Configure Socket.IO and CORS options
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Replace '*' with your client URL if necessary
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+// Set up a connection event listener for incoming sockets
+io.on('connection', (socket) => {
+  console.log('A user connected');
+
+  // Listen for 'chat message' events from the client
+  socket.on('newBid', (data) => {
+    console.log(data)
+
+    // Broadcast the message to all connected clients
+    io.emit('updateBid', data);
+  });
+
+  // Handle user disconnection
+  socket.on('disconnect', () => {
+    console.log('A user disconnected');
+  });
+});
+
 const user = require('./routes/users');
-const buyer_seller = require('./routes/buyer_seller')
-
-const { updateOfferExpired } = require('./helper/offerControl')
-
+const buyer_seller = require('./routes/buyer_seller');
 const admin = require('./routes/admin');
 const product = require('./routes/product');
 const moovPayment = require('./routes/moov_paymentgetway');
-const app = express();
-var fs = require("fs");
+const { updateOfferExpired } = require('./helper/offerControl')
 
 app.use(cors());
 global.__basedir = __dirname;
 
 app.use(express.urlencoded({ limit: '50mb', extended: true, parameterLimit: 1000000 }))
 
-// app.use(express.static(__dirname + '/public'));
-app.use(express.static("public"))
-
 app.use(express.json());
+app.use(express.static("public"))
 app.use(express.urlencoded({ extended: true }));
 
+// Register routes
 app.use('/admin', admin);
 app.use('/product', product);
 app.use('/moov', moovPayment);
@@ -42,7 +71,7 @@ app.get('/', (req, res) => {
 
 setInterval(updateOfferExpired, 600000);
 
-app.listen(5000, function () {
+server.listen(5000, function () {
   console.log('Node app is running on port 5000');
 });
 
