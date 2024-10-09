@@ -78,7 +78,7 @@ module.exports = {
 
   getMaxBidbyOfferID: async (offerId) => {
     return db.query(
-      `SELECT max(bid) as price, user_id FROM user_bids WHERE offer_id = ${offerId}`
+      `SELECT max(bid) as price, user_id FROM user_bids WHERE offer_id = ${offerId} GROUP BY user_id`
     );
   },
 
