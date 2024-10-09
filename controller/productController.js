@@ -1017,7 +1017,11 @@ exports.getOffer = async (req, res) => {
         offerImages: offerImages,
         conditions: conditions,
         seller: sellerDetails,
-        max_bid: bidRes.length > 0 ? bidRes[0]?.price : 0,
+        user_bid: {
+          user_id: (bidRes.length > 0 && bidRes[0]?.user_id != null) ? bidRes[0]?.user_id : 0,
+          max_bid: (bidRes.length > 0 && bidRes[0]?.max_bid != null) ? bidRes[0]?.max_bid : 0,
+          count: (bidRes.length > 0 && bidRes[0]?.count != null) ? bidRes[0]?.count : 0
+        },
         status: 200,
       });
     }
@@ -2137,13 +2141,13 @@ exports.createNewBid = async (data) => {
 
     const bidRows = await selectBidbyUser(offer_id, product_id, user_id);
     if (bidRows.length > 0) {
-      var lastBid = bidRows[0].bid;
+      const count = bidRows[0].count + 1
       const updatedRows = await updateBidsByUser(
         offer_id,
         user_id,
         product_id,
         bid,
-        lastBid
+        count
       );
       if (updatedRows.affectedRows > 0) {
         console.log("Bid Created =>", updatedRows.affectedRows);

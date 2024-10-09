@@ -121,11 +121,11 @@ module.exports = {
   },
 
   selectBidbyUser: async (offerId, product_id, user_id) => {
-    return db.query(`select bid from user_bids where  offer_id = ? and product_id =? and user_id =?`, [offerId, product_id, user_id]);
+    return db.query(`select bid, count from user_bids where offer_id = ? and product_id =? and user_id =?`, [offerId, product_id, user_id]);
   },
 
-  updateBidsByUser: async (offer_id, user_id, product_id, bid, lastBid) => {
-    return db.query("update user_bids set last_bid =?, bid=? where offer_id = ? and product_id =? and user_id =?", [lastBid, bid, offer_id, product_id, user_id]);
+  updateBidsByUser: async (offer_id, user_id, product_id, bid, count) => {
+    return db.query("update user_bids set count =?, bid=? where offer_id = ? and product_id =? and user_id =?", [count, bid, offer_id, product_id, user_id]);
   },
 
   insertBidByUser: async (data) => {
@@ -153,7 +153,7 @@ module.exports = {
 
   getMaxBidbyOfferID: async (offer_id) => {
     return db.query(
-      `SELECT max(bid) as price, user_id FROM user_bids WHERE offer_id = ${offer_id} GROUP BY user_id`
+      `SELECT SUM(count) AS count, MAX(bid) AS max_bid, user_id FROM user_bids WHERE offer_id = ${offer_id}`
     );
   },
 
