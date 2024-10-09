@@ -18,9 +18,9 @@ const util = require('util');
 };*/
 
 var db_config = {
-    host: 'localhost',
-    user: 'root',
-    password: '',
+    host: '98.80.36.64',
+    user: 'auction',
+    password: 'OlTheZ6a63T',
     port:3306,
     database: 'auction'
 };
