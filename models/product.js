@@ -1,6 +1,7 @@
 const db = require("../utils/database");
 var moment = require('moment-timezone');
 var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+
 module.exports = {
   getProductDetails: async () => {
     return db.query("select * from product");
@@ -74,6 +75,7 @@ module.exports = {
       offers_created.is_bid_or_fixed,
       offers_created.start_date,
       offers_created.length_oftime,
+      offers_created.end_date,
       FLOOR(HOUR(TIMEDIFF(offers_created.end_date,CURRENT_TIMESTAMP))/24) as remaining_days,
       (TIMEDIFF(offers_created.end_date,CURRENT_TIMESTAMP)) as remaining_time,
       offers_created.start_price, offers_created.increase_step, offers_created.buyto_price,
