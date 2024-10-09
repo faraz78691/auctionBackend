@@ -120,8 +120,8 @@ module.exports = {
     return db.query(`select buyto_price from offers_created where id = ?`, [offerId]);
   },
 
-  selectBidbyUser: async (offerId, product_id, user_id) => {
-    return db.query(`select bid, count from user_bids where offer_id = ? and product_id =? and user_id =?`, [offerId, product_id, user_id]);
+  selectBidbyUser: async (offerId, user_id) => {
+    return db.query(`select bid, count from user_bids where offer_id = ? and user_id =?`, [offerId, user_id]);
   },
 
   updateBidsByUser: async (offer_id, user_id, product_id, bid, count) => {

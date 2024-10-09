@@ -2144,7 +2144,7 @@ exports.createNewBid = async (data) => {
       buyToPrice = offerRes[0].buyto_price;
     }
 
-    const bidRows = await selectBidbyUser(offer_id, product_id, user_id);
+    const bidRows = await selectBidbyUser(offer_id, user_id);
     if (bidRows.length > 0) {
       const count = bidRows[0].count + 1
       const updatedRows = await updateBidsByUser(
