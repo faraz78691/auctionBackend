@@ -7,32 +7,9 @@ const app = express();
 // Setup HTTP server
 const server = http.createServer(app);
 
-// Configure Socket.IO and CORS options
-const io = new Server(server, {
-  cors: {
-    origin: "*", // Replace '*' with your client URL if necessary
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-});
-
-// Set up a connection event listener for incoming sockets
-io.on('connection', (socket) => {
-  console.log('A user connected');
-
-  // Listen for 'chat message' events from the client
-  socket.on('newBid', (data) => {
-    console.log(data)
-
-    // Broadcast the message to all connected clients
-    io.emit('updateBid', data);
-  });
-
-  // Handle user disconnection
-  socket.on('disconnect', () => {
-    console.log('A user disconnected');
-  });
-});
+// Import the Socket.IO configuration from the socket.js file
+const initializeSocket = require("./middleware/socket");
+const io = initializeSocket(server); // Initialize Socket.IO with the server
 
 const user = require('./routes/users');
 const buyer_seller = require('./routes/buyer_seller');

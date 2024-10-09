@@ -2153,3 +2153,60 @@ exports.getOffersByCategoryId = async (req, res) => {
     });
   }
 };
+
+exports.createNewBid = async (data) => {
+  try {
+    const { bid, product_id, offer_id, user_id } = data;
+    const schema = Joi.alternatives(
+      Joi.object({
+        product_id: Joi.number().required().empty(),
+        bid: Joi.number().required().empty(),
+        offer_id: Joi.number().required().empty(),
+      })
+    );
+    const result = schema.validate(data);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      console.log("error =>", message);
+    }
+
+    var buyToPrice = 0;
+    const offerRes = await getOfferRecord(offer_id);
+    if (offerRes.length > 0) {
+      buyToPrice = offerRes[0].buyto_price;
+    }
+
+    const bidRows = await selectBidbyUser(offer_id, product_id, user_id);
+    if (bidRows.length > 0) {
+      var lastBid = bidRows[0].bid;
+      const updatedRows = await updateBidsByUser(
+        offer_id,
+        user_id,
+        product_id,
+        bid,
+        lastBid
+      );
+      if (updatedRows.affectedRows > 0) {
+        console.log("Bid Created =>", updatedRows.affectedRows);
+      } else {
+        console.log("No Data Found");
+      }
+    } else {
+      const bid_created = {
+        product_id: product_id,
+        bid: bid,
+        max_price: buyToPrice,
+        offer_id: offer_id,
+        user_id: user_id,
+      };
+      const resultInserted = await insertBidByUser(bid_created);
+      if (resultInserted.affectedRows > 0) {
+        console.log("Bid Created =>", resultInserted.insertId);
+      } else {
+        console.log("No Data Found");
+      }
+    }
+  } catch (err) {
+    console.log("Internal Seerver Error =>", err);
+  }
+};
