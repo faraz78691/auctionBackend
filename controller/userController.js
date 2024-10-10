@@ -30,6 +30,8 @@ const path = require("path");
 const hbs = require("nodemailer-express-handlebars");
 var base64url = require('base64url');
 var crypto = require('crypto');
+var admin = require("firebase-admin");
+const serviceAccount = require('../config/firebase_serviceacoount.json');
 require('dotenv').config();
 
 function randomStringAsBase64Url(size) {
@@ -42,17 +44,6 @@ function betweenRandomNumber(min, max) {
 
 const saltRounds = 10;
 const base_url = "localhost:4000";
-
-/*var transporter = nodemailer.createTransport({
-  service: "gmail",
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: true,
-  auth: {
-    user: "aarif.ctinfotech@gmail.com",
-    pass: "iwshkavsfxhirrdk",
-  },
-});*/
 
 var transporter = nodemailer.createTransport({
   // service: 'gmail',
@@ -1127,6 +1118,40 @@ exports.getUserRoleProfile = async (req, res) => {
   }
 };
 
-exports.notification = async(req, res) => {
+exports.notification = async (req, res) => {
+  try {
+    const { fcm_token, postId, body } = req.body;
+    if (!fcm_token) {
+      return res.status(400).send({ success: false, message: "FCM token is required" });
+    }
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
 
+    var message = { //this may vary according to the message type (single recipient, multicast, topic, et cetera)
+      token: fcm_token,
+      notification: {
+        title: 'Feed Notification',
+        body: `${body}`,
+      },
+      data: {  //you can send only notification or only data(or include both)
+        postId: String(postId),
+        type: "post"
+      },
+    };
+
+    try {
+      const response = await admin.messaging().send(message);
+      console.log('Successfully sent message:', response);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: err.message,
+      status: 500,
+    });
+  }
 };

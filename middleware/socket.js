@@ -3,7 +3,6 @@ const { createNewBid, getBitCountByOfferId } = require("../controller/productCon
 // socket.js
 module.exports = function (server) {
     const { Server } = require("socket.io");
-
     // Create a new instance of socket.io by passing in the server
     const io = new Server(server, {
         cors: {
