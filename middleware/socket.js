@@ -1,4 +1,4 @@
-const { createNewBid } = require("../controller/productController");
+const { createNewBid, getBitCountByOfferId } = require("../controller/productController");
 
 // socket.js
 module.exports = function (server) {
@@ -16,19 +16,22 @@ module.exports = function (server) {
     // Set up a connection event listener for incoming sockets
     io.on("connection", (socket) => {
         console.log("A user connected");
-
         // Listen for 'newBid' events from the client
         socket.on("newBid", (data) => {
-            createNewBid(data);
-            // Broadcast the message to all connected clients
-            io.emit("updateBid", data);
+            createNewBid(data)
+                .then(() => getBitCountByOfferId(data))
+                .then((count) => {
+                    const bidCount = count[0].bidCount
+                    io.emit("updateBid", { ...data, bidCount });
+                })
+                .catch((error) => {
+                    console.error("Error handling new bid:", error);
+                });
         });
-
         // Handle user disconnection
         socket.on("disconnect", () => {
             console.log("A user disconnected");
         });
     });
-
     return io; // Return the io instance for use in other files if needed
 };

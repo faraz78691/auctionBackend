@@ -124,8 +124,8 @@ module.exports = {
     return db.query(`select bid, count from user_bids where offer_id = ? and user_id =?`, [offerId, user_id]);
   },
 
-  updateBidsByUser: async (offer_id, user_id, product_id, bid, count) => {
-    return db.query("update user_bids set count =?, bid=? where offer_id = ? and product_id =? and user_id =?", [count, bid, offer_id, product_id, user_id]);
+  updateBidsByUser: async (offer_id, user_id, bid, count) => {
+    return db.query("update user_bids set count =?, bid=? where offer_id = ? and user_id =?", [count, bid, offer_id, user_id]);
   },
 
   insertBidByUser: async (data) => {
@@ -319,6 +319,10 @@ module.exports = {
 
   getLatestOffer: async () => {
     return db.query(`SELECT offers_created.*, product.name AS product_name FROM offers_created LEFT JOIN product ON product.id = offers_created.product_id WHERE offfer_buy_status != 1 AND is_reactivable = 1`);
+  },
+
+  findBidCountUserId: async (offer_id) => {
+    return db.query(`SELECT SUM(count) as bidCount FROM user_bids WHERE offer_id = ${offer_id}`);
   }
 
 }                       

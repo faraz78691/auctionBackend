@@ -368,7 +368,6 @@ exports.getSellingSectionForSeller = async (req, res) => {
     const token = authHeader.replace("Bearer ", "");
     const decoded = jwt.decode(token);
     const user_id = decoded["user_id"];
-
     if (user_id === null || user_id === undefined || user_id === "") {
       return res.json({
         success: false,
@@ -379,7 +378,6 @@ exports.getSellingSectionForSeller = async (req, res) => {
     }
 
     const offersDetails = await getOffersBySeller(user_id);
-
     if (offersDetails.length > 0) {
       var finalOutput = [];
       for (el of offersDetails) {
@@ -392,12 +390,15 @@ exports.getSellingSectionForSeller = async (req, res) => {
         }
         var bidRes = await getMaxBidbyOfferID(offerId);
         if (bidRes.length > 0) {
+          tempObj.max_bid = bidRes[0]?.max_bid;
           tempObj.price = bidRes[0]?.price;
           buyer_id = bidRes[0]?.user_id;
         } else if (el?.is_bid_or_fixed === 1) {
+          tempObj.max_bid = 0;
           tempObj.price = el.buyto_price;
           tempObj.start_price = el.start_price;
         } else {
+          tempObj.max_bid = 0;
           tempObj.price = el.fixed_offer_price;
         }
         tempObj.name = el.title;

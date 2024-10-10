@@ -54,7 +54,8 @@ const {
   getSearchByProduct,
   getOffers,
   updateOfferEndDate,
-  getLatestOffer
+  getLatestOffer,
+  findBidCountUserId
 } = require("../models/product");
 
 const Joi = require("joi");
@@ -2124,12 +2125,12 @@ exports.getOffersByCategoryId = async (req, res) => {
 
 exports.createNewBid = async (data) => {
   try {
-    const { bid, product_id, offer_id, user_id } = data;
+    const { bid, offer_id, user_id } = data;
     const schema = Joi.alternatives(
       Joi.object({
-        product_id: Joi.number().required().empty(),
         bid: Joi.number().required().empty(),
         offer_id: Joi.number().required().empty(),
+        user_id: Joi.number().required().empty()
       })
     );
     const result = schema.validate(data);
@@ -2138,19 +2139,12 @@ exports.createNewBid = async (data) => {
       console.log("error =>", message);
     }
 
-    var buyToPrice = 0;
-    const offerRes = await getOfferRecord(offer_id);
-    if (offerRes.length > 0) {
-      buyToPrice = offerRes[0].buyto_price;
-    }
-
     const bidRows = await selectBidbyUser(offer_id, user_id);
     if (bidRows.length > 0) {
       const count = bidRows[0].count + 1
       const updatedRows = await updateBidsByUser(
         offer_id,
         user_id,
-        product_id,
         bid,
         count
       );
@@ -2161,7 +2155,6 @@ exports.createNewBid = async (data) => {
       }
     } else {
       const bid_created = {
-        product_id: product_id,
         bid: bid,
         offer_id: offer_id,
         user_id: user_id,
@@ -2175,5 +2168,21 @@ exports.createNewBid = async (data) => {
     }
   } catch (err) {
     console.log("Internal Seerver Error =>", err);
+  }
+};
+
+exports.getBitCountByOfferId = async (data) => {
+  try {
+    const { offer_id } = data;
+    const bidCount = await findBidCountUserId(offer_id);
+    if (bidCount.length > 0) {
+      console.log("Successfully Get Bid Count =>", bidCount);
+    } else {
+      console.log("Successfully Not Get Bid Count");
+    }
+    return bidCount; // Return the bid count
+  } catch (err) {
+    console.log("Internal Seerver Error =>", err);
+    return null;
   }
 };
