@@ -25,5 +25,6 @@ router.get('/getCategories', productController.getCategories);
 router.post('/getOfferAdvancedFilter', productController.getOfferAdvancedFilter);
 router.post('/getProductBySearch', productController.getProductBySearch);
 router.post('/getOffersByCategoryId', productController.getOffersByCategoryId);
+router.get('/getOffersByProductId', auth, productController.getOffersByProductId);
 
 module.exports = router;

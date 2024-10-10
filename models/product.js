@@ -270,23 +270,42 @@ module.exports = {
     return db.query("SELECT * FROM offers_created WHERE offfer_buy_status != 1 AND id IN (?)", [ids]);
   },
 
-  getOffersByIDsWhereClause: async (ids, limit, offset) => {
-    return db.query(`select id,
-                              product_id,
-                              title, 
-                              product_type,
-                              images_id,
-                              offerStart,
-                              is_bid_or_fixed,
-                              start_date,
-                              length_oftime,
-                              FLOOR(HOUR(TIMEDIFF(end_date,CURRENT_TIMESTAMP))/24) as remaining_days,
-                              (TIMEDIFF(end_date,CURRENT_TIMESTAMP)) as remaining_time,
-                              start_price, increase_step, buyto_price,
-                              fixed_offer_price,duration,offfer_buy_status,
-                              user_id
-                              from offers_created WHERE offfer_buy_status != 1 AND id IN (?)
-                              ORDER BY  remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset}`, [ids]);
+  getOffersByIDsWhereClause: async (ids, price, limit, offset) => {    
+    if (price == []) {
+      return db.query(`select id,
+        product_id,
+        title, 
+        product_type,
+        images_id,
+        offerStart,
+        is_bid_or_fixed,
+        start_date,
+        length_oftime,
+        FLOOR(HOUR(TIMEDIFF(end_date,CURRENT_TIMESTAMP))/24) as remaining_days,
+        (TIMEDIFF(end_date,CURRENT_TIMESTAMP)) as remaining_time,
+        start_price, increase_step, buyto_price,
+        fixed_offer_price,duration,offfer_buy_status,
+        user_id
+        from offers_created WHERE offfer_buy_status != 1 AND id IN (?)
+        ORDER BY  remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset}`, [ids]);
+    } else {
+      return db.query(`select id,
+        product_id,
+        title, 
+        product_type,
+        images_id,
+        offerStart,
+        is_bid_or_fixed,
+        start_date,
+        length_oftime,
+        FLOOR(HOUR(TIMEDIFF(end_date,CURRENT_TIMESTAMP))/24) as remaining_days,
+        (TIMEDIFF(end_date,CURRENT_TIMESTAMP)) as remaining_time,
+        start_price, increase_step, buyto_price,
+        fixed_offer_price,duration,offfer_buy_status,
+        user_id
+        from offers_created WHERE offfer_buy_status != 1 AND id IN (?) AND start_price BETWEEN ${price[0].start_price} AND ${price[1].end_price}
+        ORDER BY  remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset}`, [ids]);
+    }
   },
 
 

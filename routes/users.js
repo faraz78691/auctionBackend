@@ -14,6 +14,6 @@ router.get('/getUserRoleDetails', userController.getUserRoleDetails);
 router.post('/insertUserProfileC', userController.insertUserProfileC);
 router.post('/updateUserProfileC', userController.updateUserProfileC);
 router.get('/getUserRoleProfile', userController.getUserRoleProfile);
-router.post('/notification', userController.notification);
+router.get('/notification', userController.notification);
 
 module.exports = router;

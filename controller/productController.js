@@ -55,7 +55,7 @@ const {
   getOffers,
   updateOfferEndDate,
   getLatestOffer,
-  findBidCountUserId
+  findBidCountUserId,
 } = require("../models/product");
 
 const Joi = require("joi");
@@ -786,8 +786,6 @@ exports.getOffers = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err);
-
     return res.json({
       success: false,
       message: "Internal server error",
@@ -1803,19 +1801,19 @@ exports.getOffersAdvancedFilter = async (req, res) => {
 //   }
 // };
 
+
 exports.getOfferAdvancedFilter = async (req, res) => {
   try {
-    const { condition, auctionType, attributes, product_id, page, page_size } =
-      req.body;
-
+    const { condition, auctionType, attributes, product_id, price, page, page_size } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
+        condition: Joi.string().optional().allow("").allow(null),
+        attributes: Joi.string().optional().allow("").allow(null),
+        auctionType: Joi.string().optional().allow("").allow(null),
         product_id: Joi.number().optional().allow("").allow(null),
+        price: Joi.string().optional().allow("").allow(null),
         page: Joi.number().required().empty(),
         page_size: Joi.number().required().empty(),
-        attributes: Joi.string().optional().allow("").allow(null),
-        condition: Joi.string().optional().allow("").allow(null),
-        auctionType: Joi.string().optional().allow("").allow(null),
       })
     );
     const result = schema.validate(req.body);
@@ -1830,9 +1828,6 @@ exports.getOfferAdvancedFilter = async (req, res) => {
       });
     }
 
-
-    // Parse attributes, condition, and auctionType if they're JSON strings;
-
     // Function to safely parse JSON strings
     const safeParseJSON = (str, fallback) => {
       try {
@@ -1842,10 +1837,12 @@ exports.getOfferAdvancedFilter = async (req, res) => {
       }
     };
 
+    // const attributesArray = JSON.parse(attributes);
     // Parse attributes, condition, and auctionType safely
     const parsedAttributes = safeParseJSON(attributes, []);
     const parsedCondition = safeParseJSON(condition, []);
     const parsedAuctionType = safeParseJSON(auctionType, []);
+    const parsePrice = safeParseJSON(price, []);
 
     // Function to get offer IDs for attributes
     const getOfferIdsForAttributes = async (product_id, attributes) => {
@@ -1862,7 +1859,6 @@ exports.getOfferAdvancedFilter = async (req, res) => {
       return allOfferIds.reduce((acc, curr) => acc.filter(id => curr.includes(id)), allOfferIds[0] || []);
     };
 
-
     // Function to get offer IDs for a given filter type
     const getOfferIds = async (product_id, ids, queryFunc) => {
       if (!ids || ids.length === 0) return [];
@@ -1873,7 +1869,6 @@ exports.getOfferAdvancedFilter = async (req, res) => {
         return result.map(row => row.offer_id);
       }
     };
-
 
     // Get offer IDs for attributes if attributes are provided
     const attributeOfferIds = parsedAttributes.length > 0
@@ -1924,6 +1919,7 @@ exports.getOfferAdvancedFilter = async (req, res) => {
     const offset = (parseInt(page) - 1) * parseInt(page_size);
     var offers = await getOffersByIDsWhereClause(
       commonOfferIds,
+      parsePrice,
       page_size,
       offset
     );
@@ -2184,5 +2180,108 @@ exports.getBitCountByOfferId = async (data) => {
   } catch (err) {
     console.log("Internal Seerver Error =>", err);
     return null;
+  }
+};
+
+exports.getOffersByProductId = async (req, res) => {
+  try {
+    const { product_id } = req.query;
+    const page_size = req.query.page_size && req.query.page_size !== '' ? parseInt(req.query.page_size, 100000) : 1000000;
+    const schema = Joi.alternatives(
+      Joi.object({
+        product_id: Joi.number().required().empty(),
+      })
+    );
+    const result = schema.validate(req.query);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      return res.json({
+        message: result.error.details[0].message,
+        error: message,
+        missingParams: result.error.details[0].message,
+        status: 200,
+        success: false,
+      });
+    }
+
+    var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
+
+    var whereClause = "";
+    if (
+      product_id.length > 0 &&
+      product_id !== null &&
+      product_id !== undefined
+    ) {
+      whereClause = `WHERE product_id IN (${product_id}) and offfer_buy_status != '1' and TIMESTAMP(end_date) >= '${currDate}'`; //updated code 26-07-2024
+    } else {
+      whereClause = ` where offfer_buy_status != '1' and TIMESTAMP(end_date) >= '${currDate}'`;
+    }
+
+    const offset = 0;
+    var offers = await getOffersByWhereClause(whereClause, page_size, offset);
+
+    for (element of offers) {
+      var startDateTime = element.start_date.toString();
+      element.start_date = startDateTime;
+      var time = element.remaining_time;
+      var timeArray = time.split(":");
+      var hours = Number(timeArray[0]) % 24;
+      time = hours.toString() + ":" + timeArray[1] + ":" + timeArray[1];
+      element.remaining_time = time;
+      if (element.product_id != 0) {
+        const countR = await getNoOfBids(element.id);
+        //const maxBidR = await getMaxBidF(element.product_id);
+        if (countR.length > 0) {
+          element.user_bid = {
+            user_id: (countR.length > 0 && countR[0]?.user_id != null) ? countR[0]?.user_id : 0,
+            max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
+            count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
+          }
+        } else {
+          element.user_bid = {
+            user_id: (countR.length > 0 && countR[0]?.user_id != null) ? countR[0]?.user_id : 0,
+            max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
+            count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
+          }
+        }
+
+        const categoryRes = await getCategoryIdByProductId(element.product_id);
+        if (categoryRes.length > 0) {
+          var categoryId = categoryRes[0].category_id;
+          const categoryNameRes = await getCategorybyId(categoryId);
+          if (categoryNameRes.length > 0) {
+            element.category_name = categoryNameRes[0].cat_name;
+          }
+        }
+      }
+      if (element.images_id > 0) {
+        const imageR = await getMainImage(element.images_id);
+        if (imageR.length > 0) {
+          element.main_image_link = imageR[0].main_image;
+        }
+      }
+    }
+
+    if (offers.length > 0) {
+      return res.json({
+        success: true,
+        message: "Successfully Offers find By Product Id",
+        offers: offers,
+        status: 200,
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: "No Offers Found",
+        status: 400,
+      });
+    }
+  } catch (err) {
+    return res.json({
+      success: false,
+      message: "Internal server error",
+      error: err,
+      status: 500,
+    });
   }
 };

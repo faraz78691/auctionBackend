@@ -32,6 +32,8 @@ var base64url = require('base64url');
 var crypto = require('crypto');
 var admin = require("firebase-admin");
 const serviceAccount = require('../config/firebase_serviceacoount.json');
+const { initializeApp } = require("firebase/app");
+const { getMessaging, getToken, isSupported } = require("firebase/messaging");
 require('dotenv').config();
 
 function randomStringAsBase64Url(size) {
@@ -1120,32 +1122,69 @@ exports.getUserRoleProfile = async (req, res) => {
 
 exports.notification = async (req, res) => {
   try {
-    const { fcm_token, postId, body } = req.body;
-    if (!fcm_token) {
-      return res.status(400).send({ success: false, message: "FCM token is required" });
-    }
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
-    });
+    // const { fcm_token, postId, body } = req.body;
+    // if (!fcm_token) {
+    //   return res.status(400).send({ success: false, message: "FCM token is required" });
+    // }
+    // admin.initializeApp({
+    //   credential: admin.credential.cert(serviceAccount)
+    // });
 
-    var message = { //this may vary according to the message type (single recipient, multicast, topic, et cetera)
-      token: fcm_token,
-      notification: {
-        title: 'Feed Notification',
-        body: `${body}`,
-      },
-      data: {  //you can send only notification or only data(or include both)
-        postId: String(postId),
-        type: "post"
-      },
+    // var message = { //this may vary according to the message type (single recipient, multicast, topic, et cetera)
+    //   token: fcm_token,
+    //   notification: {
+    //     title: 'Feed Notification',
+    //     body: `${body}`,
+    //   },
+    //   data: {  //you can send only notification or only data(or include both)
+    //     postId: String(postId),
+    //     type: "post"
+    //   },
+    // };
+
+    // try {
+    //   const response = await admin.messaging().send(message);
+    //   console.log('Successfully sent message:', response);
+    // } catch (error) {
+    //   console.error('Error sending message:', error);
+    // }
+    const firebaseConfig = {
+      apiKey: "AIzaSyD7KKEEAPWUdAZyEOx__dxDe1Cnx_dZDS0",
+      authDomain: "auction-20700.firebaseapp.com",
+      projectId: "auction-20700",
+      storageBucket: "auction-20700.appspot.com",
+      messagingSenderId: "497684001909",
+      appId: "1:497684001909:web:779b838300c94acc6a343c",
+      measurementId: "G-9RY08SFF7G"
     };
 
-    try {
-      const response = await admin.messaging().send(message);
-      console.log('Successfully sent message:', response);
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
+    const app = initializeApp(firebaseConfig);
+    isSupported()
+      .then((supported) => {
+        if (supported) {
+          if (typeof window !== "undefined") {
+            const messaging = getMessaging(app);
+
+            // Obtain the FCM token
+            getToken(messaging, { vapidKey: "BGyporLd2T-whJdKWWLM2T5zIoou0vkufsVTlQbaRGiFmbYX8U0Z6bpgHiA8gdNdrMFIWudCFqG1EBVZHh4Y46w" })
+              .then((currentToken) => {
+                if (currentToken) {
+                  console.log("FCM Token:", currentToken);
+                } else {
+                  console.warn("No registration token available.");
+                }
+              })
+              .catch((err) => {
+                console.error("An error occurred while retrieving the token. ", err);
+              });
+          }
+        } else {
+          console.warn("Firebase Messaging is not supported in this browser/environment.");
+        }
+      })
+      .catch((err) => {
+        console.error("Error checking messaging support:", err);
+      });
   } catch (err) {
     return res.status(500).json({
       success: false,
@@ -1155,3 +1194,17 @@ exports.notification = async (req, res) => {
     });
   }
 };
+
+
+// getToken(messaging, { vapidKey: "YOUR_PUBLIC_VAPID_KEY" })
+//   .then((currentToken) => {
+//     if (currentToken) {
+//       console.log("FCM Token:", currentToken);
+//       // Send this token to your server to be used for sending notifications
+//     } else {
+//       console.warn("No registration token available. Request permission to generate one.");
+//     }
+//   })
+//   .catch((error) => {
+//     console.error("An error occurred while retrieving the token. ", error);
+//   });
