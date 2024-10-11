@@ -271,7 +271,7 @@ module.exports = {
   },
 
   getOffersByIDsWhereClause: async (ids, price, limit, offset) => {    
-    if (price == []) {
+    if (Array.isArray(price) && price.length === 0) {
       return db.query(`select id,
         product_id,
         title, 
