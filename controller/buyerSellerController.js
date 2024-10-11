@@ -551,15 +551,14 @@ exports.getOffersByBuyer = async (req, res) => {
         const userObj = {}
         var tempObj = { ...el, userObj };
         var offerId = el.offer_id;
-        const OfferDetail = await getOffersByOfferId(offerId);
-        console.log(OfferDetail);
-
+        const OfferDetail = await getOffersByOfferId(offerId, user_id);
         if (OfferDetail.length > 0) {
           tempObj.title = OfferDetail[0]?.title;
           tempObj.end_date = OfferDetail[0]?.end_date;
           tempObj.start_price = OfferDetail[0]?.start_price;
           tempObj.offerStart = OfferDetail[0]?.offerStart;
           tempObj.lengthOfTime = OfferDetail[0]?.length_oftime;
+          tempObj.is_favorite = OfferDetail[0]?.is_favorite;
           var thumbnail = await getMainImage(OfferDetail[0]?.images_id);
           if (thumbnail.length > 0) {
             tempObj.main_image = thumbnail[0]?.main_image;

@@ -64,6 +64,7 @@ const path = require("path");
 require("dotenv").config();
 var randomstring = require("randomstring");
 var moment = require('moment-timezone');
+const { error } = require("console");
 
 exports.getProducts = async (req, res) => {
   try {
@@ -405,8 +406,10 @@ exports.createOffer = async (req, res) => {
         startDate.getSeconds(),
         startDate.getMilliseconds()
       );
+      const unique_id = Math.floor(100000 + Math.random() * 900000);
 
       const offer_created = {
+        offer_unique_id: unique_id,
         product_id: product_id,
         title: title,
         product_type: product_type,
@@ -655,6 +658,10 @@ exports.updateOffer = async (req, res) => {
 
 exports.getOffers = async (req, res) => {
   try {
+    const authHeader = req.headers.authorization;
+    const jwtToken = authHeader == undefined ? "" : authHeader.replace("Bearer ", "");
+    const decoded = jwt.decode(jwtToken);
+    const user_id = decoded == null ? "" : decoded.user_id;
     const { product_id, page, page_size } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
@@ -722,19 +729,35 @@ exports.getOffers = async (req, res) => {
       await updateOfferEndDate(element.id, formattedDate, newEndDate, element.no_of_times_reactivated);
     }
 
-    var whereClause = "";
-    if (
-      product_id.length > 0 &&
-      product_id !== null &&
-      product_id !== undefined
-    ) {
-      whereClause = `WHERE product_id IN (${product_id}) and offfer_buy_status != '1' and TIMESTAMP(end_date) >= '${currDate}'`; //updated code 26-07-2024
-    } else {
-      whereClause = ` where offfer_buy_status != '1' and TIMESTAMP(end_date) >= '${currDate}'`;
-    }
+    if (user_id == '') {
+      var whereClause = "";
+      if (
+        product_id.length > 0 &&
+        product_id !== null &&
+        product_id !== undefined
+      ) {
+        whereClause = `WHERE product_id IN (${product_id}) and offfer_buy_status != '1' and TIMESTAMP(end_date) >= '${currDate}'`; //updated code 26-07-2024
+      } else {
+        whereClause = ` where offfer_buy_status != '1' and TIMESTAMP(end_date) >= '${currDate}'`;
+      }
 
-    const offset = (parseInt(page) - 1) * parseInt(page_size);
-    var offers = await getOffersByWhereClause(whereClause, page_size, offset);
+      const offset = (parseInt(page) - 1) * parseInt(page_size);
+      var offers = await getOffersByWhereClause(whereClause, user_id, page_size, offset);
+    } else {
+      var whereClause = "";
+      if (
+        product_id.length > 0 &&
+        product_id !== null &&
+        product_id !== undefined
+      ) {
+        whereClause = `WHERE offers_created.product_id IN (${product_id}) and offers_created.offfer_buy_status != '1' and TIMESTAMP(offers_created.end_date) >= '${currDate}'`; //updated code 26-07-2024
+      } else {
+        whereClause = ` where offers_created.offfer_buy_status != '1' and TIMESTAMP(offers_created.end_date) >= '${currDate}'`;
+      }
+
+      const offset = (parseInt(page) - 1) * parseInt(page_size);
+      var offers = await getOffersByWhereClause(whereClause, user_id, page_size, offset);
+    }
 
     for (element of offers) {
       var startDateTime = element.start_date.toString();
@@ -786,6 +809,7 @@ exports.getOffers = async (req, res) => {
       });
     }
   } catch (err) {
+    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",

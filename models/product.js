@@ -45,24 +45,70 @@ module.exports = {
     return db.query("update offers_created set ? where id = ?", [data, offer_id]);
   },
 
-  getOffersByWhereClause: async (where, limit, offset) => {
-    return db.query(`select id,
-                              product_id,
-                              title, 
-                              product_type,
-                              images_id,
-                              offerStart,
-                              is_bid_or_fixed,
-                              start_date,
-                              length_oftime,
-                              end_date,
-                              FLOOR(HOUR(TIMEDIFF(end_date,CURRENT_TIMESTAMP))/24) as remaining_days,
-                              (TIMEDIFF(end_date,CURRENT_TIMESTAMP)) as remaining_time,
-                              start_price, increase_step, buyto_price,
-                              fixed_offer_price,duration,offfer_buy_status,
-                              user_id
-                              from offers_created ${where}
-                              ORDER BY remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset};`);
+  getOffersByWhereClause: async (where, user_id, limit, offset) => {
+    if (user_id == '') {
+      return db.query(`SELECT
+        id,
+        product_id,
+        title,
+        product_type,
+        images_id,
+        offerStart,
+        is_bid_or_fixed,
+        start_date,
+        length_oftime,
+        end_date,
+        FLOOR(
+            HOUR(
+                TIMEDIFF(end_date, CURRENT_TIMESTAMP)
+            ) / 24
+        ) AS remaining_days,
+        (
+            TIMEDIFF(end_date, CURRENT_TIMESTAMP)
+        ) AS remaining_time,
+        start_price,
+        increase_step,
+        buyto_price,
+        fixed_offer_price,
+        duration,
+        offfer_buy_status,
+        user_id
+                                  from offers_created ${where}
+                                  ORDER BY remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset};`);
+    } else {
+      return db.query(`SELECT
+        offers_created.id,
+        offers_created.product_id,
+        offers_created.title,
+        offers_created.product_type,
+        offers_created.images_id,
+        offers_created.offerStart,
+        offers_created.is_bid_or_fixed,
+        offers_created.start_date,
+        offers_created.length_oftime,
+        offers_created.end_date,
+        FLOOR(
+            HOUR(
+                TIMEDIFF(offers_created.end_date, CURRENT_TIMESTAMP)
+            ) / 24
+        ) AS remaining_days,
+        (
+            TIMEDIFF(offers_created.end_date, CURRENT_TIMESTAMP)
+        ) AS remaining_time,
+        offers_created.start_price,
+        offers_created.increase_step,
+        offers_created.buyto_price,
+        offers_created.fixed_offer_price,
+        offers_created.duration,
+        offers_created.offfer_buy_status,
+        offers_created.user_id,  
+        CASE 
+            WHEN favourites_offer.offer_id IS NOT NULL THEN 1
+            ELSE 0
+        END AS is_favorite
+                                  from offers_created LEFT JOIN (SELECT offer_id FROM favourites_offer WHERE user_id = ${user_id}) AS favourites_offer ON favourites_offer.offer_id = offers_created.id ${where}
+                                  ORDER BY remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset};`);
+    }
   },
 
   getOffersByCategoryWhereClause: async (where, limit, offset) => {
@@ -145,7 +191,7 @@ module.exports = {
   },
 
   getOfferDetailsByID: async (offer_id) => {
-    return db.query("select * from offers_created where id=?", [offer_id]);
+    return db.query("SELECT offers_created.*, CASE WHEN favourites_offer.offer_id IS NOT NULL THEN 1 ELSE 0 END AS is_favorite FROM offers_created LEFT JOIN( SELECT DISTINCT offer_id FROM favourites_offer ) AS favourites_offer ON favourites_offer.offer_id = ? WHERE id = ?", [offer_id, offer_id]);
   },
   getOfferAttributesDetailsByID: async (offer_id) => {
     return db.query("select * from offer_proattr_mapping where offer_id=?", [offer_id]);
@@ -270,8 +316,8 @@ module.exports = {
     return db.query("SELECT * FROM offers_created WHERE offfer_buy_status != 1 AND id IN (?)", [ids]);
   },
 
-  getOffersByIDsWhereClause: async (ids, price, limit, offset) => {    
-    if (Array.isArray(price) && price.length === 0) {
+  getOffersByIDsWhereClause: async (ids, price, limit, offset) => {
+    if (Array.isArray(price) && price.length === 0 || price == []) {
       return db.query(`select id,
         product_id,
         title, 

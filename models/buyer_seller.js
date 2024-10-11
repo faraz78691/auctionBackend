@@ -50,9 +50,10 @@ module.exports = {
     );
   },
 
-  getOffersByOfferId: async (offer_id) => {
+  getOffersByOfferId: async (offer_id, user_id) => {
     return db.query(
-      `SELECT id as offer_id,offers_created.*  FROM offers_created WHERE id = ${offer_id}`
+      `SELECT id as offer_id,offers_created.*, CASE WHEN favourites_offer.offer_id AND favourites_offer.user_id IS NOT NULL THEN 1 ELSE 0
+END AS is_favorite FROM offers_created LEFT JOIN favourites_offer ON favourites_offer.offer_id = ${offer_id} AND favourites_offer.user_id = ${user_id} WHERE id = ${offer_id}`
     );
   },
 
