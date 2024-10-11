@@ -46,7 +46,7 @@ module.exports = {
 
   getOffersBySeller: async (seller) => {
     return db.query(
-      `SELECT id as offer_id,start_price, title, end_date,is_bid_or_fixed, fixed_offer_price, buyto_price, images_id FROM offers_created WHERE user_id = ${seller} and offfer_buy_status = 0 ORDER BY created_at DESC`
+      `SELECT id as offer_id, offer_unique_id, start_price, title, end_date,is_bid_or_fixed, fixed_offer_price, buyto_price, images_id FROM offers_created WHERE user_id = ${seller} and offfer_buy_status = 0 ORDER BY created_at DESC`
     );
   },
 
@@ -60,16 +60,14 @@ END AS is_favorite FROM offers_created LEFT JOIN favourites_offer ON favourites_
 
   getOffersDetailsNotBoughtByOfferId: async (offer_id) => {
     return db.query(
-      `SELECT id as offer_id, title, end_date,is_bid_or_fixed,offerStart,length_oftime, fixed_offer_price, buyto_price, images_id, start_price  FROM offers_created WHERE id = ${offer_id}  and offfer_buy_status = 0 ORDER BY created_at DESC`
+      `SELECT id as offer_id, offer_unique_id, title, end_date,is_bid_or_fixed,offerStart,length_oftime, fixed_offer_price, buyto_price, images_id, start_price  FROM offers_created WHERE id = ${offer_id}  and offfer_buy_status = 0 ORDER BY created_at DESC`
     );
   },
   getOffersDetailsByOfferId: async (offer_id) => {
     return db.query(
-      `SELECT id as offer_id, title, end_date,is_bid_or_fixed,offerStart,length_oftime, fixed_offer_price, buyto_price, images_id, start_price  FROM offers_created WHERE id = ${offer_id}  ORDER BY created_at DESC`
+      `SELECT id as offer_id, offer_unique_id, title, end_date,is_bid_or_fixed,offerStart,length_oftime, fixed_offer_price, buyto_price, images_id, start_price  FROM offers_created WHERE id = ${offer_id}  ORDER BY created_at DESC`
     );
   },
-
-
 
   getSoldOffersBySeller: async (seller) => {    
     return db.query(

@@ -64,7 +64,6 @@ const path = require("path");
 require("dotenv").config();
 var randomstring = require("randomstring");
 var moment = require('moment-timezone');
-const { error } = require("console");
 
 exports.getProducts = async (req, res) => {
   try {
@@ -153,7 +152,6 @@ exports.getProductsAttrByProductID = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",
@@ -1633,9 +1631,9 @@ exports.getOffersAdvancedFilter = async (req, res) => {
     } else {
       whereClause = ` where offfer_buy_status != '1'`;
     }
-
+    const user_id = '';
     const offset = (parseInt(page) - 1) * parseInt(page_size);
-    var offers = await getOffersByWhereClause(whereClause, page_size, offset);
+    var offers = await getOffersByWhereClause(whereClause, user_id, page_size, offset);
     for (element of offers) {
       var startDateTime = element.start_date.toString();
       element.start_date = startDateTime;
@@ -2241,7 +2239,8 @@ exports.getOffersByProductId = async (req, res) => {
     }
 
     const offset = 0;
-    var offers = await getOffersByWhereClause(whereClause, page_size, offset);
+    const user_id = ''
+    var offers = await getOffersByWhereClause(whereClause, user_id, page_size, offset);
 
     for (element of offers) {
       var startDateTime = element.start_date.toString();

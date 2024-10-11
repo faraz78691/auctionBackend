@@ -26,7 +26,7 @@ module.exports = {
     return db.query("SELECT offer_id FROM offer_condition_mapping WHERE product_id = ? AND condition_id IN (?)", [product_id, ids]);
   },
   getOfferIdByAuctionType: async (product_id, ids) => {
-    return db.query("SELECT id FROM offers_created WHERE product_id = ? AND is_bid_or_fixed IN (?)", [product_id, ids]);
+    return db.query("SELECT id, offer_unique_id FROM offers_created WHERE product_id = ? AND is_bid_or_fixed IN (?)", [product_id, ids]);
   },
 
   getProductAttributeTypeMapping: async (product_id, attribute_id) => {
@@ -49,6 +49,7 @@ module.exports = {
     if (user_id == '') {
       return db.query(`SELECT
         id,
+        offer_unique_id,
         product_id,
         title,
         product_type,
@@ -78,6 +79,7 @@ module.exports = {
     } else {
       return db.query(`SELECT
         offers_created.id,
+        offers_created.offer_unique_id,
         offers_created.product_id,
         offers_created.title,
         offers_created.product_type,
@@ -113,6 +115,7 @@ module.exports = {
 
   getOffersByCategoryWhereClause: async (where, limit, offset) => {
     return db.query(`select offers_created.id,
+      offers_created.offer_unique_id,
       offers_created.product_id,
       offers_created.title, 
       offers_created.product_type,
@@ -163,7 +166,7 @@ module.exports = {
   },
 
   getOfferRecord: async (offerId) => {
-    return db.query(`select buyto_price from offers_created where id = ?`, [offerId]);
+    return db.query(`select buyto_price, offer_unique_id from offers_created where id = ?`, [offerId]);
   },
 
   selectBidbyUser: async (offerId, user_id) => {
@@ -291,6 +294,7 @@ module.exports = {
 
   getOffersBDynamically: async (from, where, limit, offset) => {
     return db.query(`select oc.id,
+      oc.offer_unique_id,
        oc.product_id,
        oc.title, 
        oc.product_type,
@@ -319,6 +323,7 @@ module.exports = {
   getOffersByIDsWhereClause: async (ids, price, limit, offset) => {
     if (Array.isArray(price) && price.length === 0 || price == []) {
       return db.query(`select id,
+        offer_unique_id,
         product_id,
         title, 
         product_type,
@@ -336,6 +341,7 @@ module.exports = {
         ORDER BY  remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset}`, [ids]);
     } else {
       return db.query(`select id,
+        offer_unique_id,
         product_id,
         title, 
         product_type,
@@ -356,7 +362,7 @@ module.exports = {
 
 
   getOffersAutoUpdate: async () => {
-    return db.query(`select id, user_id, product_id from offers_created where is_bid_or_fixed=1 and offfer_buy_status=0 and TIMESTAMP(end_date) < '${currDate}'`);
+    return db.query(`select id, user_id, product_id, offer_unique_id from offers_created where is_bid_or_fixed=1 and offfer_buy_status=0 and TIMESTAMP(end_date) < '${currDate}'`);
   },
 
   getMaxBidOnOffer: async (offer_id) => {
@@ -366,7 +372,7 @@ module.exports = {
 
   getSearchByProduct: async (search) => {
     const category = await db.query(`SELECT category.id, category.cat_name FROM category WHERE cat_name LIKE "${search}%" LIMIT 2`);
-    const product = await db.query(`SELECT product.id, product.name FROM product WHERE name LIKE "${search}%" LIMIT 8`);
+    const product = await db.query(`SELECT product.id, product.name, category.id AS category_id, category.cat_name AS category_name FROM product LEFT JOIN category ON category.id = product.category_id WHERE name LIKE "${search}%" LIMIT 8`);
     const data = {
       category: category,
       product: product
