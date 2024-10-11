@@ -1391,8 +1391,7 @@ exports.getFavouriteOffers = async (req, res) => {
     }
 
     const offset = (parseInt(page) - 1) * parseInt(page_size);
-    var offers = await getOffersByWhereClause(whereClause, page_size, offset);
-    console.log(offers);
+    var offers = await getOffersByWhereClause(whereClause, user_id, page_size, offset);
     for (element of offers) {
       var startDateTime = element.start_date.toString();
       element.start_date = startDateTime;

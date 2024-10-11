@@ -451,7 +451,6 @@ exports.getSellingSectionForSeller = async (req, res) => {
 
 exports.getSoldSectionForSeller = async (req, res) => {
   try {
-    console.log("dfh");
     const authHeader = req.headers.authorization;
     const token = authHeader.replace("Bearer ", "");
     const decoded = jwt.decode(token);
@@ -467,7 +466,6 @@ exports.getSoldSectionForSeller = async (req, res) => {
     }
 
     const offersDetails = await getSoldOffersBySeller(user_id);
-    console.log("offersDetails", moment(offersDetails[0].created_at).format('YYYY-MM-DD HH:mm:ss'));
 
     if (offersDetails.length > 0) {
       var finalOutput = [];
