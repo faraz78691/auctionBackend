@@ -197,10 +197,11 @@ exports.getAllUsersOffers = async (req, res) => {
 
 exports.addCategory = async (req, res) => {
     try {
-        const { cat_name } = req.body;
+        const { cat_name, description } = req.body;
         const schema = Joi.alternatives(
             Joi.object({
                 cat_name: Joi.string().required().empty(),
+                description: Joi.string().required().empty(),
             })
         );
         const result = schema.validate(req.body);
@@ -216,7 +217,8 @@ exports.addCategory = async (req, res) => {
         }
 
         let category = {
-            cat_name: cat_name
+            cat_name: cat_name,
+            description: description
         };
 
         const resultInserted = await addCategory(category);
