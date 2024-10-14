@@ -14,8 +14,8 @@ module.exports = function (server) {
     });
 
     // Object to keep track of connected users and their socket IDs
-    const users = {};
     let onlineUsers = {};
+    
     // Set up a connection event listener for incoming sockets
     io.on("connection", (socket) => {
         console.log("A user connected =>", socket.id);
