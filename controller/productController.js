@@ -685,46 +685,17 @@ exports.getOffers = async (req, res) => {
     const offer = await getOffers(currDate);
 
     for (let element of offer) {
-      const startDate = new Date(element.end_date);
-      const newEndDate = new Date(
-        startDate.getFullYear(),
-        startDate.getMonth(),
-        startDate.getDate() + Number(element.length_oftime), // Add length of time (in days)
-        startDate.getHours(),
-        startDate.getMinutes(),
-        startDate.getSeconds(),
-        startDate.getMilliseconds()
-      );
+      const newEndDate = moment(element.end_date)
+        .add(Number(element.length_oftime), 'days').format('YYYY-MM-DD HH:mm:ss'); // Add length of time (in days)
 
-      const now = new Date(element.offerStart); // Get the initial date from `element.offerStart`
-      const offerStartDate = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() + Number(element.length_oftime), // Add `length_oftime` days to the current date
-        now.getHours(),
-        now.getMinutes(),
-        now.getSeconds()
-      );
-
-      // Format the date to `YYYY-MM-DD HH:MM:SS`
-      const formattedDate =
-        offerStartDate.getFullYear() +
-        '-' +
-        String(offerStartDate.getMonth() + 1).padStart(2, '0') + // Month is 0-indexed
-        '-' +
-        String(offerStartDate.getDate()).padStart(2, '0') +
-        ' ' +
-        String(offerStartDate.getHours()).padStart(2, '0') +
-        ':' +
-        String(offerStartDate.getMinutes()).padStart(2, '0') +
-        ':' +
-        String(offerStartDate.getSeconds()).padStart(2, '0');
+      const offerStartDate = moment(element.offerStart)
+        .add(Number(element.length_oftime), 'days').format('YYYY-MM-DD HH:mm:ss');
 
       // Update the number of times the offer has been reactivated, but ensure it doesn't go below zero
       element.no_of_times_reactivated = element.no_of_times_reactivated > 0 ? element.no_of_times_reactivated - 1 : 0;
 
       // Update the offer's end date and reactivation count in the database
-      await updateOfferEndDate(element.id, formattedDate, newEndDate, element.no_of_times_reactivated);
+      await updateOfferEndDate(element.id, offerStartDate, newEndDate, element.no_of_times_reactivated);
     }
 
     if (user_id == '') {
@@ -762,7 +733,9 @@ exports.getOffers = async (req, res) => {
       element.start_date = startDateTime;
       var time = element.remaining_time;
       var timeArray = time.split(":");
+
       var hours = Number(timeArray[0]) % 24;
+      console.log(hours);
       time = hours.toString() + ":" + timeArray[1] + ":" + timeArray[1];
       element.remaining_time = time;
       if (element.product_id != 0) {

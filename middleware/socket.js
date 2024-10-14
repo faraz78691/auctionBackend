@@ -18,7 +18,7 @@ module.exports = function (server) {
 
     // Set up a connection event listener for incoming sockets
     io.on("connection", (socket) => {
-        console.log("A user connected =>", socket.id);
+        console.log("A user connected =>");
         // Listen for 'newBid' events from the client
         socket.on("newBid", (data) => {
             createNewBid(data)

@@ -46,7 +46,7 @@ module.exports = {
   },
 
   getOffersByWhereClause: async (where, user_id, limit, offset) => {
-    if (user_id == '') {
+    if (user_id == '') {      
       return db.query(`SELECT
         id,
         offer_unique_id,
@@ -76,7 +76,7 @@ module.exports = {
         user_id
                                   from offers_created ${where}
                                   ORDER BY remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset};`);
-    } else {
+    } else {      
       return db.query(`SELECT
         offers_created.id,
         offers_created.offer_unique_id,

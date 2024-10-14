@@ -12,7 +12,6 @@ module.exports = {
   updateOfferExpired: async () => {
     try {
       var offerResult = await getOffersAutoUpdate();
-      console.log(offerResult)
       if (offerResult.length > 0) {
         for (item of offerResult) {
           var offerId = item.id;
@@ -23,6 +22,7 @@ module.exports = {
           var buyer = 0;
           var max_bid = 0;
           const result = await getMaxBidOnOffer(offerId);
+
           if (result.length > 0) {
             buyer = result[0].user_id;
             max_bid = result[0].bid
@@ -37,7 +37,6 @@ module.exports = {
               doContinue = 0;
             }
           } while (doContinue);
-
           const transactionDetails = {
             transaction_id: transactionId,
             buyer_id: buyer,
@@ -47,8 +46,7 @@ module.exports = {
             amount: max_bid,
             is_buy_now: 0,
             is_max_bid: 1,
-          };
-
+          };       
           const resultInserted = await insertTransaction(transactionDetails);
           if (resultInserted.affectedRows > 0) {
             const offerupdate = await updateOfferBuyStatus("1", offerId);
