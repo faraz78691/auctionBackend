@@ -1,6 +1,7 @@
 const express = require('express');
-const userController = require('../controller/userController');
 const router = express.Router();
+const userController = require('../controller/userController');
+const { auth } = require('../middleware/auth');
 
 router.post('/signup', userController.signup);
 router.post('/login', userController.login);
@@ -15,5 +16,6 @@ router.post('/insertUserProfileC', userController.insertUserProfileC);
 router.post('/updateUserProfileC', userController.updateUserProfileC);
 router.get('/getUserRoleProfile', userController.getUserRoleProfile);
 router.get('/notification', userController.notification);
+router.get('/getChatMessage', auth, userController.getChatMessage);
 
 module.exports = router;

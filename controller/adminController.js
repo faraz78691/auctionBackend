@@ -2,7 +2,7 @@ const Joi = require("joi");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const { findEmail, updateLoginStatusById, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId,  addProductAttribute, findAttributesByAttributesTypeId } = require("../models/admin");
+const { findEmail, updateLoginStatusById, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findAttributesByAttributesTypeId, getAllMessageUserWise } = require("../models/admin");
 
 exports.login = async (req, res) => {
     try {
@@ -489,6 +489,10 @@ exports.getTypeAttributesByProductId = async (req, res) => {
             return res.json({
                 success: true,
                 message: "Product Attributes fetched successfully",
+                product: {
+                    id: product_id,
+                    name: getAttribute[0].name
+                },
                 typeAttributes: getAttribute,
                 status: 200,
             });
@@ -618,6 +622,33 @@ exports.getAttributesByAttributeTypeId = async (req, res) => {
             success: false,
             message: "Internal server error",
             error: err,
+            status: 500,
+        });
+    }
+};
+
+exports.getAllChatMessageUser = async (req, res) => {
+    try {
+        const findAllMessage = await getAllMessageUserWise();
+        if (findAllMessage.length > 0) {
+            return res.json({
+                message: "fetch user all chat message",
+                status: 200,
+                success: true,
+                data: findAllMessage,
+            });
+        } else {
+            return res.json({
+                message: "Fetch user all chat message failed",
+                status: 200,
+                success: true,
+            });
+        }
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: err.message,
             status: 500,
         });
     }

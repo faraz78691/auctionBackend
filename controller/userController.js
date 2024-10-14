@@ -19,9 +19,10 @@ const {
   updateUserM,
   getuserProfileDetails,
   fetchAllUsers,
-  fetchAllUsersOffers
+  fetchAllUsersOffers,
+  getAllMessageByUserId
 } = require("../models/users");
-
+const { updateData } = require("../models/common");
 const Joi = require("joi");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -1195,7 +1196,6 @@ exports.notification = async (req, res) => {
   }
 };
 
-
 // getToken(messaging, { vapidKey: "YOUR_PUBLIC_VAPID_KEY" })
 //   .then((currentToken) => {
 //     if (currentToken) {
@@ -1208,3 +1208,62 @@ exports.notification = async (req, res) => {
 //   .catch((error) => {
 //     console.error("An error occurred while retrieving the token. ", error);
 //   });
+
+exports.updateOnlineStatus = async (userId, status) => {
+  try {
+    const schema = Joi.alternatives(
+      Joi.object({
+        userId: Joi.number().required().empty(),
+        status: Joi.string().required().empty()
+      })
+    );
+    const result = schema.validate(userId, status);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      console.log("error =>", message);
+    }
+    const userstatus = {
+      online_status: status
+    }
+    const updateStatus = updateData('users', `WHERE id = ${userId}`, userstatus);
+    console.log(updateStatus);
+
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: err.message,
+      status: 500,
+    });
+  }
+};
+
+exports.getChatMessage = async (req, res) => {
+  try {
+    const user_id = req.user.id;
+    console.log(user_id);
+
+    const findAllMessage = await getAllMessageByUserId(user_id);
+    if (findAllMessage.length > 0) {
+      return res.json({
+        message: "fetch user all chat message",
+        status: 200,
+        success: true,
+        data: findAllMessage,
+      });
+    } else {
+      return res.json({
+        message: "Fetch user all chat message failed",
+        status: 200,
+        success: true,
+      });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: err.message,
+      status: 500,
+    });
+  }
+};

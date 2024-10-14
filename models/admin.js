@@ -57,7 +57,7 @@ module.exports = {
     },
 
     findTypeAttributesByProductId: async (product_id) => {
-        return db.query(`SELECT id, attribute_name, heading, input_type FROM product_type_attribute where product_id = ${product_id}`);
+        return db.query(`SELECT product_type_attribute.id, product_type_attribute.attribute_name, product_type_attribute.heading, product_type_attribute.input_type, product.name FROM product_type_attribute LEFT JOIN product ON product.id = product_type_attribute.product_id WHERE product_id = ${product_id}`);
     },
 
     findProductById: async (product_id) => {
@@ -74,6 +74,10 @@ module.exports = {
 
     findAttributesByAttributesTypeId: async (attribute_id) => {
         return db.query(`SELECT * FROM product_attributes_mapping WHERE attribute_id = ${attribute_id}`);
+    },
+
+    getAllMessageUserWise: async () => {
+        return db.query("SELECT cs.user_id AS session_userId, cs.admin_id AS session_adminId, m.user_id, m.admin_id, m.message FROM tbl_chat_sessions cs LEFT JOIN tbl_messages m ON m.id = cs.last_message_id WHERE m.id IN ( SELECT MAX(id) FROM tbl_messages WHERE user_id IN (SELECT user_id FROM tbl_chat_sessions) GROUP BY user_id )");
     }
 
 };

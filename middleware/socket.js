@@ -1,7 +1,8 @@
 const db = require("../utils/database");
 const { Server } = require("socket.io");
 const { createNewBid, getBitCountByOfferId } = require("../controller/productController");
-
+const { required } = require("joi");
+const { updateOnlineStatus } = require("../controller/userController");
 // socket.js
 module.exports = function (server) {
     // Create a new instance of socket.io by passing in the server
@@ -15,7 +16,7 @@ module.exports = function (server) {
 
     // Object to keep track of connected users and their socket IDs
     let onlineUsers = {};
-    
+
     // Set up a connection event listener for incoming sockets
     io.on("connection", (socket) => {
         console.log("A user connected =>", socket.id);
@@ -40,22 +41,22 @@ module.exports = function (server) {
         });
 
         // Send previous chat history
-        // db.query('SELECT * FROM tbl_customer_support ORDER BY created_at ASC', (err, results) => {
-        //     if (err) {
-        //         console.error("Database query error:", err);
-        //         socket.emit('error', 'Could not load chat history');
-        //         return;
-        //     }
-        //     socket.emit('chatHistory', results);
-        // });
+        db.query('SELECT * FROM tbl_messages ORDER BY created_at ASC', (err, results) => {
+            if (err) {
+                console.error("Database query error:", err);
+                socket.emit('error', 'Could not load chat history');
+                return;
+            }
+            socket.emit('chatHistory', results);
+        });
 
         // Listen for a new chat message
         socket.on('sendMessage', (msg) => {
-            const { sender_id, receiver_id, message } = msg;
+            const { admin_id, user_id, message } = msg;
 
             // Insert the message into the database
-            const sql = 'INSERT INTO `tbl_messages`(`sender_id`, `receiver_id`, `message`) VALUES (?, ?, ?)';
-            db.query(sql, [sender_id, receiver_id, message], (err, result) => {
+            const sql = 'INSERT INTO `tbl_messages`(`admin_id`, `user_id`, `message`) VALUES (?, ?, ?)';
+            db.query(sql, [admin_id, user_id, message], (err, result) => {
                 if (err) {
                     console.error('Error inserting chat message:', err);
                     socket.emit('error', 'Message could not be sent');
@@ -69,15 +70,6 @@ module.exports = function (server) {
                 if (onlineUsers[receiverId]) {
                     io.to(onlineUsers[receiverId]).emit('newMessage', { senderId, message });
                 }
-            });
-        });
-
-        // Mark message as read (admin or user views chat)
-        socket.on('markAsSeen', (userId) => {
-            const query = `UPDATE messages SET seen = 1 WHERE receiver_id = ? AND seen = 0`;
-            db.query(query, [userId], (err, result) => {
-                if (err) throw err;
-                updateUnreadCount(userId); // Reset unread count
             });
         });
 

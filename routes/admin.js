@@ -21,5 +21,6 @@ router.post('/addProductTypeAttributes', adminAuth, adminController.addProductTy
 router.get('/getTypeAttributesByProductId', adminAuth, adminController.getTypeAttributesByProductId);
 router.post('/addProductAttributes', adminAuth, adminController.addProductAttributes);
 router.get('/getAttributesByAttributeTypeId', adminAuth, adminController.getAttributesByAttributeTypeId);
+router.get('/getAllChatMessageUser', adminAuth, adminController.getAllChatMessageUser);
 
 module.exports = router;

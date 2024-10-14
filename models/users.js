@@ -114,6 +114,10 @@ module.exports = {
 
   getUserNamebyId: async (id) => {
     return db.query(`select concat(first_name, " ", last_name) as name from  users where  id=${id}`);
+  },
+
+  getAllMessageByUserId: async (id) => {
+    return db.query(`SELECT tbl_messages.user_id, tbl_messages.admin_id, tbl_messages.message FROM tbl_chat_sessions LEFT JOIN tbl_messages ON tbl_messages.id = tbl_chat_sessions.last_message_id WHERE tbl_chat_sessions.user_id = ${id}`);
   }
 
 };
