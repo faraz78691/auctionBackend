@@ -5,12 +5,13 @@ require('dotenv').config();
 const MOOV_ACCOUNT_ID = process.env.MOOV_ACCOUNT_ID;
 const MOOV_PUBLIC_KEY = process.env.MOOV_API_KEY;   // Your Moov Public Key
 const MOOV_SECRET_KEY = process.env.MOOV_API_SECRET;   // Your Moov Secret Key
-const MOOV_DOMAIN = process.env.MOOV_DOMAIN; 
+const MOOV_DOMAIN = process.env.MOOV_DOMAIN;
 const MOOV_API_KEY = process.env.MOOV_API_KEY;
 
 // Log the values for debugging
 console.log('MOOV_API_KEY:', MOOV_API_KEY);
 console.log('MOOV_ACCOUNT_ID:', MOOV_ACCOUNT_ID);
+console.log('MOOV_DOMAIN:', MOOV_DOMAIN);
 
 // Initialize the Moov SDK
 const moov = new Moov({
@@ -21,25 +22,20 @@ const moov = new Moov({
 });
 
 // Create a customer API function
-exports.createCustomer = async (req, res) => {
-    const accountData = req.body; // Get customer data from request body
-
+exports.createAccount = async (req, res) => {
     try {
+        const accountData = req.body; // Get customer data from request body
         // Create a new customer using Moov SDK
         const customer = await moov.accounts.create(accountData);
         console.log('Customer created successfully:', customer);
-
         // Send success response
         res.status(201).json(customer);
     } catch (error) {
-        console.error('Error creating customer:', error);
-
         // Handle errors accordingly
-        if (error.response) {
-            console.error('Error details:', error.response.data);
+        if (error.response && error.response.status) {
             res.status(error.response.status).json(error.response.data);
         } else {
-            res.status(500).json({ message: 'Internal Server Error' });
+            res.status(500).json({ message: 'Internal Server Error', error });
         }
     }
 };
