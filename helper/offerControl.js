@@ -12,6 +12,7 @@ module.exports = {
   updateOfferExpired: async () => {
     try {
       var offerResult = await getOffersAutoUpdate();
+      console.log(offerResult)
       if (offerResult.length > 0) {
         for (item of offerResult) {
           var offerId = item.id;

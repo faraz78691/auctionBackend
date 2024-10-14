@@ -2037,6 +2037,7 @@ exports.getProductBySearch = async (req, res) => {
       });
     }
   } catch (err) {
+    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",
@@ -2096,8 +2097,11 @@ exports.getOffersByCategoryId = async (req, res) => {
         const countR = await getNoOfBids(element.id);
         //const maxBidR = await getMaxBidF(element.product_id);
         if (countR.length > 0) {
-          element.count = countR[0].count;
-          element.max_bid = countR[0].max_bid;
+          element.user_bid = {
+            user_id: (countR.length > 0 && countR[0]?.user_id != null) ? countR[0]?.user_id : 0,
+            max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
+            count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
+          }
         }
 
         const categoryRes = await getCategoryIdByProductId(element.product_id);
@@ -2131,6 +2135,7 @@ exports.getOffersByCategoryId = async (req, res) => {
       });
     }
   } catch (err) {
+    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",
