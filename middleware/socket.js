@@ -3,6 +3,7 @@ const { Server } = require("socket.io");
 const { createNewBid, getBitCountByOfferId } = require("../controller/productController");
 const upload_files = require('./upload');
 const { updateOnlineStatus } = require("../controller/userController");
+const { adminUpdateLoginStatus } = require("../controller/adminController");
 
 // socket.js
 module.exports = function (server) {
@@ -16,7 +17,8 @@ module.exports = function (server) {
     });
 
     // Object to keep track of connected users and their socket IDs
-    let onlineUsers = {};
+    var userSockets = {};  // Store userId and socket.id
+    var adminSockets = {}; // Store adminId and socket.id
 
     // Set up a connection event listener for incoming sockets
     io.on("connection", (socket) => {
@@ -36,10 +38,17 @@ module.exports = function (server) {
         });
 
         // User goes online
-        socket.on('userOnline', (userId) => {
-            onlineUsers[userId] = socket.id;
+        socket.on('user_login', (userId) => {
+            console.log(`User ${userId} has logged in.`);
+            userSockets[userId] = socket.id;
             updateOnlineStatus(userId, 'online');
-            socket.emit('onlineUsers', onlineUsers); // Broadcast the list of online users
+        });
+
+        // Admin goes online
+        socket.on('admin_login', (adminId) => {
+            console.log(`Admin ${adminId} has logged in.`);
+            adminSockets[adminId] = socket.id;  // Save the admin's socket id
+            adminUpdateLoginStatus('online');
         });
 
         // Send previous chat history
@@ -63,12 +72,30 @@ module.exports = function (server) {
             const addMessage = await db.query(insertMessageQuery, [user_id, admin_id, message, sender_id])
             if (addMessage.affectedRows > 0) {
                 const messageId = addMessage.insertId;
+
                 // Update conversation_session with the latest message and unread count
                 const updateSessionQuery = `INSERT INTO tbl_chat_sessions (user_id, admin_id, last_message_id, unread_count)
             VALUES (?, ?, ?, 1) ON DUPLICATE KEY UPDATE last_message_id = ?, unread_count = unread_count + 1`;
                 const addSession = await db.query(updateSessionQuery, [user_id, admin_id, messageId, messageId]);
                 if (addSession.affectedRows > 0) {
-                    socket.emit("getMessage",  msg);
+                    if (user_id === sender_id) {
+                        const adminSocketId = adminSockets[admin_id];
+                        const userSocketId = userSockets[user_id];
+                        if (adminSocketId) {
+                            io.to(adminSocketId).emit("getMessage", msg);
+                            io.to(userSocketId).emit("getMessage", msg);
+                            console.log(`Sent message from user ${user_id} to admin ${admin_id}`);
+                        }
+                    } else {
+                        const adminSocketId = adminSockets[admin_id];
+                        const userSocketId = userSockets[user_id];
+                        if (userSocketId) {
+                            io.to(adminSocketId).emit("getMessage", msg);
+                            io.to(userSocketId).emit("getMessage", msg);
+                            console.log(`Sent message from admin ${admin_id} to user ${user_id}`);
+                        }
+                    }
+                    // socket.emit("getMessage",  msg);
                 } else {
                     console.error('Error inserting chat message:', err);
                     socket.emit('error', 'Chat session could not be sent');
@@ -83,15 +110,7 @@ module.exports = function (server) {
 
         // User goes offline
         socket.on('disconnect', () => {
-            for (let userId in onlineUsers) {
-                if (onlineUsers[userId] === socket.id) {
-                    updateOnlineStatus(userId, 'offline');
-                    delete onlineUsers[userId];
-                    break;
-                }
-            }
-            io.emit('onlineUsers', onlineUsers); // Update online users list
-            console.log('Client disconnected', socket.id);
+            console.log('User disconnected', socket.id);
         });
     });
     return io; // Return the io instance for use in other files if needed

@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const { findEmail, updateLoginStatusById, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findAttributesByAttributesTypeId, getAllMessageUserWise } = require("../models/admin");
+const { updateData } = require("../models/common");
 
 exports.login = async (req, res) => {
     try {
@@ -663,6 +664,34 @@ exports.getAllChatMessageUser = async (req, res) => {
                 success: true,
             });
         }
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: err.message,
+            status: 500,
+        });
+    }
+};
+
+exports.adminUpdateLoginStatus = async (status) => {
+    try {
+        const schema = Joi.alternatives(
+            Joi.object({
+                status: Joi.string().required().empty()
+            })
+        );
+        const result = schema.validate(status);
+        if (result.error) {
+            const message = result.error.details.map((i) => i.message).join(",");
+            console.log("error =>", message);
+        }
+        const userstatus = {
+            online_status: status
+        }
+        const updateStatus = await updateData('user_profile', ``, userstatus);
+        console.log(updateStatus);
+
     } catch (err) {
         return res.status(500).json({
             success: false,

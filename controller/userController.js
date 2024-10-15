@@ -1225,7 +1225,7 @@ exports.updateOnlineStatus = async (userId, status) => {
     const userstatus = {
       online_status: status
     }
-    const updateStatus = updateData('users', `WHERE id = ${userId}`, userstatus);
+    const updateStatus = await updateData('users', `WHERE id = ${userId}`, userstatus);
     console.log(updateStatus);
 
   } catch (err) {
