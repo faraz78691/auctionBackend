@@ -1,8 +1,9 @@
 const db = require("../utils/database");
 const { Server } = require("socket.io");
 const { createNewBid, getBitCountByOfferId } = require("../controller/productController");
-const { required } = require("joi");
+const upload_files = require('./upload');
 const { updateOnlineStatus } = require("../controller/userController");
+
 // socket.js
 module.exports = function (server) {
     // Create a new instance of socket.io by passing in the server
@@ -53,12 +54,14 @@ module.exports = function (server) {
 
         // Listen for a new chat message
         socket.on('sendMessage', (msg) => {
+            console.log(msg);
+            
             const { user_id, admin_id, message, sender_id } = msg;
 
             // Insert the message into the database
             const insertMessageQuery = `
-            INSERT INTO tbl_messages (user_id, admin_id, message, sender_id, is_read)
-            VALUES (?, ?, ?, ?, FALSE)`;
+            INSERT INTO tbl_messages (user_id, admin_id, message, sender_id)
+            VALUES (?, ?, ?, ?)`;
             db.query(insertMessageQuery, [user_id, admin_id, message, sender_id], (err, result) => {
                 if (err) {
                     console.error('Error inserting chat message:', err);
@@ -80,14 +83,7 @@ module.exports = function (server) {
                     if (err) throw err;
                 });
 
-                // Broadcast the message to the admin or user
-                io.to(admin_id).emit('new_message', {
-                    user_id,
-                    admin_id,
-                    message,
-                    sender_id,
-                    created_at: new Date(),
-                });
+                io.emit("new_message", { msg });
             });
         });
 

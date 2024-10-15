@@ -73,7 +73,7 @@ module.exports = {
     },
 
     findAttributesByAttributesTypeId: async (attribute_id) => {
-        return db.query(`SELECT * FROM product_attributes_mapping WHERE attribute_id = ${attribute_id}`);
+        return db.query(`SELECT product_attributes_mapping.*, product_type_attribute.attribute_name FROM product_attributes_mapping LEFT JOIN product_type_attribute ON product_type_attribute.id = product_attributes_mapping.attribute_id WHERE attribute_id = ${attribute_id}`);
     },
 
     getAllMessageUserWise: async () => {
