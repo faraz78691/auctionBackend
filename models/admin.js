@@ -77,7 +77,7 @@ module.exports = {
     },
 
     getAllMessageUserWise: async () => {
-        return db.query("SELECT cs.user_id AS session_userId, cs.admin_id AS session_adminId, m.user_id, m.admin_id, m.message FROM tbl_chat_sessions cs LEFT JOIN tbl_messages m ON m.id = cs.last_message_id WHERE m.id IN ( SELECT MAX(id) FROM tbl_messages WHERE user_id IN (SELECT user_id FROM tbl_chat_sessions) GROUP BY user_id )");
+        return db.query("SELECT cs.user_id, cs.admin_id, CONCAT(u.first_name, '', u.last_name) AS user_name, m.message, m.created_at, cs.unread_count FROM tbl_chat_sessions cs JOIN users u ON cs.user_id = u.id JOIN tbl_messages m ON cs.last_message_id = m.id ORDER BY m.created_at DESC;");
     }
 
 };

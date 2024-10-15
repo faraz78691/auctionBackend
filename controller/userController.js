@@ -1240,9 +1240,23 @@ exports.updateOnlineStatus = async (userId, status) => {
 
 exports.getChatMessage = async (req, res) => {
   try {
-    const user_id = req.user.id;
-    console.log(user_id);
-
+    const { user_id } = req.body;
+    const schema = Joi.alternatives(
+      Joi.object({
+        user_id: Joi.number().required().empty(),
+      })
+    );
+    const result = schema.validate(req.body);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      return res.json({
+        message: result.error.details[0].message,
+        error: message,
+        missingParams: result.error.details[0].message,
+        status: 200,
+        success: true,
+      });
+    }
     const findAllMessage = await getAllMessageByUserId(user_id);
     if (findAllMessage.length > 0) {
       return res.json({

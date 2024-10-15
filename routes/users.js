@@ -16,6 +16,6 @@ router.post('/insertUserProfileC', userController.insertUserProfileC);
 router.post('/updateUserProfileC', userController.updateUserProfileC);
 router.get('/getUserRoleProfile', userController.getUserRoleProfile);
 router.get('/notification', userController.notification);
-router.get('/getChatMessage', auth, userController.getChatMessage);
+router.post('/getChatMessage', userController.getChatMessage);
 
 module.exports = router;

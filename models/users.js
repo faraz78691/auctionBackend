@@ -117,7 +117,7 @@ module.exports = {
   },
 
   getAllMessageByUserId: async (id) => {
-    return db.query(`SELECT tbl_messages.user_id, tbl_messages.admin_id, tbl_messages.message FROM tbl_chat_sessions LEFT JOIN tbl_messages ON tbl_messages.id = tbl_chat_sessions.last_message_id WHERE tbl_chat_sessions.user_id = ${id}`);
+    return db.query(`SELECT * FROM tbl_messages WHERE user_id = ${id} ORDER BY created_at`);
   }
 
 };

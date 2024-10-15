@@ -52,24 +52,41 @@ module.exports = function (server) {
 
         // Listen for a new chat message
         socket.on('sendMessage', (msg) => {
-            const { admin_id, user_id, message } = msg;
+            const { user_id, admin_id, message, sender_id } = msg;
 
             // Insert the message into the database
-            const sql = 'INSERT INTO `tbl_messages`(`admin_id`, `user_id`, `message`) VALUES (?, ?, ?)';
-            db.query(sql, [admin_id, user_id, message], (err, result) => {
+            const insertMessageQuery = `
+            INSERT INTO tbl_messages (user_id, admin_id, message, sender_id, is_read)
+            VALUES (?, ?, ?, ?, FALSE)`;
+            db.query(insertMessageQuery, [user_id, admin_id, message, sender_id], (err, result) => {
                 if (err) {
                     console.error('Error inserting chat message:', err);
                     socket.emit('error', 'Message could not be sent');
                     return;
                 }
 
-                // Update the chat session with last message and unread count
-                updateChatSession(receiverId, result.insertId);
+                const messageId = result.insertId;
 
-                // Emit the message to the receiver
-                if (onlineUsers[receiverId]) {
-                    io.to(onlineUsers[receiverId]).emit('newMessage', { senderId, message });
-                }
+                // Update conversation_session with the latest message and unread count
+                const updateSessionQuery = `
+                INSERT INTO conversation_session (user_id, admin_id, last_message_id, unread_count)
+                VALUES (?, ?, ?, 1)
+                ON DUPLICATE KEY UPDATE
+                last_message_id = ?, unread_count = unread_count + 1
+            `;
+
+                db.query(updateSessionQuery, [user_id, admin_id, messageId, messageId], (err) => {
+                    if (err) throw err;
+                });
+
+                // Broadcast the message to the admin or user
+                io.to(admin_id).emit('new_message', {
+                    user_id,
+                    admin_id,
+                    message,
+                    sender_role,
+                    sent_at: new Date(),
+                });
             });
         });
 

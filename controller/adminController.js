@@ -630,12 +630,29 @@ exports.getAttributesByAttributeTypeId = async (req, res) => {
 exports.getAllChatMessageUser = async (req, res) => {
     try {
         const findAllMessage = await getAllMessageUserWise();
-        if (findAllMessage.length > 0) {
+        const conversations = findAllMessage.reduce((acc, msg) => {
+            if (!acc[msg.user_id]) {
+                acc[msg.user_id] = {
+                    user_id: msg.user_id,
+                    user_name: msg.user_name,
+                    messages: [],
+                    unread_count: msg.unread_count
+                };
+            }
+            acc[msg.user_id].messages.push({
+                message: msg.message,
+                sent_at: msg.sent_at,
+                is_read: msg.is_read
+            });
+            return acc;
+        }, {});
+        const conversationArray = Object.values(conversations);
+        if (conversationArray.length > 0) {
             return res.json({
                 message: "fetch user all chat message",
                 status: 200,
                 success: true,
-                data: findAllMessage,
+                data: conversationArray,
             });
         } else {
             return res.json({
