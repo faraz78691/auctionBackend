@@ -77,7 +77,7 @@ module.exports = {
     },
 
     getAllMessageUserWise: async () => {
-        return db.query("SELECT cs.user_id, cs.admin_id, CONCAT(u.first_name, '', u.last_name) AS user_name, m.message, m.created_at, cs.unread_count FROM tbl_chat_sessions cs JOIN users u ON cs.user_id = u.id JOIN tbl_messages m ON cs.last_message_id = m.id ORDER BY m.created_at DESC;");
+        return db.query("SELECT cs.user_id, cs.admin_id, CONCAT(u.first_name, '', u.last_name) AS user_name, u.online_status, m.message, m.created_at, cs.unread_count FROM tbl_chat_sessions cs JOIN users u ON cs.user_id = u.id JOIN tbl_messages m ON cs.last_message_id = m.id ORDER BY m.created_at DESC");
     }
 
 };

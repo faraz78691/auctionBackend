@@ -117,7 +117,7 @@ module.exports = {
   },
 
   getAllMessageByUserId: async (id) => {
-    return db.query(`SELECT * FROM tbl_messages WHERE user_id = ${id} ORDER BY created_at`);
+    return db.query(`SELECT CONCAT(users.first_name, ' ', users.last_name) AS full_name, users.online_status, tbl_messages.* FROM tbl_messages LEFT JOIN users ON users.id = tbl_messages.user_id WHERE tbl_messages.user_id = ${id} ORDER BY tbl_messages.created_at;`);
   }
 
 };

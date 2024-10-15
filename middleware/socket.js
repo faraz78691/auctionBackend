@@ -19,7 +19,8 @@ module.exports = function (server) {
 
     // Set up a connection event listener for incoming sockets
     io.on("connection", (socket) => {
-        console.log("A user connected =>", socket.id);
+        console.log("A user connected =>");
+
         // Listen for 'newBid' events from the client
         socket.on("newBid", (data) => {
             createNewBid(data)
@@ -69,7 +70,7 @@ module.exports = function (server) {
 
                 // Update conversation_session with the latest message and unread count
                 const updateSessionQuery = `
-                INSERT INTO conversation_session (user_id, admin_id, last_message_id, unread_count)
+                INSERT INTO tbl_chat_sessions (user_id, admin_id, last_message_id, unread_count)
                 VALUES (?, ?, ?, 1)
                 ON DUPLICATE KEY UPDATE
                 last_message_id = ?, unread_count = unread_count + 1
@@ -84,8 +85,8 @@ module.exports = function (server) {
                     user_id,
                     admin_id,
                     message,
-                    sender_role,
-                    sent_at: new Date(),
+                    sender_id,
+                    created_at: new Date(),
                 });
             });
         });
@@ -105,3 +106,40 @@ module.exports = function (server) {
     });
     return io; // Return the io instance for use in other files if needed
 };
+
+// Function to handle sending a message
+const sendMessage = async (msg) => {
+    const { user_id, admin_id, message, sender_id } = msg;
+
+    const insertMessageQuery = `
+        INSERT INTO tbl_messages (user_id, admin_id, message, sender_id)
+        VALUES (?, ?, ?, ?)`;
+
+    const insertMesasage = await db.query(insertMessageQuery, [user_id, admin_id, message, sender_id]);
+
+    const messageId = insertMesasage.insertId;
+
+    // Update conversation_session with the latest message and unread count
+    const updateSessionQuery = `
+            INSERT INTO tbl_chat_sessions (user_id, admin_id, last_message_id, unread_count)
+            VALUES (?, ?, ?, 1)
+            ON DUPLICATE KEY UPDATE
+            last_message_id = ?, unread_count = unread_count + 1`;
+
+    db.query(updateSessionQuery, [user_id, admin_id, messageId, messageId], (err) => {
+        if (err) {
+            console.error('Error updating chat session:', err);
+            return;
+        }
+    });
+};
+
+// setInterval(() => {
+//     const msg = {
+//         user_id: 20,
+//         admin_id: 955190,
+//         message: "test",
+//         sender_id: 20
+//     };
+//     sendMessage(msg);
+// }, 6000);

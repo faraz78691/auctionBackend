@@ -636,7 +636,8 @@ exports.getAllChatMessageUser = async (req, res) => {
                     user_id: msg.user_id,
                     user_name: msg.user_name,
                     messages: [],
-                    unread_count: msg.unread_count
+                    unread_count: msg.unread_count,
+                    online_status: msg.online_status
                 };
             }
             acc[msg.user_id].messages.push({
