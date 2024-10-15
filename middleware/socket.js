@@ -39,7 +39,7 @@ module.exports = function (server) {
         socket.on('userOnline', (userId) => {
             onlineUsers[userId] = socket.id;
             updateOnlineStatus(userId, 'online');
-            io.emit('onlineUsers', onlineUsers); // Broadcast the list of online users
+            socket.emit('onlineUsers', onlineUsers); // Broadcast the list of online users
         });
 
         // Send previous chat history
@@ -53,38 +53,32 @@ module.exports = function (server) {
         });
 
         // Listen for a new chat message
-        socket.on('sendMessage', (msg) => {
-            console.log(msg);
-            
+        socket.on('sendMessage', async (msg) => {
             const { user_id, admin_id, message, sender_id } = msg;
 
             // Insert the message into the database
             const insertMessageQuery = `
             INSERT INTO tbl_messages (user_id, admin_id, message, sender_id)
             VALUES (?, ?, ?, ?)`;
-            db.query(insertMessageQuery, [user_id, admin_id, message, sender_id], (err, result) => {
-                if (err) {
+            const addMessage = await db.query(insertMessageQuery, [user_id, admin_id, message, sender_id])
+            if (addMessage.affectedRows > 0) {
+                const messageId = addMessage.insertId;
+                // Update conversation_session with the latest message and unread count
+                const updateSessionQuery = `INSERT INTO tbl_chat_sessions (user_id, admin_id, last_message_id, unread_count)
+            VALUES (?, ?, ?, 1) ON DUPLICATE KEY UPDATE last_message_id = ?, unread_count = unread_count + 1`;
+                const addSession = await db.query(updateSessionQuery, [user_id, admin_id, messageId, messageId]);
+                if (addSession.affectedRows > 0) {
+                    socket.emit("getMessage",  msg);
+                } else {
                     console.error('Error inserting chat message:', err);
-                    socket.emit('error', 'Message could not be sent');
+                    socket.emit('error', 'Chat session could not be sent');
                     return;
                 }
-
-                const messageId = result.insertId;
-
-                // Update conversation_session with the latest message and unread count
-                const updateSessionQuery = `
-                INSERT INTO tbl_chat_sessions (user_id, admin_id, last_message_id, unread_count)
-                VALUES (?, ?, ?, 1)
-                ON DUPLICATE KEY UPDATE
-                last_message_id = ?, unread_count = unread_count + 1
-            `;
-
-                db.query(updateSessionQuery, [user_id, admin_id, messageId, messageId], (err) => {
-                    if (err) throw err;
-                });
-
-                io.emit("new_message", { msg });
-            });
+            } else {
+                console.error('Error inserting chat message:', err);
+                socket.emit('error', 'Message could not be sent');
+                return;
+            }
         });
 
         // User goes offline
@@ -102,40 +96,3 @@ module.exports = function (server) {
     });
     return io; // Return the io instance for use in other files if needed
 };
-
-// Function to handle sending a message
-const sendMessage = async (msg) => {
-    const { user_id, admin_id, message, sender_id } = msg;
-
-    const insertMessageQuery = `
-        INSERT INTO tbl_messages (user_id, admin_id, message, sender_id)
-        VALUES (?, ?, ?, ?)`;
-
-    const insertMesasage = await db.query(insertMessageQuery, [user_id, admin_id, message, sender_id]);
-
-    const messageId = insertMesasage.insertId;
-
-    // Update conversation_session with the latest message and unread count
-    const updateSessionQuery = `
-            INSERT INTO tbl_chat_sessions (user_id, admin_id, last_message_id, unread_count)
-            VALUES (?, ?, ?, 1)
-            ON DUPLICATE KEY UPDATE
-            last_message_id = ?, unread_count = unread_count + 1`;
-
-    db.query(updateSessionQuery, [user_id, admin_id, messageId, messageId], (err) => {
-        if (err) {
-            console.error('Error updating chat session:', err);
-            return;
-        }
-    });
-};
-
-// setInterval(() => {
-//     const msg = {
-//         user_id: 20,
-//         admin_id: 955190,
-//         message: "test",
-//         sender_id: 20
-//     };
-//     sendMessage(msg);
-// }, 6000);
