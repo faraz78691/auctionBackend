@@ -607,6 +607,7 @@ exports.getAttributesByAttributeTypeId = async (req, res) => {
             return res.json({
                 success: true,
                 message: "Attributes fetched successfully",
+                attributeName: getAttributes[0].attribute_name,
                 typeAttributes: getAttributes,
                 status: 200,
             });
