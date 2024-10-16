@@ -693,11 +693,6 @@ exports.adminUpdateLoginStatus = async (status) => {
         console.log(updateStatus);
 
     } catch (err) {
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error",
-            error: err.message,
-            status: 500,
-        });
+        console.log("Internal Server Error =>", err);
     }
 };

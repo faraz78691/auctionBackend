@@ -17,8 +17,8 @@ module.exports = function (server) {
     });
 
     // Object to keep track of connected users and their socket IDs
-    var userSockets = {};  // Store userId and socket.id
-    var adminSockets = {}; // Store adminId and socket.id
+    const userSockets = {};  // Store userId and socket.id
+    const adminSockets = {}; // Store adminId and socket.id
 
     // Set up a connection event listener for incoming sockets
     io.on("connection", (socket) => {
@@ -51,16 +51,6 @@ module.exports = function (server) {
             adminUpdateLoginStatus('online');
         });
 
-        // Send previous chat history
-        db.query('SELECT * FROM tbl_messages ORDER BY created_at ASC', (err, results) => {
-            if (err) {
-                console.error("Database query error:", err);
-                socket.emit('error', 'Could not load chat history');
-                return;
-            }
-            socket.emit('chatHistory', results);
-        });
-
         // Listen for a new chat message
         socket.on('sendMessage', async (msg) => {
             const { user_id, admin_id, message, sender_id } = msg;
@@ -78,33 +68,34 @@ module.exports = function (server) {
             VALUES (?, ?, ?, 1) ON DUPLICATE KEY UPDATE last_message_id = ?, unread_count = unread_count + 1`;
                 const addSession = await db.query(updateSessionQuery, [user_id, admin_id, messageId, messageId]);
                 if (addSession.affectedRows > 0) {
-                    if (user_id === sender_id) {
-                        const adminSocketId = adminSockets[admin_id];
-                        const userSocketId = userSockets[user_id];
-                        if (adminSocketId) {
-                            io.to(adminSocketId).emit("getMessage", msg);
-                            io.to(userSocketId).emit("getMessage", msg);
-                            console.log(`Sent message from user ${user_id} to admin ${admin_id}`);
+                    const getLastMessage = `SELECT * FROM tbl_messages WHERE id = ?`
+                    const lastMessage = await db.query(getLastMessage, [messageId]);
+                    if (lastMessage.length > 0) {
+                        if (user_id === sender_id) {
+                            const adminSocketId = adminSockets[admin_id];
+                            const userSocketId = userSockets[user_id];
+                            if (adminSocketId) {
+                                io.to(adminSocketId).emit("getMessage", lastMessage[0]);
+                                io.to(userSocketId).emit("getMessage", lastMessage[0]);
+                                console.log(`Sent message from user ${user_id} to admin ${admin_id}`);
+                            }
+                        } else {
+                            const adminSocketId = adminSockets[admin_id];
+                            const userSocketId = userSockets[user_id];
+                            if (userSocketId) {
+                                io.to(adminSocketId).emit("getMessage", lastMessage[0]);
+                                io.to(userSocketId).emit("getMessage", lastMessage[0]);
+                                console.log(`Sent message from admin ${admin_id} to user ${user_id}`);
+                            }
                         }
                     } else {
-                        const adminSocketId = adminSockets[admin_id];
-                        const userSocketId = userSockets[user_id];
-                        if (userSocketId) {
-                            io.to(adminSocketId).emit("getMessage", msg);
-                            io.to(userSocketId).emit("getMessage", msg);
-                            console.log(`Sent message from admin ${admin_id} to user ${user_id}`);
-                        }
+                        socket.emit('error', 'Failed to last message get');
                     }
-                    // socket.emit("getMessage",  msg);
                 } else {
-                    console.error('Error inserting chat message:', err);
-                    socket.emit('error', 'Chat session could not be sent');
-                    return;
+                    socket.emit('error', 'Failed to update session');
                 }
             } else {
-                console.error('Error inserting chat message:', err);
                 socket.emit('error', 'Message could not be sent');
-                return;
             }
         });
 
