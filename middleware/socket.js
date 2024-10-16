@@ -39,16 +39,18 @@ module.exports = function (server) {
 
         // User goes online
         socket.on('user_login', (userId) => {
-            console.log(`User ${userId} has logged in.`);
+           
             userSockets[userId] = socket.id;
-            updateOnlineStatus(userId, 'online');
+            console.log("userSockets[userId]",  userSockets);
+            // updateOnlineStatus(userId, 'online');
         });
 
         // Admin goes online
         socket.on('admin_login', (adminId) => {
             console.log(`Admin ${adminId} has logged in.`);
-            adminSockets[adminId] = socket.id;  // Save the admin's socket id
-            adminUpdateLoginStatus('online');
+            adminSockets[adminId] = socket.id; 
+            console.log("adminSockets[adminId]", adminSockets[adminId]); // Save the admin's socket id
+            // adminUpdateLoginStatus('online');
         });
 
         // Listen for a new chat message
@@ -74,7 +76,8 @@ module.exports = function (server) {
                         if (user_id === sender_id) {
                             const adminSocketId = adminSockets[admin_id];
                             const userSocketId = userSockets[user_id];
-                            if (adminSocketId) {
+                         
+                            if (userSocketId) {
                                 io.to(adminSocketId).emit("getMessage", lastMessage[0]);
                                 io.to(userSocketId).emit("getMessage", lastMessage[0]);
                                 console.log(`Sent message from user ${user_id} to admin ${admin_id}`);
@@ -82,7 +85,7 @@ module.exports = function (server) {
                         } else {
                             const adminSocketId = adminSockets[admin_id];
                             const userSocketId = userSockets[user_id];
-                            if (userSocketId) {
+                            if (adminSocketId) {
                                 io.to(adminSocketId).emit("getMessage", lastMessage[0]);
                                 io.to(userSocketId).emit("getMessage", lastMessage[0]);
                                 console.log(`Sent message from admin ${admin_id} to user ${user_id}`);
