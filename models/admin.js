@@ -1,19 +1,15 @@
 const db = require("../utils/database");
 module.exports = {
     findEmail: async (email) => {
-        return db.query(`SELECT * FROM user_profile WHERE email = "${email}"`);
-    },
-
-    updateLoginStatusById: async (status, id) => {
-        return db.query(`UPDATE user_profile SET login_status = "${status}" WHERE user_id = ${id}`);
+        return db.query(`SELECT * FROM users WHERE email = "${email}"`);
     },
 
     tokenUpdate: async (token, id) => {
-        return db.query(`UPDATE user_profile SET token = ${token} WHERE user_id = ${id}`);
+        return db.query(`UPDATE users SET token = ${token} WHERE id = ${id}`);
     },
 
     fetchAllUsers: async () => {
-        return db.query('SELECT first_name, last_name, email, phone_number, concat(street_number, " ", street, " ", city, " ", state, " ", country, " ", postal_code ) AS address FROM `users`;');
+        return db.query('SELECT first_name, last_name, email, phone_number, concat(street_number, " ", street, " ", city, " ", state, " ", country, " ", postal_code ) AS address FROM `users` WHERE role_id = 1');
     },
 
     fetchAllUsersOffers: async () => {
@@ -21,7 +17,7 @@ module.exports = {
     },
 
     findAdminById: async (id) => {
-        return db.query(`SELECT * FROM user_profile WHERE user_id = "${id}"`);
+        return db.query(`SELECT * FROM users WHERE id = "${id}"`);
     },
 
     addCategory: async (cat_name) => {

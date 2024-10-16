@@ -22,7 +22,7 @@ module.exports = function (server) {
 
     // Set up a connection event listener for incoming sockets
     io.on("connection", (socket) => {
-        console.log("A user connected =>");
+        console.log("A user connected");
 
         // Listen for 'newBid' events from the client
         socket.on("newBid", (data) => {
@@ -48,9 +48,8 @@ module.exports = function (server) {
         // Admin goes online
         socket.on('admin_login', (adminId) => {
             console.log(`Admin ${adminId} has logged in.`);
-            adminSockets[adminId] = socket.id; 
-            console.log("adminSockets[adminId]", adminSockets[adminId]); // Save the admin's socket id
-            // adminUpdateLoginStatus('online');
+            adminSockets[adminId] = socket.id;  // Save the admin's socket id
+            adminUpdateLoginStatus(adminId, 'online');
         });
 
         // Listen for a new chat message
@@ -62,21 +61,27 @@ module.exports = function (server) {
             INSERT INTO tbl_messages (user_id, admin_id, message, sender_id)
             VALUES (?, ?, ?, ?)`;
             const addMessage = await db.query(insertMessageQuery, [user_id, admin_id, message, sender_id])
+
             if (addMessage.affectedRows > 0) {
                 const messageId = addMessage.insertId;
 
-                // Update conversation_session with the latest message and unread count
-                const updateSessionQuery = `INSERT INTO tbl_chat_sessions (user_id, admin_id, last_message_id, unread_count)
-            VALUES (?, ?, ?, 1) ON DUPLICATE KEY UPDATE last_message_id = ?, unread_count = unread_count + 1`;
-                const addSession = await db.query(updateSessionQuery, [user_id, admin_id, messageId, messageId]);
-                if (addSession.affectedRows > 0) {
-                    const getLastMessage = `SELECT * FROM tbl_messages WHERE id = ?`
+                const findLastMessage = await db.query('SELECT * FROM `tbl_chat_sessions` WHERE user_id = ? AND admin_id = ?', [user_id, admin_id]);
+
+                let session = '';
+                if (findLastMessage.length > 0) {
+                    session = await db.query('UPDATE `tbl_chat_sessions` SET `last_message_id`= ?, `unread_count`= ? WHERE user_id = ? AND admin_id = ?', [messageId, findLastMessage[0].unread_count + 1, user_id, admin_id]);
+                } else {
+                    // Add conversation_session with the latest message and unread count
+                    session = await db.query('INSERT INTO tbl_chat_sessions (user_id, admin_id, last_message_id, unread_count) VALUES (?, ?, ?, ?)', [user_id, admin_id, messageId, 1]);
+                }
+
+                if (session.affectedRows > 0) {
+                    const getLastMessage = `SELECT id, user_id, admin_id, message, image_path, sender_id, is_read, DATE_FORMAT(created_at, '%Y-%m-%dT%h:%i:%s.000Z') AS created_at, updated_at FROM tbl_messages WHERE id = ?`
                     const lastMessage = await db.query(getLastMessage, [messageId]);
                     if (lastMessage.length > 0) {
                         if (user_id === sender_id) {
                             const adminSocketId = adminSockets[admin_id];
                             const userSocketId = userSockets[user_id];
-                         
                             if (userSocketId) {
                                 io.to(adminSocketId).emit("getMessage", lastMessage[0]);
                                 io.to(userSocketId).emit("getMessage", lastMessage[0]);
@@ -90,8 +95,7 @@ module.exports = function (server) {
                                 io.to(userSocketId).emit("getMessage", lastMessage[0]);
                                 console.log(`Sent message from admin ${admin_id} to user ${user_id}`);
                             }
-                        }
-                    } else {
+                            
                         socket.emit('error', 'Failed to last message get');
                     }
                 } else {

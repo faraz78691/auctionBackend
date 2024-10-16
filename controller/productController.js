@@ -747,10 +747,17 @@ exports.getOffers = async (req, res) => {
             max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
             count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
           }
+        } else {
+          element.user_bid = {
+            user_id: (countR.length > 0 && countR[0]?.user_id != null) ? countR[0]?.user_id : 0,
+            max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
+            count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
+          }
         }
 
         const categoryRes = await getCategoryIdByProductId(element.product_id);
         if (categoryRes.length > 0) {
+          element.product_name = categoryRes[0].name;
           var categoryId = categoryRes[0].category_id;
           const categoryNameRes = await getCategorybyId(categoryId);
           if (categoryNameRes.length > 0) {
@@ -765,14 +772,31 @@ exports.getOffers = async (req, res) => {
         }
       }
     }
+    const categoryRes = await getCategoryIdByProductId(product_id);
+    if (categoryRes.length > 0) {
+      var categoryId = categoryRes[0].category_id;
+      var categoryNameRes = await getCategorybyId(categoryId);
+    }
     if (offers.length > 0) {
       return res.json({
         success: true,
         message: "Offer Sorted by time",
+        categoryName: offers[0].category_name,
+        prouductNmae: offers[0].product_name,
         offers: offers,
         status: 200,
       });
-    } else {
+    } else if (categoryRes.length > 0 || categoryNameRes.length > 0) {
+      return res.json({
+        success: false,
+        message: "Offer Sorted by time only category name and product name find",
+        categoryName: categoryNameRes.length > 0 ? categoryNameRes[0].cat_name : null,
+        productName: categoryRes.length > 0 ? categoryRes[0].name : null,
+        offers: null,
+        status: 400,
+      });
+    }
+    else {
       return res.json({
         success: false,
         message: "No Offers Found",
@@ -2075,6 +2099,12 @@ exports.getOffersByCategoryId = async (req, res) => {
             max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
             count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
           }
+        } else {
+          element.user_bid = {
+            user_id: (countR.length > 0 && countR[0]?.user_id != null) ? countR[0]?.user_id : 0,
+            max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
+            count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
+          }
         }
 
         const categoryRes = await getCategoryIdByProductId(element.product_id);
@@ -2093,14 +2123,25 @@ exports.getOffersByCategoryId = async (req, res) => {
         }
       }
     }
+    const categoryNameRes = await getCategorybyId(category_id);
     if (offers.length > 0) {
       return res.json({
         success: true,
         message: "Offer Sorted by time",
+        categoryName: offers[0].category_name,
         offers: offers,
         status: 200,
       });
-    } else {
+    } else if (categoryNameRes.length > 0) {
+      return res.json({
+        success: false,
+        message: "Offer Sorted by time only category name find",
+        categoryName: categoryNameRes[0].cat_name,
+        offers: null,
+        status: 400,
+      });
+    }
+    else {
       return res.json({
         success: false,
         message: "No Offers Found",

@@ -2,7 +2,7 @@ const Joi = require("joi");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const { findEmail, updateLoginStatusById, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findAttributesByAttributesTypeId, getAllMessageUserWise } = require("../models/admin");
+const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findAttributesByAttributesTypeId, getAllMessageUserWise } = require("../models/admin");
 const { updateData } = require("../models/common");
 
 exports.login = async (req, res) => {
@@ -40,17 +40,15 @@ exports.login = async (req, res) => {
         if (getAdmin.length > 0) {
             const match = bcrypt.compareSync(password, getAdmin[0].password);
             if (match) {
-                const status = "1"
-                await updateLoginStatusById(status, getAdmin[0].user_id);
                 const token = jwt.sign(
                     {
-                        user_id: getAdmin[0].user_id,
+                        user_id: getAdmin[0].id,
                     },
                     "SecretKey",
                     { expiresIn: "24h" }
                 );
 
-                await tokenUpdate(`"${token}"`, getAdmin[0].user_id);
+                await tokenUpdate(`"${token}"`, getAdmin[0].id);
 
                 delete getAdmin[0].token;
 
@@ -111,10 +109,7 @@ exports.logout = async (req, res) => {
 
         const getAdmin = await findAdminById(id);
         if (getAdmin.length > 0) {
-            const status = "0"
-            await updateLoginStatusById(status, getAdmin[0].user_id);
-
-            await tokenUpdate(null, getAdmin[0].user_id);
+            await tokenUpdate(null, getAdmin[0].id);
 
             delete getAdmin[0].token;
 
@@ -674,14 +669,15 @@ exports.getAllChatMessageUser = async (req, res) => {
     }
 };
 
-exports.adminUpdateLoginStatus = async (status) => {
+exports.adminUpdateLoginStatus = async (adminId, status) => {
     try {
         const schema = Joi.alternatives(
             Joi.object({
+                adminId: Joi.number().required().empty(),
                 status: Joi.string().required().empty()
             })
         );
-        const result = schema.validate(status);
+        const result = schema.validate(adminId, status);
         if (result.error) {
             const message = result.error.details.map((i) => i.message).join(",");
             console.log("error =>", message);
@@ -689,7 +685,7 @@ exports.adminUpdateLoginStatus = async (status) => {
         const userstatus = {
             online_status: status
         }
-        const updateStatus = await updateData('user_profile', ``, userstatus);
+        const updateStatus = await updateData('users', `WHERE id = ${adminId}`, userstatus);
         console.log(updateStatus);
 
     } catch (err) {
