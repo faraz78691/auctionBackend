@@ -71,6 +71,9 @@ app.get('/login', (req, res, next) => {
 
 app.get('/callback', (req, res, next) => {
   passport.authenticate('openidconnect', { failureRedirect: '/' }, (err, user, info) => {
+    console.log(err);
+    console.log(user);
+    
       if (err) {
           console.error('Authentication error:', err);
           return res.redirect('/');
@@ -108,7 +111,8 @@ const admin = require('./routes/admin');
 const product = require('./routes/product');
 const moovPayment = require('./routes/moov_paymentgetway');
 const bankId = require('./routes/bankId');
-const { updateOfferExpired } = require('./helper/offerControl')
+const { updateOfferExpired } = require('./helper/offerControl');
+const { log } = require("console");
 
 app.use(cors());
 global.__basedir = __dirname;

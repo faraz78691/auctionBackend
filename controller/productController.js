@@ -782,7 +782,7 @@ exports.getOffers = async (req, res) => {
         success: true,
         message: "Offer Sorted by time",
         categoryName: offers[0].category_name,
-        prouductName: offers[0].product_name,
+        productName: offers[0].product_name,
         offers: offers,
         status: 200,
       });
