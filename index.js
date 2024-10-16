@@ -3,6 +3,8 @@ const http = require('http');
 const cors = require('cors');
 const app = express();
 const session = require('express-session');
+const passport = require('passport');
+require('dotenv').config();
 
 // Middleware for sessions
 app.use(session({
@@ -10,15 +12,15 @@ app.use(session({
   resave: false,
   saveUninitialized: true
 }));
-require('dotenv').config();
 
-let client
+app.use(passport.initialize());
+app.use(passport.session());
+
 (async () => {
   try {
     const openidClient = await import('openid-client');
-
     // Extract Issuer and generators from the imported module
-    const { Issuer, generators } = openidClient.default || openidClient;
+    const { Issuer, Strategy, generators } = openidClient.default || openidClient;
 
 
     // Check if Issuer is defined
@@ -31,66 +33,68 @@ let client
     // Discover the Criipto Issuer
     const criiptoIssuer = await Issuer.discover('https://gf-fch-ed-sds-test.criipto.id/');
 
-    const client_id = process.env.CLIENT_ID;
-    const client_secret = process.env.CLIENT_SECRET;
-
-    // Check if client_id is properly set
-    if (!client_id || !client_secret) {
-      throw new Error('client_id or client_secret is missing. Please check your environment variables.');
-    }
-
-    // Initialize the Client
-    client = new criiptoIssuer.Client({
-      client_id,    // Use from environment variable
-      client_secret, // Use from environment variable
-      redirect_uris: ['https://gf-fch-ed-sds-test.criipto.id/qr/'],
-      response_types: ['code']
+    const client = new criiptoIssuer.Client({
+      client_id: process.env.CLIENT_ID,
+      client_secret: process.env.CLIENT_SECRET,
+      redirect_uris: [process.env.REDIRECT_URI],
+      response_types: ['code'],
     });
 
-    console.log('Criipto Issuer and client set up successfully.');
+    // Set up the Passport OpenID Connect strategy
+    passport.use('openidconnect', new Strategy({ client }, (tokenSet, userInfo, done) => {
+      return done(null, userInfo);
+    }));
 
-
-    // Create a customer API function
-    app.get('/login', async (req, res) => {
-      if (!client) {
-        return res.status(500).send('Client not initialized. Try again later.');
-      }
-      const codeVerifier = generators.codeVerifier();
-      const codeChallenge = generators.codeChallenge(codeVerifier);
-
-      req.session.codeVerifier = codeVerifier;
-
-      const authorizationUrl = client.authorizationUrl({
-        scope: 'openid',
-        response_type: 'code',
-        code_challenge: codeChallenge,
-        code_challenge_method: 'S256',
-        acr_values: 'urn:grn:authn:se:bankid:same-device' // Sweden BankID specific ACR
-      });
-
-      res.redirect(authorizationUrl);
+    // Serialize and deserialize user
+    passport.serializeUser((user, done) => {
+      done(null, user);
     });
 
-    app.get('/callback', async (req, res) => {
-      if (!client) {
-        return res.status(500).send('Client not initialized. Try again later.');
-      }
-      try {
-        const params = client.callbackParams(req);
-        const tokenSet = await client.callback('https://gf-fch-ed-sds-test.criipto.id/qr/', params, {
-          code_verifier: req.session.codeVerifier
-        });
-
-        req.session.tokenSet = tokenSet;
-        res.send(`User authenticated! Access token: ${tokenSet.access_token}`);
-      } catch (error) {
-        res.status(500).send(`Error during callback: ${error.message}`);
-      }
+    passport.deserializeUser((user, done) => {
+      done(null, user);
     });
   } catch (error) {
     console.error('Error setting up Criipto or Issuer:', error);
   }
 })();
+
+// Routes
+app.get('/login', (req, res, next) => {
+  const state = 'asfasfascasffas'; // Generate a random state string
+  const authorizationUrl = passport.authenticate('openidconnect', {
+      scope: 'openid profile email',
+      prompt: 'login',
+      state: state, // Pass the state parameter
+  });
+  return authorizationUrl(req, res, next);
+});
+
+app.get('/callback', (req, res, next) => {
+  passport.authenticate('openidconnect', { failureRedirect: '/' }, (err, user, info) => {
+      if (err) {
+          console.error('Authentication error:', err);
+          return res.redirect('/');
+      }
+      if (!user) {
+          console.error('No user found:', info);
+          return res.redirect('/');
+      }
+      req.logIn(user, (err) => {
+          if (err) {
+              console.error('Login error:', err);
+              return res.redirect('/');
+          }
+          res.send(`Hello, ${user.name}! You are logged in.`);
+      });
+  })(req, res, next);
+});
+
+
+app.get('/logout', (req, res) => {
+  req.logout();
+  res.redirect('/');
+});
+
 // Setup HTTP server
 const server = http.createServer(app);
 
