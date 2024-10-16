@@ -46,7 +46,7 @@ module.exports = {
   },
 
   getOffersByWhereClause: async (where, user_id, limit, offset) => {
-    if (user_id == '') {      
+    if (user_id == '') {
       return db.query(`SELECT
         id,
         offer_unique_id,
@@ -76,7 +76,7 @@ module.exports = {
         user_id
                                   from offers_created ${where}
                                   ORDER BY remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset};`);
-    } else {      
+    } else {
       return db.query(`SELECT
         offers_created.id,
         offers_created.offer_unique_id,
@@ -182,11 +182,11 @@ module.exports = {
   },
 
   getCategoryIdByProductId: async (product_id) => {
-    return db.query("select category_id from product where id=?", [product_id]);
+    return db.query("select category_id, name from product where id=?", [product_id]);
   },
 
   getCategorybyId: async (categoryId) => {
-    return db.query("select cat_name from category where id=?", [categoryId]);
+    return db.query("select cat_name from category where id = ?", [categoryId]);
   },
 
   getProductDetailsByID: async (product_id) => {
