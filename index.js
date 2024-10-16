@@ -41,7 +41,7 @@ app.use(passport.session());
     });
 
     // Set up the Passport OpenID Connect strategy
-    passport.use('openidconnect', new Strategy({ client }, (tokenSet, userInfo, done) => {
+    passport.use('openidconnect', new Strategy({ client }, (tokenSet, userInfo, done) => {  
       return done(null, userInfo);
     }));
 
