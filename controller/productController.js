@@ -404,7 +404,21 @@ exports.createOffer = async (req, res) => {
         startDate.getSeconds(),
         startDate.getMilliseconds()
       );
-      const unique_id = Math.floor(100000 + Math.random() * 900000);
+
+      let unique_id;
+      let isUnique = false;
+
+      // Loop to generate a unique offer ID
+      while (!isUnique) {
+        unique_id = Math.floor(100000 + Math.random() * 900000); // Generate a 6-digit unique ID
+
+        // Check if the unique_id exists in the database
+        const [rows] = await db.execute('SELECT COUNT(*) AS count FROM offers_created WHERE offer_unique_id = ?', [unique_id]);
+
+        if (rows[0].count === 0) {
+          isUnique = true; // If no existing offer has this unique_id, we can use it
+        }
+      }
 
       const offer_created = {
         offer_unique_id: unique_id,

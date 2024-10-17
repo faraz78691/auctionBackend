@@ -60,7 +60,6 @@ app.use(passport.session());
 
 // Routes
 app.get('/login', (req, res, next) => {
-  const state = 'asfasfascasffas'; // Generate a random state string
   const authorizationUrl = passport.authenticate('openidconnect', {
     scope: 'openid profile email',
     acr_values: 'urn:grn:authn:se:bankid:qr',

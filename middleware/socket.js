@@ -95,7 +95,7 @@ module.exports = function (server) {
                                 io.to(userSocketId).emit("getMessage", lastMessage[0]);
                                 console.log(`Sent message from admin ${admin_id} to user ${user_id}`);
                             }
-                        }
+                        } 
                         socket.emit('error', 'Failed to last message get');
                     }
                 } else {
