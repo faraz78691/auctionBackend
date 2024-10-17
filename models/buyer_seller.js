@@ -83,7 +83,7 @@ END AS is_favorite FROM offers_created LEFT JOIN favourites_offer ON favourites_
 
   getOffersByBuyerID: async (buyer) => {
     return db.query(
-      `SELECT offer_id  FROM user_bids WHERE user_id = ${buyer} ORDER BY created_at DESC`
+      `SELECT offer_id FROM user_bids WHERE user_id = ${buyer} ORDER BY created_at DESC`
     );
   },
 

@@ -41,7 +41,7 @@ app.use(passport.session());
     });
 
     // Set up the Passport OpenID Connect strategy
-    passport.use('openidconnect', new Strategy({ client }, (tokenSet, userInfo, done) => {  
+    passport.use('openidconnect', new Strategy({ client }, (tokenSet, userInfo, done) => {
       return done(null, userInfo);
     }));
 
@@ -62,33 +62,36 @@ app.use(passport.session());
 app.get('/login', (req, res, next) => {
   const state = 'asfasfascasffas'; // Generate a random state string
   const authorizationUrl = passport.authenticate('openidconnect', {
-      scope: 'openid profile email',
-      prompt: 'login',
-      state: state, // Pass the state parameter
+    scope: 'openid profile email',
+    acr_values: 'urn:grn:authn:se:bankid:qr',
+    prompt: 'login'
   });
   return authorizationUrl(req, res, next);
 });
 
 app.get('/callback', (req, res, next) => {
   passport.authenticate('openidconnect', { failureRedirect: '/' }, (err, user, info) => {
-    console.log(err);
-    console.log(user);
-    
+    const { id_token, access_token } = req.session.tokenSet || {};
+    if (id_token && access_token) {
+      res.send(`Authenticated. Access token: ${access_token}`);
+    } else {
+      res.status(500).send('Error during authentication. Please try again.');
+    }
+    if (err) {
+      console.error('Authentication error:', err);
+      return res.redirect('/');
+    }
+    if (!user) {
+      console.error('No user found:', info);
+      return res.redirect('/');
+    }
+    req.logIn(user, (err) => {
       if (err) {
-          console.error('Authentication error:', err);
-          return res.redirect('/');
+        console.error('Login error:', err);
+        return res.redirect('/');
       }
-      if (!user) {
-          console.error('No user found:', info);
-          return res.redirect('/');
-      }
-      req.logIn(user, (err) => {
-          if (err) {
-              console.error('Login error:', err);
-              return res.redirect('/');
-          }
-          res.send(`Hello, ${user.name}! You are logged in.`);
-      });
+      res.send(`Hello, ${user.name}! You are logged in.`);
+    });
   })(req, res, next);
 });
 

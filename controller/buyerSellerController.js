@@ -252,6 +252,7 @@ exports.getPriceSuggestedBySellerStatus = async (req, res) => {
         var offerDetails = await getOfferDetailsByID(offerId);
         if (offerDetails.length > 0) {
           var thumbnail = await getMainImage(offerDetails[0]?.images_id);
+          tempObj.offer_unique_id = offerDetails[0]?.offer_unique_id;
           tempObj.name = offerDetails[0]?.title;
           tempObj.end_date = offerDetails[0]?.end_date;
           tempObj.fixed_offer_price = offerDetails[0]?.fixed_offer_price;
@@ -321,6 +322,7 @@ exports.getPriceSuggestedForBuyer = async (req, res) => {
         var offerDetails = await getOfferDetailsByID(offerId);
         if (offerDetails.length > 0) {
           var thumbnail = await getMainImage(offerDetails[0]?.images_id);
+          tempObj.offer_unique_id = offerDetails[0]?.offer_unique_id;
           tempObj.name = offerDetails[0]?.title;
           tempObj.end_date = offerDetails[0]?.end_date;
           tempObj.fixed_offer_price = offerDetails[0]?.fixed_offer_price;
@@ -551,6 +553,7 @@ exports.getOffersByBuyer = async (req, res) => {
         var offerId = el.offer_id;
         const OfferDetail = await getOffersByOfferId(offerId, user_id);
         if (OfferDetail.length > 0) {
+          tempObj.offer_unique_id = OfferDetail[0]?.offer_unique_id,
           tempObj.title = OfferDetail[0]?.title;
           tempObj.end_date = OfferDetail[0]?.end_date;
           tempObj.start_price = OfferDetail[0]?.start_price;
