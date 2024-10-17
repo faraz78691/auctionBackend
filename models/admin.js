@@ -29,7 +29,7 @@ module.exports = {
     },
 
     getCategorybyId: async (categoryId) => {
-        return db.query("select cat_name from category where id=?", [categoryId]);
+        return db.query("select id, cat_name from category where id = ?", [categoryId]);
     },
 
     addProduct: async (product) => {
@@ -74,6 +74,14 @@ module.exports = {
 
     getAllMessageUserWise: async () => {
         return db.query("SELECT cs.user_id, cs.admin_id, CONCAT(u.first_name, ' ', u.last_name) AS user_name, u.online_status, m.message, m.created_at, cs.unread_count FROM tbl_chat_sessions cs JOIN users u ON cs.user_id = u.id JOIN tbl_messages m ON cs.last_message_id = m.id ORDER BY m.created_at DESC");
+    },
+
+    updateCategoryById: async (category_id, cat_name) => {
+        return await db.query('UPDATE `category` SET `cat_name`= "' + cat_name + '" WHERE id = "' + category_id + '"');
+    },
+
+    updateProductById: async (product_id, name) => {
+        return await db.query('UPDATE `product` SET `name`= "' + name + '" WHERE id = "' + product_id + '"');
     }
 
 };
