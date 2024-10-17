@@ -13,10 +13,14 @@ router.get('/getAllUsersOffers', adminAuth, adminController.getAllUsersOffers);
 // Category
 router.post('/addCategory', adminAuth, adminController.addCategory);
 router.get('/getAllCategory', adminAuth, adminController.getAllCategory);
+router.post('/getCategoryById', adminAuth, adminController.getCategoryById)
+router.post('/updateCategoryById', adminAuth, adminController.updateCategoryById);
 
 // Product
 router.post('/addProduct', adminAuth, adminController.addProduct);
 router.get('/getProductByCategoryId', adminAuth, adminController.getProductByCategoryId);
+router.post('/getProductByProductId', adminAuth, adminController.getProductByProductId);
+router.post('/updateProductByProductId', adminAuth, adminController.updateProductByProductId);
 router.post('/addProductTypeAttributes', adminAuth, adminController.addProductTypeAttributes);
 router.get('/getTypeAttributesByProductId', adminAuth, adminController.getTypeAttributesByProductId);
 router.post('/addProductAttributes', adminAuth, adminController.addProductAttributes);

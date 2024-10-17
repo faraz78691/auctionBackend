@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@criipto/verify-express": "^1.0.3",
     "@moovio/node": "^1.2.2",
     "axios": "^1.6.7",
     "axios-retry": "^4.5.0",
@@ -18,7 +19,7 @@
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^16.4.5",
-    "express": "^4.18.2",
+    "express": "^4.21.1",
     "express-session": "^1.18.1",
     "fcm-node": "^1.6.1",
     "firebase": "^10.14.0",

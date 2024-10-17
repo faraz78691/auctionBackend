@@ -1249,7 +1249,7 @@ exports.getChatMessage = async (req, res) => {
         error: message,
         missingParams: result.error.details[0].message,
         status: 200,
-        success: true,
+        success: false,
       });
     }
     const findAllMessage = await getAllMessageByUserId(user_id);
@@ -1264,7 +1264,7 @@ exports.getChatMessage = async (req, res) => {
       return res.json({
         message: "Fetch user all chat message failed",
         status: 200,
-        success: true,
+        success: false,
       });
     }
   } catch (err) {

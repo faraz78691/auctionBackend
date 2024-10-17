@@ -2,7 +2,7 @@ const Joi = require("joi");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findAttributesByAttributesTypeId, getAllMessageUserWise } = require("../models/admin");
+const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findAttributesByAttributesTypeId, getAllMessageUserWise, updateCategoryById, updateProductById } = require("../models/admin");
 const { updateData } = require("../models/common");
 
 exports.login = async (req, res) => {
@@ -269,6 +269,106 @@ exports.getAllCategory = async (req, res) => {
     }
 };
 
+exports.getCategoryById = async (req, res) => {
+    try {
+        const { category_id } = req.body;
+        const schema = Joi.alternatives(
+            Joi.object({
+                category_id: Joi.number().required().empty(),
+            })
+        );
+        const result = schema.validate(req.body);
+        if (result.error) {
+            const message = result.error.details.map((i) => i.message).join(",");
+            return res.json({
+                message: result.error.details[0].message,
+                error: message,
+                missingParams: result.error.details[0].message,
+                status: 200,
+                success: true,
+            });
+        }
+        const results = await getCategorybyId(category_id);
+        if (results.length !== 0) {
+            return res.json({
+                success: true,
+                message: "fetch categorys by id success",
+                status: 200,
+                insertId: results[0],
+            });
+        } else {
+            return res.json({
+                success: true,
+                message: "Fetch categorys by id failed",
+                status: 200,
+            });
+        }
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false,
+            message: "Internal server error",
+            error: err,
+            status: 500,
+        });
+    }
+};
+
+exports.updateCategoryById = async (req, res) => {
+    try {
+        const { category_id, cat_name } = req.body;
+        const schema = Joi.alternatives(
+            Joi.object({
+                category_id: Joi.number().required().empty(),
+                cat_name: Joi.string().required().empty(),
+            })
+        );
+        const result = schema.validate(req.body);
+        if (result.error) {
+            const message = result.error.details.map((i) => i.message).join(",");
+            return res.json({
+                message: result.error.details[0].message,
+                error: message,
+                missingParams: result.error.details[0].message,
+                status: 200,
+                success: true,
+            });
+        }
+        const results = await getCategorybyId(category_id);
+        if (results.length !== 0) {
+            const updateCategory = await updateCategoryById(category_id, cat_name);
+            if (updateCategory.affectedRows > 0) {
+                return res.json({
+                    success: true,
+                    message: "Successfully update",
+                    status: 200,
+                    insertId: updateCategory,
+                });
+            } else {
+                return res.json({
+                    success: true,
+                    message: "Not update",
+                    status: 200,
+                });
+            }
+        } else {
+            return res.json({
+                success: true,
+                message: "Wrong category id",
+                status: 200,
+            });
+        }
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false,
+            message: "Internal server error",
+            error: err,
+            status: 500,
+        });
+    }
+};
+
 exports.addProduct = async (req, res) => {
     try {
         const { name, category_id } = req.body;
@@ -374,6 +474,104 @@ exports.getProductByCategoryId = async (req, res) => {
                 success: false,
                 message: "Category Id Wrong",
                 status: 400,
+            });
+        }
+    } catch (err) {
+        return res.json({
+            success: false,
+            message: "Internal server error",
+            error: err,
+            status: 500,
+        });
+    }
+};
+
+exports.getProductByProductId = async (req, res) => {
+    try {
+        const { product_id } = req.body;
+        const schema = Joi.alternatives(
+            Joi.object({
+                product_id: Joi.number().required().empty(),
+            })
+        );
+        const result = schema.validate(req.body);
+        if (result.error) {
+            const message = result.error.details.map((i) => i.message).join(",");
+            return res.json({
+                message: result.error.details[0].message,
+                error: message,
+                missingParams: result.error.details[0].message,
+                status: 200,
+                success: false,
+            });
+        }
+        const results = await findProductById(product_id);
+        if (results.length !== 0) {
+            return res.json({
+                success: true,
+                message: "fetch product by id success",
+                status: 200,
+                productList: results[0],
+            });
+        } else {
+            return res.json({
+                success: false,
+                message: "Fetch product by id failed",
+                status: 200,
+            });
+        }
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false,
+            message: "Internal server error",
+            error: err,
+            status: 500,
+        });
+    }
+};
+
+exports.updateProductByProductId = async (req, res) => {
+    try {
+        const { product_id, name } = req.body;
+        const schema = Joi.alternatives(
+            Joi.object({
+                product_id: Joi.number().required().empty(),
+                name: Joi.string().required().empty(),
+            })
+        );
+        const result = schema.validate(req.body);
+        if (result.error) {
+            const message = result.error.details.map((i) => i.message).join(",");
+            return res.json({
+                message: result.error.details[0].message,
+                error: message,
+                missingParams: result.error.details[0].message,
+                status: 200,
+                success: false,
+            });
+        }
+        const getProduct = await findProductById(product_id);
+        if (getProduct.length <= 0) {
+            return res.json({
+                success: false,
+                message: "product id is wrong",
+                status: 200,
+            });
+        }
+        const updateProduct = await updateProductById(product_id, name);
+        if (updateProduct.affectedRows > 0) {
+            return res.json({
+                success: true,
+                message: "Successfully update",
+                status: 200,
+                insertId: updateProduct,
+            });
+        } else {
+            return res.json({
+                success: false,
+                message: "Not update",
+                status: 200,
             });
         }
     } catch (err) {
