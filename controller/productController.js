@@ -57,7 +57,7 @@ const {
   getLatestOffer,
   findBidCountUserId,
 } = require("../models/product");
-
+const db = require("../utils/database");
 const Joi = require("joi");
 const jwt = require("jsonwebtoken");
 const path = require("path");
@@ -413,9 +413,8 @@ exports.createOffer = async (req, res) => {
         unique_id = Math.floor(100000 + Math.random() * 900000); // Generate a 6-digit unique ID
 
         // Check if the unique_id exists in the database
-        const [rows] = await db.execute('SELECT COUNT(*) AS count FROM offers_created WHERE offer_unique_id = ?', [unique_id]);
-
-        if (rows[0].count === 0) {
+        const [rows] = await db.query('SELECT COUNT(*) AS count FROM offers_created WHERE offer_unique_id = ?', [unique_id]);
+        if (rows.count === 0) {
           isUnique = true; // If no existing offer has this unique_id, we can use it
         }
       }

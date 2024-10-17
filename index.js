@@ -62,7 +62,6 @@ app.use(passport.session());
 app.get('/login', (req, res, next) => {
   const authorizationUrl = passport.authenticate('openidconnect', {
     scope: 'openid profile email',
-    acr_values: 'urn:grn:authn:se:bankid:qr',
     prompt: 'login'
   });
   return authorizationUrl(req, res, next);
