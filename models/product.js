@@ -245,7 +245,7 @@ module.exports = {
   // updated code 26-07-2024
   getTransactionsHistoryUpdated: async (user_id) => {
 
-    return db.query(`select A.*,S.first_name,S.last_name,O.images_id,O.offerStart,O.fixed_offer_price, O.title from  buy_sell_transactions A 
+    return db.query(`select A.*,S.first_name,S.last_name,O.offer_unique_id,O.images_id,O.offerStart,O.fixed_offer_price, O.title from  buy_sell_transactions A 
     LEFT JOIN offers_created O ON A.offer_id = O.id  
     LEFT JOIN users S ON A.seller_id = S.id  
     where A.buyer_id = '${user_id}'`);
