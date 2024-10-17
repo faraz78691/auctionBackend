@@ -39,9 +39,10 @@ module.exports = function (server) {
 
         // User goes online
         socket.on('user_login', (userId) => {
-            console.log(`User ${userId} has logged in.`);
+           
             userSockets[userId] = socket.id;
-            updateOnlineStatus(userId, 'online');
+            console.log("userSockets[userId]",  userSockets);
+            // updateOnlineStatus(userId, 'online');
         });
 
         // Admin goes online
@@ -94,8 +95,7 @@ module.exports = function (server) {
                                 io.to(userSocketId).emit("getMessage", lastMessage[0]);
                                 console.log(`Sent message from admin ${admin_id} to user ${user_id}`);
                             }
-                        }
-                    } else {
+                        } 
                         socket.emit('error', 'Failed to last message get');
                     }
                 } else {
