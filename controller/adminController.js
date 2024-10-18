@@ -453,7 +453,7 @@ exports.getProductByCategoryId = async (req, res) => {
             const product = await findProductByCategoryId(category_id);
             if (product.length > 0) {
                 const data = {
-                    category: category[0].cat_name,
+                    category: category[0],
                     products: product
                 }
                 return res.json({
@@ -465,6 +465,7 @@ exports.getProductByCategoryId = async (req, res) => {
             } else {
                 return res.json({
                     success: false,
+                    category: category[0],
                     message: "product failed to get",
                     status: 400,
                 });
@@ -620,7 +621,25 @@ exports.addProductTypeAttributes = async (req, res) => {
                     input_type: input_type
                 }
                 const addProductTypeAttribute = await addProductAttributeType(attribute);
-                if (addProductTypeAttribute.affectedRows == 1) {
+                if (addProductTypeAttribute.affectedRows > 0) {
+                    if (attribute_name == 'Country' || attribute_name == 'Colors') {
+                        const attributeValueMapping = {
+                            Country: 'Any Country',
+                            Colors: 'All colors',
+                        };
+
+                        const attributeMapping = {
+                            product_id: product_id,
+                            attribute_id: addProductTypeAttribute.insertId,
+                            attribute_value_name: attributeValueMapping[attribute_name] || attribute_name // Default to attribute_name if not mapped
+                        };
+
+                        try {
+                            const addProductAttributeMapping = await addProductAttribute(attributeMapping);
+                        } catch (error) {
+                            console.error('Error adding product attribute mapping:', error);
+                        }
+                    }
                     return res.json({
                         success: true,
                         message: "Product type attributes add successfully",
@@ -693,7 +712,7 @@ exports.getTypeAttributesByProductId = async (req, res) => {
         } else {
             return res.json({
                 success: false,
-                message: "Product Id Wrong",
+                message: "Product attributes no t found",
                 status: 400,
             });
         }
