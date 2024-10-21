@@ -2,7 +2,7 @@ const Joi = require("joi");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById } = require("../models/admin");
+const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById } = require("../models/admin");
 const { updateData } = require("../models/common");
 
 exports.login = async (req, res) => {
@@ -708,16 +708,29 @@ exports.getTypeAttributesByProductId = async (req, res) => {
             });
         }
 
+        var getProduct = await findProductById(product_id);
         var getAttribute = await findTypeAttributesByProductId(product_id);
         if (getAttribute.length > 0) {
             return res.json({
                 success: true,
                 message: "Product Attributes fetched successfully",
                 product: {
-                    id: product_id,
+                    id: getProduct[0].id,
                     name: getAttribute[0].name
                 },
                 typeAttributes: getAttribute,
+                status: 200,
+            });
+        } else if (getProduct.length > 0) {
+            return res.json({
+                error: true,
+                success: false,
+                message: "Product fetched successfully",
+                product: {
+                    id: getProduct[0].id,
+                    name: getProduct[0].name
+                },
+                typeAttributes: null,
                 status: 200,
             });
         } else {
@@ -826,14 +839,24 @@ exports.getAttributesByAttributeTypeId = async (req, res) => {
                 success: false,
             });
         }
+        var getTypeAttributes = await findTypeAttributeById(attribute_id);
         var getAttributes = await findAttributesByAttributesTypeId(attribute_id);
         if (getAttributes.length > 0) {
             return res.json({
                 success: true,
                 message: "Attributes fetched successfully",
-                attributeName: getAttributes[0].attribute_name,
+                attributeName: getTypeAttributes[0].attribute_name,
                 typeAttributes: getAttributes,
                 status: 200,
+            });
+        } else if (getTypeAttributes.length > 0) {
+            return res.json({
+                error: true,
+                success: false,
+                message: "Attributes Type fetched successfully",
+                attributeName: getTypeAttributes[0].attribute_name,
+                typeAttributes: null,
+                status: 400,
             });
         } else {
             return res.json({
@@ -939,4 +962,93 @@ exports.deleteProductTypeAttribute = async (req, res) => {
     } catch (error) {
         return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
     }
-}
+};
+
+exports.deleteProductAttributeMapping = async (req, res) => {
+    try {
+        const { product_attribute_id } = req.body;
+        const schema = Joi.object({
+            product_attribute_id: Joi.string().required().messages({
+                'string.base': 'Product Attribute Id must be a string',
+                'string.empty': 'Product Attribute Id is required',
+                'any.required': 'Product Attribute Id is required',
+            })
+        })
+
+        const { error } = schema.validate(req.body);
+        if (error) {
+            return res.status(400).json({
+                error: true,
+                message: error.details[0].message,
+                status: 400,
+                success: false
+            });
+        } else {
+            const deleteResult = await productAttributeMappingDeleteById(product_attribute_id);
+            if (deleteResult.affectedRows > 0) {
+                return res.status(200).json({
+                    error: false,
+                    message: "Successfully delete",
+                    status: 200,
+                    success: true
+                });
+            } else {
+                return res.status(400).json({
+                    error: true,
+                    message: "Not delete",
+                    status: 400,
+                    success: false
+                });
+            }
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
+    }
+};
+
+exports.updateProductAttributeMapping = async (req, res) => {
+    try {
+        const { id, attribute_value_name } = req.body;
+        const schema = Joi.object({
+            id: Joi.string().required().messages({
+                'string.base': 'Id must be a string',
+                'string.empty': 'Id is required',
+                'any.required': 'Id is required',
+            }),
+            attribute_value_name: Joi.string().required().messages({
+                'string.base': 'Attribute Value Name must be a string',
+                'string.empty': 'Attribute Value Name is required',
+                'any.required': 'Attribute Value Name is required',
+            })
+        })
+
+        const { error } = schema.validate(req.body);
+        if (error) {
+            return res.status(400).json({
+                error: true,
+                message: error.details[0].message,
+                status: 400,
+                success: false
+            });
+        } else {
+            const updateResult = await productAttributeMappingUpdateById(id, attribute_value_name);
+            if (deleteResult.affectedRows > 0) {
+                return res.status(200).json({
+                    error: false,
+                    message: "Successfully delete",
+                    status: 200,
+                    success: true
+                });
+            } else {
+                return res.status(400).json({
+                    error: true,
+                    message: "Not delete",
+                    status: 400,
+                    success: false
+                });
+            }
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
+    }
+};
