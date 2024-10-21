@@ -913,7 +913,7 @@ exports.deleteProductTypeAttribute = async (req, res) => {
         const { error } = schema.validate(req.body);
         if (error) {
             return res.status(400).json({
-                errors: true,
+                error: true,
                 message: error.details[0].message,
                 status: 400,
                 success: false
@@ -921,15 +921,15 @@ exports.deleteProductTypeAttribute = async (req, res) => {
         } else {
             const deleteResult = await productTypeDeleteById(product_type_id);
             if (deleteResult.affectedRows > 0) {
-                return res.status(400).json({
-                    errors: false,
+                return res.status(200).json({
+                    error: false,
                     message: "Successfully delete",
                     status: 200,
                     success: true
                 });
             } else {
                 return res.status(400).json({
-                    errors: true,
+                    error: true,
                     message: "Not delete",
                     status: 400,
                     success: false
