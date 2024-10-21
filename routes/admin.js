@@ -27,5 +27,7 @@ router.post('/addProductAttributes', adminAuth, adminController.addProductAttrib
 router.get('/getAttributesByAttributeTypeId', adminAuth, adminController.getAttributesByAttributeTypeId);
 router.get('/getAllChatMessageUser', adminAuth, adminController.getAllChatMessageUser);
 router.post('/deleteProductTypeAttribute', adminAuth, adminController.deleteProductTypeAttribute);
+router.post('/deleteProductAttributeMapping', adminAuth, adminController.deleteProductAttributeMapping);
+router.post('/updateProductAttributeMapping', adminAuth, adminController.updateProductAttributeMapping);
 
 module.exports = router;

@@ -68,6 +68,10 @@ module.exports = {
         return db.query("insert into product_attributes_mapping set ?", [data]);
     },
 
+    findTypeAttributeById: async (id) => {
+        return await db.query('SELECT * FROM `product_type_attribute` WHERE id = "' + id + '"');
+    },
+
     findAttributesByAttributesTypeId: async (attribute_id) => {
         return db.query(`SELECT product_attributes_mapping.*, product_type_attribute.attribute_name FROM product_attributes_mapping LEFT JOIN product_type_attribute ON product_type_attribute.id = product_attributes_mapping.attribute_id WHERE attribute_id = ${attribute_id}`);
     },
@@ -90,6 +94,10 @@ module.exports = {
 
     productTypeDeleteById: async (id) => {
         return await db.query('DELETE FROM `product_type_attribute` WHERE id = "' + id + '"');
+    },
+
+    productAttributeMappingDeleteById: async(id) => {
+        return await db.query('DELETE FROM `product_attributes_mapping` WHERE id = "' + id +'"');
     }
 
 };
