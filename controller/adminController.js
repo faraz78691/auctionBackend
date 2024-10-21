@@ -2,7 +2,7 @@ const Joi = require("joi");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById } = require("../models/admin");
+const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById } = require("../models/admin");
 const { updateData } = require("../models/common");
 
 exports.login = async (req, res) => {
@@ -650,6 +650,64 @@ exports.addProductTypeAttributes = async (req, res) => {
                         } catch (error) {
                             console.error('Error adding product attribute mapping:', error);
                         }
+                    } else if (attribute_name == 'Miscellaneous' && heading == 'Gender') {
+                        const attributeMapping = [{
+                            product_id: product_id,
+                            attribute_id: addProductTypeAttribute.insertId,
+                            attribute_value_name: 'Men' // Default to attribute_name if not mapped
+                        },
+                        {
+                            product_id: product_id,
+                            attribute_id: addProductTypeAttribute.insertId,
+                            attribute_value_name: 'Women' // Default to attribute_name if not mapped
+                        },
+                        {
+                            product_id: product_id,
+                            attribute_id: addProductTypeAttribute.insertId,
+                            attribute_value_name: 'Unisex' // Default to attribute_name if not mapped
+                        },
+                        ];
+                        for (let x of attributeMapping) {
+                            try {
+                                const addProductAttributeMapping = await addProductAttribute(x);
+                            } catch (error) {
+                                console.error('Error adding product attribute mapping:', error);
+                            }
+                        }
+                    } else if (attribute_name == 'Misc' && heading == 'Guarantee') {
+                        const attributeMapping = [{
+                            product_id: product_id,
+                            attribute_id: addProductTypeAttribute.insertId,
+                            attribute_value_name: 'No guarantee' // Default to attribute_name if not mapped
+                        },
+                        {
+                            product_id: product_id,
+                            attribute_id: addProductTypeAttribute.insertId,
+                            attribute_value_name: 'Up to 24 months' // Default to attribute_name if not mapped
+                        },
+                        {
+                            product_id: product_id,
+                            attribute_id: addProductTypeAttribute.insertId,
+                            attribute_value_name: 'Up to 12 months' // Default to attribute_name if not mapped
+                        },
+                        {
+                            product_id: product_id,
+                            attribute_id: addProductTypeAttribute.insertId,
+                            attribute_value_name: 'Up to 6 months' // Default to attribute_name if not mapped
+                        },
+                        {
+                            product_id: product_id,
+                            attribute_id: addProductTypeAttribute.insertId,
+                            attribute_value_name: 'Over 24 months' // Default to attribute_name if not mapped
+                        },
+                        ];
+                        for (let x of attributeMapping) {
+                            try {
+                                const addProductAttributeMapping = await addProductAttribute(x);
+                            } catch (error) {
+                                console.error('Error adding product attribute mapping:', error);
+                            }
+                        }
                     }
                     return res.json({
                         success: true,
@@ -851,12 +909,11 @@ exports.getAttributesByAttributeTypeId = async (req, res) => {
             });
         } else if (getTypeAttributes.length > 0) {
             return res.json({
-                error: true,
                 success: false,
                 message: "Attributes Type fetched successfully",
                 attributeName: getTypeAttributes[0].attribute_name,
                 typeAttributes: null,
-                status: 400,
+                status: 200,
             });
         } else {
             return res.json({
@@ -1031,18 +1088,22 @@ exports.updateProductAttributeMapping = async (req, res) => {
                 success: false
             });
         } else {
-            const updateResult = await productAttributeMappingUpdateById(id, attribute_value_name);
-            if (deleteResult.affectedRows > 0) {
+            const update = {
+                id: id,
+                attribute_value_name: attribute_value_name
+            }
+            const updateResult = await productAttributeMappingUpdateById(update);
+            if (updateResult.affectedRows > 0) {
                 return res.status(200).json({
                     error: false,
-                    message: "Successfully delete",
+                    message: "Successfully update",
                     status: 200,
                     success: true
                 });
             } else {
                 return res.status(400).json({
                     error: true,
-                    message: "Not delete",
+                    message: "Not update",
                     status: 400,
                     success: false
                 });
