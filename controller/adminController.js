@@ -650,6 +650,8 @@ exports.addProductTypeAttributes = async (req, res) => {
                         } catch (error) {
                             console.error('Error adding product attribute mapping:', error);
                         }
+                    } else if(attribute_name == 'Miscellaneous' && input_type == 'Gender'){
+
                     }
                     return res.json({
                         success: true,
@@ -851,12 +853,11 @@ exports.getAttributesByAttributeTypeId = async (req, res) => {
             });
         } else if (getTypeAttributes.length > 0) {
             return res.json({
-                error: true,
                 success: false,
                 message: "Attributes Type fetched successfully",
                 attributeName: getTypeAttributes[0].attribute_name,
                 typeAttributes: null,
-                status: 400,
+                status: 200,
             });
         } else {
             return res.json({
