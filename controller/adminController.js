@@ -708,16 +708,29 @@ exports.getTypeAttributesByProductId = async (req, res) => {
             });
         }
 
+        var getProduct = await findProductById(product_id);
         var getAttribute = await findTypeAttributesByProductId(product_id);
         if (getAttribute.length > 0) {
             return res.json({
                 success: true,
                 message: "Product Attributes fetched successfully",
                 product: {
-                    id: product_id,
+                    id: getProduct[0].id,
                     name: getAttribute[0].name
                 },
                 typeAttributes: getAttribute,
+                status: 200,
+            });
+        } else if (getProduct.length > 0) {
+            return res.json({
+                error: true,
+                success: false,
+                message: "Product fetched successfully",
+                product: {
+                    id: getProduct[0].id,
+                    name: getProduct[0].name
+                },
+                typeAttributes: null,
                 status: 200,
             });
         } else {
