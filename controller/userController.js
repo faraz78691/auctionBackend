@@ -20,6 +20,7 @@ const {
   getuserProfileDetails,
   fetchAllUsers,
   fetchAllUsersOffers,
+  updateMessageCount,
   getAllMessageByUserId
 } = require("../models/users");
 const { updateData } = require("../models/common");
@@ -35,6 +36,7 @@ var admin = require("firebase-admin");
 const serviceAccount = require('../config/firebase_serviceacoount.json');
 const { initializeApp } = require("firebase/app");
 const { getMessaging, getToken, isSupported } = require("firebase/messaging");
+const { hashPassword } = require('../helper/hashPassword');
 require('dotenv').config();
 
 function randomStringAsBase64Url(size) {
@@ -71,7 +73,6 @@ transporter.use("compile", hbs(handlebarOptions));
 
 exports.signup = async (req, res) => {
   try {
-    console.log("req.body", req.body);
     const {
       email,
       password,
@@ -459,8 +460,6 @@ exports.editProfile = async (req, res) => {
       }
     }
   } catch (err) {
-    console.log(err);
-
     return res.json({
       success: false,
       message: "Internal server error",
@@ -1252,6 +1251,7 @@ exports.getChatMessage = async (req, res) => {
         success: false,
       });
     }
+    const updateMessageCountResult = await updateMessageCount(user_id);
     const findAllMessage = await getAllMessageByUserId(user_id);
     if (findAllMessage.length > 0) {
       return res.json({
@@ -1268,11 +1268,105 @@ exports.getChatMessage = async (req, res) => {
       });
     }
   } catch (err) {
+    console.log(err);
+
     return res.status(500).json({
       success: false,
       message: "Internal server error",
       error: err.message,
       status: 500,
     });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const userInfo = req.user;
+    const { password, first_name, last_name, phone_number, country, postal_code, street,
+      street_number } = req.body;
+    const schema = Joi.object({
+      first_name: Joi.string().required().messages({
+        'string.base': 'First Name must be a string',
+        'string.empty': 'First Name is required',
+        'any.required': 'First Name is required',
+      }),
+      last_name: Joi.string().required().messages({
+        'string.base': 'Last Name must be a string',
+        'string.empty': 'Last Name is required',
+        'any.required': 'Last Name is required',
+      }),
+      phone_number: Joi.string().required().messages({
+        'string.base': 'Phone Number must be a string',
+        'string.empty': 'Phone Number is required',
+        'any.required': 'Phone Number is required',
+      }),
+      password: Joi.string().min(6).required().messages({
+        'string.base': 'Password must be a string',
+        'string.empty': 'Password is required',
+        'string.min': 'Password must be at least 6 characters long',
+        'any.required': 'Password is required',
+      }),
+      country: Joi.string().required().messages({
+        'string.base': 'Country must be a string',
+        'string.empty': 'Country is required',
+        'any.required': 'Country is required',
+      }),
+      postal_code: Joi.string().required().messages({
+        'string.base': 'Postal Code must be a string',
+        'string.empty': 'Postal Code is required',
+        'any.required': 'Postal Code is required',
+      }),
+      street: Joi.string().required().messages({
+        'string.base': 'Street must be a string',
+        'string.empty': 'Street is required',
+        'any.required': 'Street is required',
+      }),
+      street_number: Joi.string().required().messages({
+        'string.base': 'Street Number must be a string',
+        'string.empty': 'Street Number is required',
+        'any.required': 'Street Number is required',
+      }),
+    });
+
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        errors: true,
+        message: error.details[0].message,
+        status: 400,
+        success: false
+      });
+    } else {
+      const userHashPassword = await hashPassword(password);
+      let user = {
+        first_name: first_name != 'undefined' ? first_name : userInfo.first_name,
+        last_name: last_name != 'undefined' ? last_name : userInfo.last_name,
+        phone_number: phone_number != 'undefined' ? phone_number : userInfo.phone_number,
+        password: password != 'undefined' ? userHashPassword : userInfo.password,
+        country: country != 'undefined' ? country : userInfo.country,
+        postal_code: postal_code != 'undefined' ? postal_code : userInfo.postal_code,
+        street: street != 'undefined' ? street : userInfo.street,
+        street_number: street_number != 'undefined' ? street_number : userInfo.street_number
+      };
+      const updateResult = await updateUserById(user, userInfo.id);
+      if (updateResult.affectedRows > 0) {
+        return res.json({
+          errors: false,
+          message: "Profile successfully update",
+          updateData: updateResult,
+          status: 200,
+          success: true,
+        });
+      } else {
+        return res.json({
+          error: true,
+          message: "Profile not update",
+          status: 200,
+          success: false,
+        });
+      }
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false })
   }
 };

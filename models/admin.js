@@ -9,7 +9,7 @@ module.exports = {
     },
 
     fetchAllUsers: async () => {
-        return db.query('SELECT first_name, last_name, email, phone_number, concat(street_number, " ", street, " ", city, " ", state, " ", country, " ", postal_code ) AS address FROM `users` WHERE role_id = 1');
+        return db.query('SELECT first_name, last_name, email, phone_number, street_number, street, city, state, country, postal_code,  concat(street_number, " ", street, " ", city, " ", state, " ", country, " ", postal_code ) AS address FROM `users` WHERE role_id = 1');
     },
 
     fetchAllUsersOffers: async () => {
@@ -72,8 +72,12 @@ module.exports = {
         return db.query(`SELECT product_attributes_mapping.*, product_type_attribute.attribute_name FROM product_attributes_mapping LEFT JOIN product_type_attribute ON product_type_attribute.id = product_attributes_mapping.attribute_id WHERE attribute_id = ${attribute_id}`);
     },
 
-    getAllMessageUserWise: async () => {
-        return db.query("SELECT cs.user_id, cs.admin_id, CONCAT(u.first_name, ' ', u.last_name) AS user_name, u.online_status, m.message, m.created_at, cs.unread_count FROM tbl_chat_sessions cs JOIN users u ON cs.user_id = u.id JOIN tbl_messages m ON cs.last_message_id = m.id ORDER BY m.created_at DESC");
+    getAllChatUsers: async () => {
+        return await db.query("SELECT users.id AS user_id, CONCAT( users.first_name, ' ', users.last_name ) AS user_name, users.online_status FROM `tbl_messages` LEFT JOIN users ON users.id = tbl_messages.user_id GROUP BY tbl_messages.user_id;");
+    },
+
+    getLastMessageAllUser: async (id) => {
+        return await db.query('SELECT tbl_messages.*, (SELECT COUNT(is_read) FROM tbl_messages WHERE user_id = "' + id + '" AND is_read = "0") AS unread_count FROM tbl_messages WHERE user_id = "' + id + '" ORDER BY id DESC LIMIT 1')
     },
 
     updateCategoryById: async (category_id, cat_name) => {
@@ -82,6 +86,10 @@ module.exports = {
 
     updateProductById: async (product_id, name) => {
         return await db.query('UPDATE `product` SET `name`= "' + name + '" WHERE id = "' + product_id + '"');
+    },
+
+    productTypeDeleteById: async (id) => {
+        return await db.query('DELETE FROM `product_type_attribute` WHERE id = "' + id + '"');
     }
 
 };
