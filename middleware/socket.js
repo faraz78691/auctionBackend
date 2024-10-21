@@ -3,7 +3,7 @@ const { Server } = require("socket.io");
 const { createNewBid, getBitCountByOfferId } = require("../controller/productController");
 const { updateOnlineStatus } = require("../controller/userController");
 const { adminUpdateLoginStatus } = require("../controller/adminController");
-
+const { getAllChatUsers, getLastMessageAllUser } = require('../models/admin')
 // socket.js
 module.exports = function (server) {
     // Create a new instance of socket.io by passing in the server
@@ -62,8 +62,9 @@ module.exports = function (server) {
                 // Insert the message into the database
                 const insertMessageQuery = `INSERT INTO tbl_messages (user_id, admin_id, message, sender_id) VALUES (?, ?, ?, ?)`;
                 const addMessage = await db.query(insertMessageQuery, [user_id, admin_id, message, sender_id])
-                
+
                 if (addMessage.affectedRows > 0) {
+                    const updateLatestMessageStatus = `UPDATE tbl_messages SET is_read = "1" WHERE user_id = ${user_id} AND admin_id = ${admin_id} AND is_read = "0"`;
                     const getLastMessage = `SELECT id, user_id, admin_id, message, image_path, sender_id, is_read, DATE_FORMAT(created_at, '%Y-%m-%dT%h:%i:%s.000Z') AS created_at, updated_at FROM tbl_messages WHERE id = ?`
                     const lastMessage = await db.query(getLastMessage, [addMessage.insertId]);
                     if (user_id === sender_id) {
@@ -87,6 +88,21 @@ module.exports = function (server) {
                 } else {
                     socket.emit('error', 'Message could not be sent');
                 }
+            }
+        });
+
+        // Listen for a new chat message
+        socket.on('getAllUserMessageCount', async () => {
+            const findChatUser = await getAllChatUsers();
+            if (findChatUser.length > 0) {
+                for (let user of findChatUser) {
+                    const findLastMessage = await getLastMessageAllUser(user.user_id);
+                    user.message = findLastMessage[0].message,
+                        user.unread_count = findLastMessage[0].unread_count
+                }
+                socket.emit("getMessages", findChatUser);
+            } else {
+                socket.emit('error', 'Message could not be sent');
             }
         });
 

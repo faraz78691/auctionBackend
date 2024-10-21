@@ -666,11 +666,44 @@ exports.addProductTypeAttributes = async (req, res) => {
                             attribute_id: addProductTypeAttribute.insertId,
                             attribute_value_name: 'Unisex' // Default to attribute_name if not mapped
                         },
-                    ];
-                    for (let x of attributeMapping) {
-                        console.log(x);
-                        try {
-                            const addProductAttributeMapping = await addProductAttribute(x);
+                        ];
+                        for (let x of attributeMapping) {
+                            try {
+                                const addProductAttributeMapping = await addProductAttribute(x);
+                            } catch (error) {
+                                console.error('Error adding product attribute mapping:', error);
+                            }
+                        }
+                    } else if (attribute_name == 'Misc' && heading == 'Guarantee') {
+                        const attributeMapping = [{
+                            product_id: product_id,
+                            attribute_id: addProductTypeAttribute.insertId,
+                            attribute_value_name: 'No guarantee' // Default to attribute_name if not mapped
+                        },
+                        {
+                            product_id: product_id,
+                            attribute_id: addProductTypeAttribute.insertId,
+                            attribute_value_name: 'Up to 24 months' // Default to attribute_name if not mapped
+                        },
+                        {
+                            product_id: product_id,
+                            attribute_id: addProductTypeAttribute.insertId,
+                            attribute_value_name: 'Up to 12 months' // Default to attribute_name if not mapped
+                        },
+                        {
+                            product_id: product_id,
+                            attribute_id: addProductTypeAttribute.insertId,
+                            attribute_value_name: 'Up to 6 months' // Default to attribute_name if not mapped
+                        },
+                        {
+                            product_id: product_id,
+                            attribute_id: addProductTypeAttribute.insertId,
+                            attribute_value_name: 'Over 24 months' // Default to attribute_name if not mapped
+                        },
+                        ];
+                        for (let x of attributeMapping) {
+                            try {
+                                const addProductAttributeMapping = await addProductAttribute(x);
                             } catch (error) {
                                 console.error('Error adding product attribute mapping:', error);
                             }
