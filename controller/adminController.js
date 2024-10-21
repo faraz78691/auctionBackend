@@ -2,7 +2,7 @@ const Joi = require("joi");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findAttributesByAttributesTypeId, getAllMessageUserWise, updateCategoryById, updateProductById } = require("../models/admin");
+const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById } = require("../models/admin");
 const { updateData } = require("../models/common");
 
 exports.login = async (req, res) => {
@@ -639,6 +639,17 @@ exports.addProductTypeAttributes = async (req, res) => {
                         } catch (error) {
                             console.error('Error adding product attribute mapping:', error);
                         }
+                    } else if (attribute_name == 'Miscellaneous' && input_type == 'input') {
+                        const attributeMapping = {
+                            product_id: product_id,
+                            attribute_id: addProductTypeAttribute.insertId,
+                            attribute_value_name: 'Any' // Default to attribute_name if not mapped
+                        };
+                        try {
+                            const addProductAttributeMapping = await addProductAttribute(attributeMapping);
+                        } catch (error) {
+                            console.error('Error adding product attribute mapping:', error);
+                        }
                     }
                     return res.json({
                         success: true,
@@ -843,38 +854,16 @@ exports.getAttributesByAttributeTypeId = async (req, res) => {
 
 exports.getAllChatMessageUser = async (req, res) => {
     try {
-        const findAllMessage = await getAllMessageUserWise();
-        const conversations = findAllMessage.reduce((acc, msg) => {
-            if (!acc[msg.user_id]) {
-                acc[msg.user_id] = {
-                    user_id: msg.user_id,
-                    user_name: msg.user_name,
-                    messages: [],
-                    unread_count: msg.unread_count,
-                    online_status: msg.online_status
-                };
+        const findChatUser = await getAllChatUsers();
+        if (findChatUser.length > 0) {
+            for (let user of findChatUser) {
+                const findLastMessage = await getLastMessageAllUser(user.user_id);
+                user.message = findLastMessage[0].message,
+                    user.unread_count = findLastMessage[0].unread_count
             }
-            acc[msg.user_id].messages.push({
-                message: msg.message,
-                sent_at: msg.sent_at,
-                is_read: msg.is_read
-            });
-            return acc;
-        }, {});
-        const conversationArray = Object.values(conversations);
-        if (conversationArray.length > 0) {
-            return res.json({
-                message: "fetch user all chat message",
-                status: 200,
-                success: true,
-                data: conversationArray,
-            });
+            return res.status(200).json({ error: false, message: "Get all chat message", userChat: findChatUser, status: 200, success: true })
         } else {
-            return res.json({
-                message: "Fetch user all chat message failed",
-                status: 200,
-                success: true,
-            });
+            return res.status(200).json({ error: true, message: "Not get all chat message", userChat: null, status: 200, success: false })
         }
     } catch (err) {
         return res.status(500).json({
@@ -909,3 +898,45 @@ exports.adminUpdateLoginStatus = async (adminId, status) => {
         console.log("Internal Server Error =>", err);
     }
 };
+
+exports.deleteProductTypeAttribute = async (req, res) => {
+    try {
+        const { product_type_id } = req.body;
+        const schema = Joi.object({
+            product_type_id: Joi.string().required().messages({
+                'string.base': 'Product Type Id must be a string',
+                'string.empty': 'Product Type Id is required',
+                'any.required': 'Product Type Id is required',
+            })
+        })
+
+        const { error } = schema.validate(req.body);
+        if (error) {
+            return res.status(400).json({
+                errors: true,
+                message: error.details[0].message,
+                status: 400,
+                success: false
+            });
+        } else {
+            const deleteResult = await productTypeDeleteById(product_type_id);
+            if (deleteResult.affectedRows > 0) {
+                return res.status(400).json({
+                    errors: false,
+                    message: "Successfully delete",
+                    status: 200,
+                    success: true
+                });
+            } else {
+                return res.status(400).json({
+                    errors: true,
+                    message: "Not delete",
+                    status: 400,
+                    success: false
+                });
+            }
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
+    }
+}
