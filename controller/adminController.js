@@ -650,8 +650,31 @@ exports.addProductTypeAttributes = async (req, res) => {
                         } catch (error) {
                             console.error('Error adding product attribute mapping:', error);
                         }
-                    } else if(attribute_name == 'Miscellaneous' && input_type == 'Gender'){
-
+                    } else if (attribute_name == 'Miscellaneous' && heading == 'Gender') {
+                        const attributeMapping = [{
+                            product_id: product_id,
+                            attribute_id: addProductTypeAttribute.insertId,
+                            attribute_value_name: 'Men' // Default to attribute_name if not mapped
+                        },
+                        {
+                            product_id: product_id,
+                            attribute_id: addProductTypeAttribute.insertId,
+                            attribute_value_name: 'Women' // Default to attribute_name if not mapped
+                        },
+                        {
+                            product_id: product_id,
+                            attribute_id: addProductTypeAttribute.insertId,
+                            attribute_value_name: 'Unisex' // Default to attribute_name if not mapped
+                        },
+                    ];
+                    for (let x of attributeMapping) {
+                        console.log(x);
+                        try {
+                            const addProductAttributeMapping = await addProductAttribute(x);
+                            } catch (error) {
+                                console.error('Error adding product attribute mapping:', error);
+                            }
+                        }
                     }
                     return res.json({
                         success: true,
