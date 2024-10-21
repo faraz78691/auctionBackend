@@ -96,8 +96,12 @@ module.exports = {
         return await db.query('DELETE FROM `product_type_attribute` WHERE id = "' + id + '"');
     },
 
-    productAttributeMappingDeleteById: async(id) => {
-        return await db.query('DELETE FROM `product_attributes_mapping` WHERE id = "' + id +'"');
+    productAttributeMappingDeleteById: async (id) => {
+        return await db.query('DELETE FROM `product_attributes_mapping` WHERE id = "' + id + '"');
+    },
+
+    productAttributeMappingUpdateById: async (data) => {
+        return await db.query('UPDATE `product_attributes_mapping` SET `attribute_value_name`= "' + data.attribute_value_name + '" WHERE id = "' + data.id + '"');
     }
 
 };

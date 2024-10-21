@@ -2,7 +2,7 @@ const Joi = require("joi");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById } = require("../models/admin");
+const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById } = require("../models/admin");
 const { updateData } = require("../models/common");
 
 exports.login = async (req, res) => {
@@ -1031,18 +1031,22 @@ exports.updateProductAttributeMapping = async (req, res) => {
                 success: false
             });
         } else {
-            const updateResult = await productAttributeMappingUpdateById(id, attribute_value_name);
-            if (deleteResult.affectedRows > 0) {
+            const update = {
+                id: id,
+                attribute_value_name: attribute_value_name
+            }
+            const updateResult = await productAttributeMappingUpdateById(update);
+            if (updateResult.affectedRows > 0) {
                 return res.status(200).json({
                     error: false,
-                    message: "Successfully delete",
+                    message: "Successfully update",
                     status: 200,
                     success: true
                 });
             } else {
                 return res.status(400).json({
                     error: true,
-                    message: "Not delete",
+                    message: "Not update",
                     status: 400,
                     success: false
                 });
