@@ -674,7 +674,7 @@ exports.addProductTypeAttributes = async (req, res) => {
                                 console.error('Error adding product attribute mapping:', error);
                             }
                         }
-                    } else if (attribute_name == 'Misc' && heading == 'Guarantee') {
+                    } else if (attribute_name == 'Miscellaneous' && heading == 'Guarantee') {
                         const attributeMapping = [{
                             product_id: product_id,
                             attribute_id: addProductTypeAttribute.insertId,

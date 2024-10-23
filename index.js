@@ -44,10 +44,6 @@ app.get('/', (req, res) => {
   }
 })
 
-app.get('/login-page', (req, res) => {
-  res.send('<a href="http://localhost:5000/login">Login with BankID</a>');
-});
-
 setInterval(updateOfferExpired, 600000);
 
 server.listen(5000, function () {
