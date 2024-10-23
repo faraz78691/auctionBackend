@@ -102,6 +102,26 @@ module.exports = {
 
     productAttributeMappingUpdateById: async (data) => {
         return await db.query('UPDATE `product_attributes_mapping` SET `attribute_value_name`= "' + data.attribute_value_name + '" WHERE id = "' + data.id + '"');
+    },
+
+    updateProductMappingById: async (id) => {
+        return await db.query('UPDATE `product_attributes_mapping` SET `is_sub_attribute` = "1",`sub_attribute_heading` = "Model" WHERE id = ?', [id]);
+    },
+
+    subAttributeMappingAdd: async (data) => {
+        return await db.query('INSERT INTO `sub_attribute_mapping` SET ?', [data]);
+    },
+
+    getSubAttributesByProductAttributesMappingId: async (id) => {
+        return await db.query('SELECT * FROM `sub_attribute_mapping` WHERE attribute_mapping_id = ?', [id]);
+    },
+
+    updateSubAttributeMappingById: async (id, value) => {
+        return await db.query('UPDATE `sub_attribute_mapping` SET `value`= ? WHERE id = ?', [value, id]);
+    },
+
+    deleteSubAttributesById: async (id) => {
+        return await db.query('DELETE FROM `sub_attribute_mapping` WHERE id = ?', [id]);
     }
 
 };

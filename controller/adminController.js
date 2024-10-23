@@ -2,7 +2,7 @@ const Joi = require("joi");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById } = require("../models/admin");
+const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, updateSubAttributeMappingById, deleteSubAttributesById } = require("../models/admin");
 const { updateData } = require("../models/common");
 
 exports.login = async (req, res) => {
@@ -1107,6 +1107,171 @@ exports.updateProductAttributeMapping = async (req, res) => {
                     status: 400,
                     success: false
                 });
+            }
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
+    }
+};
+
+exports.addSubAttributesMapping = async (req, res) => {
+    try {
+        const { attribute_mapping_id, value } = req.body;
+        const schema = Joi.object({
+            attribute_mapping_id: Joi.number().required().messages({
+                'number.base': 'Attrribute Mapping Id must be a number',
+                'number.empty': 'Attrribute Mapping Id is required',
+                'any.required': 'Attrribute Mapping Id is required',
+            }),
+            value: Joi.string().required().messages({
+                'string.base': 'Value must be a string',
+                'string.empty': 'Value is required',
+                'any.required': 'Value is required',
+            })
+        })
+
+        const { error } = schema.validate(req.body);
+        if (error) {
+            return res.status(400).json({
+                error: true,
+                message: error.details[0].message,
+                status: 400,
+                success: false
+            });
+        } else {
+            const update = await updateProductMappingById(attribute_mapping_id);
+            const add = {
+                attribute_mapping_id: attribute_mapping_id,
+                value: value
+            }
+            const addResult = await subAttributeMappingAdd(add);
+            if (addResult.affectedRows > 0) {
+                return res.status(200).json({
+                    error: false,
+                    message: "Successfully add",
+                    status: 200,
+                    success: true,
+                    subAttributeAdd: addResult
+                });
+            } else {
+                return res.status(400).json({
+                    error: true,
+                    message: "Not add",
+                    status: 400,
+                    success: false
+                });
+            }
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
+    }
+};
+
+exports.getSubAttributesByProductAttributesMappingId = async (req, res) => {
+    try {
+        const { attribute_mapping_id } = req.query;
+        const schema = Joi.object({
+            attribute_mapping_id: Joi.number().required().messages({
+                'number.base': 'Attrribute Mapping Id must be a number',
+                'number.empty': 'Attrribute Mapping Id is required',
+                'any.required': 'Attrribute Mapping Id is required',
+            })
+        })
+
+        const { error } = schema.validate(req.query);
+        if (error) {
+            return res.status(400).json({
+                error: true,
+                message: error.details[0].message,
+                status: 400,
+                success: false
+            });
+        } else {
+            const result = await getSubAttributesByProductAttributesMappingId(attribute_mapping_id);
+            if (result.length > 0) {
+                return res.status(200).json({ error: false, message: "Data successfully found", success: true, status: 200, subAttributeData: result });
+            } else {
+                return res.status(404).json({ error: true, message: "Data not found", success: false, status: 404 });
+            }
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
+    }
+}
+
+exports.updateSubAttributesById = async (req, res) => {
+    try {
+        const { id, value } = req.body;
+        const schema = Joi.object({
+            id: Joi.number().required().messages({
+                'number.base': 'Id must be a number',
+                'number.empty': 'Id is required',
+                'any.required': 'Id is required',
+            }),
+            value: Joi.string().required().messages({
+                'string.base': 'Value must be a string',
+                'string.empty': 'Value is required',
+                'any.required': 'Value is required',
+            })
+        })
+
+        const { error } = schema.validate(req.body);
+        if (error) {
+            return res.status(400).json({
+                error: true,
+                message: error.details[0].message,
+                status: 400,
+                success: false
+            });
+        } else {
+            const updateResult = await updateSubAttributeMappingById(id, value);
+            if (updateResult.affectedRows > 0) {
+                return res.status(200).json({
+                    error: false,
+                    message: "Successfully update",
+                    status: 200,
+                    success: true,
+                    updateData: updateResult
+                });
+            } else {
+                return res.status(400).json({
+                    error: true,
+                    message: "Not update",
+                    status: 400,
+                    success: false
+                });
+            }
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
+    }
+};
+
+exports.deleteSubAttributesById = async (req, res) => {
+    try {
+        const { id } = req.query;
+        const schema = Joi.object({
+            id: Joi.number().required().messages({
+                'number.base': 'Id must be a number',
+                'number.empty': 'Id is required',
+                'any.required': 'Id is required',
+            })
+        })
+
+        const { error } = schema.validate(req.query);
+        if (error) {
+            return res.status(400).json({
+                error: true,
+                message: error.details[0].message,
+                status: 400,
+                success: false
+            });
+        } else {
+            const result = await deleteSubAttributesById(id);
+            if (result.affectedRows > 0) {
+                return res.status(200).json({ error: false, message: "Data successfully delete", success: true, status: 200, subAttributeData: result });
+            } else {
+                return res.status(404).json({ error: true, message: "Data not delete or id not found", success: false, status: 404 });
             }
         }
     } catch (error) {
