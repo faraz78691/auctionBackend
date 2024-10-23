@@ -767,11 +767,16 @@ exports.getTypeAttributesByProductId = async (req, res) => {
         }
 
         var getProduct = await findProductById(product_id);
+        const getCategory = await findCategoryId(getProduct[0].category_id)
         var getAttribute = await findTypeAttributesByProductId(product_id);
         if (getAttribute.length > 0) {
             return res.json({
                 success: true,
                 message: "Product Attributes fetched successfully",
+                category: {
+                    id: getCategory[0].id,
+                    name: getCategory[0].cat_name
+                },
                 product: {
                     id: getProduct[0].id,
                     name: getAttribute[0].name
@@ -784,6 +789,10 @@ exports.getTypeAttributesByProductId = async (req, res) => {
                 error: true,
                 success: false,
                 message: "Product fetched successfully",
+                category: {
+                    id: getCategory[0].id,
+                    name: getCategory[0].cat_name
+                },
                 product: {
                     id: getProduct[0].id,
                     name: getProduct[0].name
@@ -899,10 +908,20 @@ exports.getAttributesByAttributeTypeId = async (req, res) => {
         }
         var getTypeAttributes = await findTypeAttributeById(attribute_id);
         var getAttributes = await findAttributesByAttributesTypeId(attribute_id);
+        const getProduct = await findProductById(getAttributes[0].product_id);
+        const getCategory = await findCategoryId(getProduct[0].category_id)
         if (getAttributes.length > 0) {
             return res.json({
                 success: true,
                 message: "Attributes fetched successfully",
+                category: {
+                    id: getCategory[0].id,
+                    name: getCategory[0].cat_name
+                },
+                product: {
+                    id: getProduct[0].id,
+                    name: getProduct[0].name
+                },
                 attributeName: getTypeAttributes[0].attribute_name,
                 typeAttributes: getAttributes,
                 status: 200,
@@ -911,6 +930,14 @@ exports.getAttributesByAttributeTypeId = async (req, res) => {
             return res.json({
                 success: false,
                 message: "Attributes Type fetched successfully",
+                category: {
+                    id: getCategory[0].id,
+                    name: getCategory[0].cat_name
+                },
+                product: {
+                    id: getProduct[0].id,
+                    name: getProduct[0].name
+                },
                 attributeName: getTypeAttributes[0].attribute_name,
                 typeAttributes: null,
                 status: 200,
