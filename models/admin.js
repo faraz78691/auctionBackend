@@ -116,6 +116,10 @@ module.exports = {
         return await db.query('SELECT * FROM `sub_attribute_mapping` WHERE attribute_mapping_id = ?', [id]);
     },
 
+    getProductAttributeMappingById: async (id) => {
+        return await db.query('SELECT * FROM `product_attributes_mapping` WHERE id = ?', [id]);
+    },
+
     updateSubAttributeMappingById: async (id, value) => {
         return await db.query('UPDATE `sub_attribute_mapping` SET `value`= ? WHERE id = ?', [value, id]);
     },

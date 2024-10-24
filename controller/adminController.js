@@ -2,7 +2,7 @@ const Joi = require("joi");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, updateSubAttributeMappingById, deleteSubAttributesById } = require("../models/admin");
+const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById } = require("../models/admin");
 const { updateData } = require("../models/common");
 
 exports.login = async (req, res) => {
@@ -908,7 +908,7 @@ exports.getAttributesByAttributeTypeId = async (req, res) => {
         }
         var getTypeAttributes = await findTypeAttributeById(attribute_id);
         var getAttributes = await findAttributesByAttributesTypeId(attribute_id);
-        const getProduct = await findProductById(getAttributes[0].product_id);
+        const getProduct = await findProductById(getTypeAttributes[0].product_id);
         const getCategory = await findCategoryId(getProduct[0].category_id)
         if (getAttributes.length > 0) {
             return res.json({
@@ -1215,16 +1215,60 @@ exports.getSubAttributesByProductAttributesMappingId = async (req, res) => {
             });
         } else {
             const result = await getSubAttributesByProductAttributesMappingId(attribute_mapping_id);
+            const getAttributeMapping = await getProductAttributeMappingById(attribute_mapping_id);
+            const getTypeAttributes = await findTypeAttributeById(getAttributeMapping[0].attribute_id);
+            // var getAttributes = await findAttributesByAttributesTypeId(getTypeAttributes[0].id);
+            const getProduct = await findProductById(getTypeAttributes[0].product_id);
+            const getCategory = await findCategoryId(getTypeAttributes[0].category_id)
             if (result.length > 0) {
-                return res.status(200).json({ error: false, message: "Data successfully found", success: true, status: 200, subAttributeData: result });
+                return res.status(200).json({
+                    error: false, message: "Data successfully found", success: true, status: 200,
+                    category: {
+                        id: getCategory[0].id,
+                        name: getCategory[0].cat_name
+                    },
+                    product: {
+                        id: getProduct[0].id,
+                        name: getProduct[0].name
+                    },
+                    attributeType: {
+                        id: getTypeAttributes[0].id,
+                        attribute_name: getTypeAttributes[0].attribute_name
+                    },
+                    attributeMapping: {
+                        id: getAttributeMapping[0].id,
+                        attribute_mapping_name: getAttributeMapping[0].attribute_value_name
+                    },
+                    subAttributeData: result
+                });
             } else {
-                return res.status(404).json({ error: true, message: "Data not found", success: false, status: 404 });
+                return res.status(404).json({
+                    error: true, message: "Data not found", success: false, status: 404, category: {
+                        id: getCategory[0].id,
+                        name: getCategory[0].cat_name
+                    },
+                    product: {
+                        id: getProduct[0].id,
+                        name: getProduct[0].name
+                    },
+                    attributeType: {
+                        id: getTypeAttributes[0].id,
+                        attribute_name: getTypeAttributes[0].attribute_name
+                    },
+                    attributeMapping: {
+                        id: getAttributeMapping[0].id,
+                        attribute_mapping_name: getAttributeMapping[0].attribute_value_name
+                    },
+                    subAttributeData: null
+                });
             }
         }
     } catch (error) {
+        console.log(error);
+
         return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
     }
-}
+};
 
 exports.updateSubAttributesById = async (req, res) => {
     try {
