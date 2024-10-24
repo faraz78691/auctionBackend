@@ -2,7 +2,7 @@ const Joi = require("joi");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById } = require("../models/admin");
+const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById } = require("../models/admin");
 const { updateData } = require("../models/common");
 
 exports.login = async (req, res) => {
@@ -168,6 +168,49 @@ exports.getAllUsers = async (req, res) => {
 exports.getAllUsersOffers = async (req, res) => {
     try {
         const results = await fetchAllUsersOffers();
+        if (results.length !== 0) {
+            return res.json({
+                message: "fetch all users offers details success",
+                status: 200,
+                success: true,
+                data: results,
+            });
+        } else {
+            return res.json({
+                message: "Fetch all users offers failed",
+                status: 200,
+                success: true,
+            });
+        }
+    } catch (error) {
+        return res.json({
+            success: false,
+            message: "Internal server error",
+            status: 500,
+        });
+    }
+};
+
+exports.getAllOffersByUserId = async (req, res) => {
+    try {
+        const { user_id } = req.query
+        const schema = Joi.alternatives(
+            Joi.object({
+                user_id: Joi.number().required().empty(),
+            })
+        );
+        const result = schema.validate(req.query);
+        if (result.error) {
+            const message = result.error.details.map((i) => i.message).join(",");
+            return res.json({
+                message: result.error.details[0].message,
+                error: message,
+                missingParams: result.error.details[0].message,
+                status: 200,
+                success: true,
+            });
+        }
+        const results = await fetchAllUsersOffersByUserId(user_id);
         if (results.length !== 0) {
             return res.json({
                 message: "fetch all users offers details success",

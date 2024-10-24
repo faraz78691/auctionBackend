@@ -16,6 +16,10 @@ module.exports = {
         return db.query('SELECT category.cat_name AS category_name, product.name AS product_name, CONCAT( users.first_name, " ", users.last_name ) AS seller_name, offers_created.* FROM `offers_created` LEFT JOIN product ON product.id = offers_created.product_id LEFT JOIN category ON product.category_id = category.id LEFT JOIN users ON users.id = offers_created.user_id ORDER BY offers_created.end_date;');
     },
 
+    fetchAllUsersOffersByUserId: async (id) => {
+        return db.query('SELECT category.cat_name AS category_name, product.name AS product_name, CONCAT( users.first_name, " ", users.last_name ) AS seller_name, offers_created.* FROM `offers_created` LEFT JOIN product ON product.id = offers_created.product_id LEFT JOIN category ON product.category_id = category.id LEFT JOIN users ON users.id = offers_created.user_id WHERE offers_created.user_id = ? ORDER BY offers_created.end_date;', [id]);
+    },
+
     findAdminById: async (id) => {
         return db.query(`SELECT * FROM users WHERE id = "${id}"`);
     },

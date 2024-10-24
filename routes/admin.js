@@ -9,6 +9,7 @@ router.post('/logout', adminController.logout);
 //Users
 router.get('/getAllUsers', adminAuth, adminController.getAllUsers);
 router.get('/getAllUsersOffers', adminAuth, adminController.getAllUsersOffers);
+router.get('/getAllOffersByUserId', adminAuth, adminController.getAllOffersByUserId);
 
 // Category
 router.post('/addCategory', adminAuth, adminController.addCategory);
