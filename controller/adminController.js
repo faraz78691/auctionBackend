@@ -1433,7 +1433,7 @@ exports.getAllTransaction = async (req, res) => {
         if (resultTransaction.length > 0) {
             return res.status(200).json({ error: false, message: "Transaction successfully found", success: true, status: 200, transdactionData: resultTransaction });
         } else {
-            return res.status(404).json({ error: true, message: "Transaction not found", success: false, status: 404, highestBid: null });
+            return res.status(200).json({ error: true, message: "Transaction not found", success: false, status: 404, highestBid: null });
         }
     } catch (error) {
         return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
