@@ -29,6 +29,8 @@ const {
   getOfferImages,
   getProductTypeAttribute,
   getProductAttributeTypeMappingByIDP,
+  getOffersAutoUpdate,
+  getMaxBidOnOffer,
   checkTransactionID,
   insertTransaction,
   getProductIdsByName,
@@ -67,11 +69,7 @@ var moment = require('moment-timezone');
 
 exports.getProducts = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    const jwtToken = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(jwtToken);
-    const user_id = decoded.user_id;
-
+    const user_id = req.user.id;
     if (user_id === undefined || user_id === null) {
       return res.json({
         success: false,
@@ -124,11 +122,7 @@ exports.getProductsAttrByProductID = async (req, res) => {
         success: true,
       });
     }
-    const authHeader = req.headers.authorization;
-    const jwtToken = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(jwtToken);
-    const user_id = decoded.user_id;
-
+    const user_id = req.user.id;
     if (user_id === undefined || user_id === null) {
       return res.json({
         success: false,
@@ -180,11 +174,7 @@ exports.getProductsAttrTypeByProductID = async (req, res) => {
         success: true,
       });
     }
-    const authHeader = req.headers.authorization;
-    const jwtToken = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(jwtToken);
-    const user_id = decoded.user_id;
-
+    const user_id = req.user.id;
     if (user_id === undefined || user_id === null) {
       return res.json({
         success: false,
@@ -237,6 +227,7 @@ exports.getProductsAttrTypeByProductID = async (req, res) => {
 
 exports.uploadOfferImages = async (req, res) => {
   try {
+    const user_id = req.user.id;
     const {
       main_image,
       bottom_eside,
@@ -249,11 +240,6 @@ exports.uploadOfferImages = async (req, res) => {
       accessories,
       context,
     } = req.files;
-    const authHeader = req.headers.authorization;
-    const token = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(token);
-    const user_id = decoded["user_id"];
-
     var mainImageLink = "";
     var bottomEsideLink = "";
     var topEsideLink = "";
@@ -782,11 +768,11 @@ exports.getOffers = async (req, res) => {
     }
     const categoryRes = await getCategoryIdByProductId(product_id);
     let categoryNameRes;
-    if (categoryRes.length > 0) {      
+    if (categoryRes.length > 0) {
       categoryNameRes = await getCategorybyId(categoryRes[0].category_id);
-    } else{
+    } else {
       categoryNameRes = []
-    }    
+    }
     if (offers.length > 0) {
       return res.json({
         success: true,
@@ -813,7 +799,7 @@ exports.getOffers = async (req, res) => {
         status: 400,
       });
     }
-  } catch (err) {    
+  } catch (err) {
     return res.json({
       success: false,
       message: "Internal server error",
@@ -910,16 +896,12 @@ exports.createUserBids = async (req, res) => {
         success: false,
       });
     }
-    const authHeader = req.headers.authorization;
-    const token = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(token);
-    const user_id = decoded["user_id"];
+    const user_id = req.user.id;
     var buyToPrice = 0;
     const offerRes = await getOfferRecord(offer_id);
     if (offerRes.length > 0) {
       buyToPrice = offerRes[0].buyto_price;
     }
-
     const bidRows = await selectBidbyUser(offer_id, product_id, user_id);
     if (bidRows.length > 0) {
       var lastBid = bidRows[0].bid;
@@ -1092,10 +1074,7 @@ exports.createBuyTransaction = async (req, res) => {
         success: true,
       });
     }
-    const authHeader = req.headers.authorization;
-    const token = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(token);
-    const user_id = decoded["user_id"];
+    const user_id = req.user.id;
     var transactionId = "";
     var doContinue = 1;
     do {
@@ -1255,11 +1234,7 @@ exports.getOffersFilter = async (req, res) => {
 
 exports.transactionHistoryUser = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(token);
-    const user_id = decoded["user_id"];
-
+    const user_id = req.user.id;
     //updated code  26-07-2024 added getTransactionsHistoryUpdated model
     const transactionRes = await getTransactionsHistoryUpdated(user_id);
     if (transactionRes.length > 0) {
@@ -1318,10 +1293,7 @@ exports.createOfferFavourites = async (req, res) => {
         success: false,
       });
     }
-    const authHeader = req.headers.authorization;
-    const token = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(token);
-    const user_id = decoded["user_id"];
+    const user_id = req.user.id;
     const offerFavourites = {
       offer_id: offer_id,
       user_id: user_id,
@@ -1366,10 +1338,7 @@ exports.getFavouriteOffers = async (req, res) => {
         success: false,
       });
     }
-    const authHeader = req.headers.authorization;
-    const token = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(token);
-    const user_id = decoded["user_id"];
+    const user_id = req.user.id;
 
     const offerIds = await getFavouriteOffersByUserId(user_id);
     var offer_id = "";
@@ -2331,6 +2300,76 @@ exports.getOffersByProductId = async (req, res) => {
       success: false,
       message: "Internal server error",
       error: err,
+      status: 500,
+    });
+  }
+};
+
+exports.updateOfferExpired = async (req, res) => {
+  try {
+    var offerResult = await getOffersAutoUpdate();
+    if (offerResult.length > 0) {
+      for (item of offerResult) {
+        var offerId = item.id;
+        var doContinue = 1;
+        var transactionId = 0;
+        var seller = item.user_id;
+        var productId = item.product_id
+        var buyer = 0;
+        var max_bid = 0;
+        const result = await getMaxBidOnOffer(offerId);
+
+        if (result.length > 0) {
+          buyer = result[0].user_id;
+          max_bid = result[0].bid
+        }
+        do {
+          transactionId = randomstring.generate({
+            length: 12,
+            charset: "alphanumeric",
+          });
+          const found = await checkTransactionID(transactionId);
+          if (found.length > 0) {
+            doContinue = 0;
+          }
+        } while (doContinue);
+        const transactionDetails = {
+          transaction_id: transactionId,
+          buyer_id: buyer,
+          seller_id: seller,
+          product_id: productId,
+          offer_id: offerId,
+          amount: max_bid,
+          is_buy_now: 0,
+          is_max_bid: 1,
+        };
+        const resultInserted = await insertTransaction(transactionDetails);
+        if (resultInserted.affectedRows > 0) {
+          const offerupdate = await updateOfferBuyStatus("1", offerId);
+          if (offerupdate.affectedRows > 0) {
+            return res.json({
+              success: true,
+              message: "Offer Successfully Update",
+              status: 200,
+              error: false,
+              updateData: offerupdate
+            });
+          } else {
+            return res.json({
+              success: false,
+              message: "Offer Not Update",
+              status: 200,
+              error: true
+            });
+          }
+        }
+      }
+    }
+  } catch (error) {
+    return res.json({
+      success: false,
+      message: "Internal server error" + ':' + error.message,
+      error: true,
       status: 500,
     });
   }
