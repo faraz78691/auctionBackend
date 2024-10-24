@@ -69,14 +69,6 @@ var moment = require('moment-timezone');
 
 exports.getProducts = async (req, res) => {
   try {
-    const user_id = req.user.id;
-    if (user_id === undefined || user_id === null) {
-      return res.json({
-        success: false,
-        status: 500,
-        msg: "The token is expired or incorrect, Please login again",
-      });
-    }
     const productDetails = await getProductDetails();
     if (productDetails.length > 0) {
       res.json({
@@ -122,14 +114,6 @@ exports.getProductsAttrByProductID = async (req, res) => {
         success: true,
       });
     }
-    const user_id = req.user.id;
-    if (user_id === undefined || user_id === null) {
-      return res.json({
-        success: false,
-        status: 500,
-        msg: "The token is expired or incorrect, Please login again",
-      });
-    }
     const productAttrDetails = await getProductAttributesByID(product_id);
     if (productAttrDetails.length > 0) {
       res.json({
@@ -172,14 +156,6 @@ exports.getProductsAttrTypeByProductID = async (req, res) => {
         missingParams: result.error.details[0].message,
         status: 200,
         success: true,
-      });
-    }
-    const user_id = req.user.id;
-    if (user_id === undefined || user_id === null) {
-      return res.json({
-        success: false,
-        status: 500,
-        msg: "The token is expired or incorrect, Please login again",
       });
     }
     var productAttributeTypeValueMap = [];
@@ -653,7 +629,10 @@ exports.updateOffer = async (req, res) => {
 
 exports.getOffers = async (req, res) => {
   try {
-    const user_id = req.user.id;
+    const authHeader = req.headers.authorization;
+    const token = authHeader.replace("Bearer ", "");
+    const decoded = jwt.decode(token);
+    const user_id = decoded["user_id"];
     const { product_id, page, page_size } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
