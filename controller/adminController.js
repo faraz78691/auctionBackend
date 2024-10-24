@@ -666,18 +666,12 @@ exports.addProductTypeAttributes = async (req, res) => {
                 }
                 const addProductTypeAttribute = await addProductAttributeType(attribute);
                 if (addProductTypeAttribute.affectedRows > 0) {
-                    if (attribute_name == 'Country' || attribute_name == 'Colors') {
-                        const attributeValueMapping = {
-                            Country: 'Any Country',
-                            Colors: 'All colors',
-                        };
-
+                    if (attribute_name == 'Country' || attribute_name == 'Color') {
                         const attributeMapping = {
                             product_id: product_id,
                             attribute_id: addProductTypeAttribute.insertId,
-                            attribute_value_name: attributeValueMapping[attribute_name] || attribute_name // Default to attribute_name if not mapped
+                            attribute_value_name: attribute_name == 'Color' ? 'All colors' : 'Any Country' // Default to attribute_name if not mapped
                         };
-
                         try {
                             const addProductAttributeMapping = await addProductAttribute(attributeMapping);
                         } catch (error) {
