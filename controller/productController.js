@@ -656,8 +656,6 @@ exports.updateOffer = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err);
-
     return res.json({
       success: false,
       message: "Internal server error",
@@ -669,10 +667,7 @@ exports.updateOffer = async (req, res) => {
 
 exports.getOffers = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    const jwtToken = authHeader == undefined ? "" : authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(jwtToken);
-    const user_id = decoded == null ? "" : decoded.user_id;
+    const user_id = req.user.id;
     const { product_id, page, page_size } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
@@ -786,10 +781,12 @@ exports.getOffers = async (req, res) => {
       }
     }
     const categoryRes = await getCategoryIdByProductId(product_id);
-    if (categoryRes.length > 0) {
-      var categoryId = categoryRes[0].category_id;
-      var categoryNameRes = await getCategorybyId(categoryId);
-    }
+    let categoryNameRes;
+    if (categoryRes.length > 0) {      
+      categoryNameRes = await getCategorybyId(categoryRes[0].category_id);
+    } else{
+      categoryNameRes = []
+    }    
     if (offers.length > 0) {
       return res.json({
         success: true,
@@ -816,8 +813,7 @@ exports.getOffers = async (req, res) => {
         status: 400,
       });
     }
-  } catch (err) {
-    console.log(err);
+  } catch (err) {    
     return res.json({
       success: false,
       message: "Internal server error",

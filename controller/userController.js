@@ -849,11 +849,7 @@ exports.insertUserRole = async (req, res) => {
         success: true,
       });
     }
-    const authHeader = req.headers.authorization;
-    const jwtToken = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(jwtToken);
-    const user_id = decoded.user_id;
-
+    const user_id = req.user.id;
     const userDetails = await fetchUserById(user_id);
     if (userDetails.length > 0) {
       const role_data = {
@@ -889,10 +885,7 @@ exports.insertUserRole = async (req, res) => {
 
 exports.getUserRoleDetails = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    const jwtToken = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(jwtToken);
-    const user_id = decoded.user_id;
+    const user_id = req.user.id;
     var userRoles = {};
     if (user_id === undefined || user_id === null) {
       return (
@@ -1078,10 +1071,7 @@ exports.updateUserProfileC = async (req, res) => {
 
 exports.getUserRoleProfile = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    const jwtToken = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(jwtToken);
-    const user_id = decoded.user_id;
+    const user_id = req.user.id;
     var userRoles = {};
     if (user_id === undefined || user_id === null) {
       return (

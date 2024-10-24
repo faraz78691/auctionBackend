@@ -10,7 +10,7 @@ router.post('/getProductsAttrByProductID', productController.getProductsAttrByPr
 router.post('/getProductsAttrTypeByProductID', productController.getProductsAttrTypeByProductID);
 router.post('/createOffer', auth, productController.createOffer);
 router.post('/updateOffer', auth, productController.updateOffer);
-router.post('/getOffers', productController.getOffers);
+router.post('/getOffers', auth, productController.getOffers);
 router.post('/getOffersCountDown', productController.getOffersCountDown);
 router.post('/createUserBids', productController.createUserBids);
 router.get('/getOffer', productController.getOffer);

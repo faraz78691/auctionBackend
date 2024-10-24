@@ -141,7 +141,7 @@ module.exports = {
     },
 
     findAllTransaction: async () => {
-        return await db.query("SELECT buy_sell_transactions.transaction_id, buy_sell_transactions.buyer_id, CONCAT( buyer_user.first_name, ' ', buyer_user.last_name ) AS buyer_name, buy_sell_transactions.seller_id, CONCAT( seller_user.first_name, ' ', seller_user.last_name ) AS seller_name, buy_sell_transactions.amount, buy_sell_transactions.buyer_status, buy_sell_transactions.seller_status, buy_sell_transactions.created_at, offers_created.id AS offer_id, offers_created.offer_unique_id, offers_created.title FROM `buy_sell_transactions` LEFT JOIN users AS buyer_user ON buyer_user.id = buy_sell_transactions.buyer_id LEFT JOIN users AS seller_user ON seller_user.id = buy_sell_transactions.seller_id LEFT JOIN offers_created ON offers_created.id = buy_sell_transactions.offer_id;");
+        return await db.query("SELECT buy_sell_transactions.*, CONCAT( buyer_user.first_name, ' ', buyer_user.last_name ) AS buyer_name, CONCAT( seller_user.first_name, ' ', seller_user.last_name ) AS seller_name, offers_created.id AS offer_id, offers_created.offer_unique_id, offers_created.title FROM `buy_sell_transactions` LEFT JOIN users AS buyer_user ON buyer_user.id = buy_sell_transactions.buyer_id LEFT JOIN users AS seller_user ON seller_user.id = buy_sell_transactions.seller_id LEFT JOIN offers_created ON offers_created.id = buy_sell_transactions.offer_id;");
     }
 
 };
