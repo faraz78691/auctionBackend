@@ -1096,6 +1096,7 @@ exports.createBuyTransaction = async (req, res) => {
       amount: amount,
       is_buy_now: is_buy_now,
       is_max_bid: is_max_bid,
+      created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
     };
     const resultInserted = await insertTransaction(transactionDetails);
     if (resultInserted.affectedRows > 0) {
