@@ -9,7 +9,7 @@ module.exports = {
     },
 
     fetchAllUsers: async () => {
-        return db.query('SELECT first_name, last_name, email, phone_number, street_number, street, city, state, country, postal_code,  concat(street_number, " ", street, " ", city, " ", state, " ", country, " ", postal_code ) AS address FROM `users` WHERE role_id = 1');
+        return db.query('SELECT id, first_name, last_name, email, phone_number, street_number, street, city, state, country, postal_code,  concat(street_number, " ", street, " ", city, " ", state, " ", country, " ", postal_code ) AS address FROM `users` WHERE role_id = 1');
     },
 
     fetchAllUsersOffers: async () => {
@@ -130,6 +130,10 @@ module.exports = {
 
     deleteSubAttributesById: async (id) => {
         return await db.query('DELETE FROM `sub_attribute_mapping` WHERE id = ?', [id]);
+    },
+
+    findLiveHighestBid: async() => {
+        return await db.query('SELECT user_bids.offer_id, MAX(user_bids.bid) AS highest_bid, sum(user_bids.count) AS total_bid, offers_created.offer_unique_id, offers_created.start_price, offers_created.title, offers_created.start_date, offers_created.end_date FROM user_bids LEFT JOIN offers_created ON offers_created.id = user_bids.offer_id GROUP BY user_bids.offer_id;');
     }
 
 };

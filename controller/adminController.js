@@ -1,8 +1,9 @@
 const Joi = require("joi");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+var moment = require('moment-timezone');
 
-const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById } = require("../models/admin");
+const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid } = require("../models/admin");
 const { updateData } = require("../models/common");
 
 exports.login = async (req, res) => {
@@ -1387,6 +1388,26 @@ exports.deleteSubAttributesById = async (req, res) => {
             } else {
                 return res.status(404).json({ error: true, message: "Data not delete or id not found", success: false, status: 404 });
             }
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
+    }
+};
+
+exports.getLiveHighestBid = async (req, res) => {
+    try {
+        const currDate = moment().tz('Europe/Zurich');
+        const result = await findLiveHighestBid();
+        for (let element of result) {
+            const endDate = moment(element.end_date);
+            if (endDate.isBefore(currDate)) {
+                const resultTransaction = await getTransactionByOfferId(element.offer_id)
+            }
+        }
+        if (result.length > 0) {
+            return res.status(200).json({ error: false, message: "Highest bid successfully found", success: true, status: 200, highestBid: result });
+        } else {
+            return res.status(404).json({ error: true, message: "Highest bid not found", success: false, status: 404, highestBid: null });
         }
     } catch (error) {
         return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
