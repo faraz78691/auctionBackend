@@ -1051,12 +1051,11 @@ exports.getOffer = async (req, res) => {
 
 exports.createBuyTransaction = async (req, res) => {
   try {
-    const { seller_id, product_id, offer_id, amount, is_buy_now, is_max_bid } =
+    const { seller_id, offer_id, amount, is_buy_now, is_max_bid } =
       req.body;
     const schema = Joi.alternatives(
       Joi.object({
         seller_id: Joi.number().required().empty(),
-        product_id: Joi.number().required().empty(),
         offer_id: Joi.number().required().empty(),
         amount: Joi.number().required().empty(),
         is_buy_now: Joi.number().required().empty(),
@@ -1092,7 +1091,7 @@ exports.createBuyTransaction = async (req, res) => {
       transaction_id: transactionId,
       buyer_id: user_id,
       seller_id: seller_id,
-      product_id: product_id,
+      // product_id: product_id,
       offer_id: offer_id,
       amount: amount,
       is_buy_now: is_buy_now,
