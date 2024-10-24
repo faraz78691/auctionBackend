@@ -196,7 +196,6 @@ exports.rejectPrice = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",
@@ -208,6 +207,7 @@ exports.rejectPrice = async (req, res) => {
 
 exports.getPriceSuggestedBySellerStatus = async (req, res) => {
   try {
+    const user_id = req.user.id;
     const { status } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
@@ -225,12 +225,6 @@ exports.getPriceSuggestedBySellerStatus = async (req, res) => {
         success: false,
       });
     }
-
-    const authHeader = req.headers.authorization;
-    const token = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(token);
-    const user_id = decoded["user_id"];
-
     if (user_id === null || user_id === undefined || user_id === "") {
       return res.json({
         success: false,
@@ -296,11 +290,7 @@ exports.getPriceSuggestedBySellerStatus = async (req, res) => {
 
 exports.getPriceSuggestedForBuyer = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(token);
-    const user_id = decoded["user_id"];
-
+    const user_id = req.user.id;
     if (user_id === null || user_id === undefined || user_id === "") {
       return res.json({
         success: false,
@@ -366,10 +356,7 @@ exports.getPriceSuggestedForBuyer = async (req, res) => {
 
 exports.getSellingSectionForSeller = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(token);
-    const user_id = decoded["user_id"];
+    const user_id = req.user.id;
     if (user_id === null || user_id === undefined || user_id === "") {
       return res.json({
         success: false,
@@ -453,11 +440,7 @@ exports.getSellingSectionForSeller = async (req, res) => {
 
 exports.getSoldSectionForSeller = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(token);
-    const user_id = decoded["user_id"];
-
+    const user_id = req.user.id;
     if (user_id === null || user_id === undefined || user_id === "") {
       return res.json({
         success: false,
@@ -528,11 +511,7 @@ exports.getSoldSectionForSeller = async (req, res) => {
 
 exports.getOffersByBuyer = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(token);
-    const user_id = decoded["user_id"];
-
+    const user_id = req.user.id;
     if (user_id === null || user_id === undefined || user_id === "") {
       return res.json({
         success: false,
@@ -553,7 +532,7 @@ exports.getOffersByBuyer = async (req, res) => {
         const OfferDetail = await getOffersByOfferId(offerId, user_id);
         if (OfferDetail.length > 0) {
           tempObj.offer_unique_id = OfferDetail[0]?.offer_unique_id,
-          tempObj.title = OfferDetail[0]?.title;
+            tempObj.title = OfferDetail[0]?.title;
           tempObj.end_date = OfferDetail[0]?.end_date;
           tempObj.start_price = OfferDetail[0]?.start_price;
           tempObj.offerStart = OfferDetail[0]?.offerStart;
@@ -631,13 +610,8 @@ exports.getOffersByBuyer = async (req, res) => {
 
 exports.getQuestionAnswerForSeller = async (req, res) => {
   try {
-
+    const user_id = req.user.id;
     const { offerId } = req.query;
-    const authHeader = req.headers.authorization;
-    const token = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(token);
-    const user_id = decoded["user_id"];
-
     if (user_id === null || user_id === undefined || user_id === "") {
       return res.json({
         success: false,
@@ -677,11 +651,7 @@ exports.getQuestionAnswerForSeller = async (req, res) => {
 exports.getQuestionAnswerForBuyer = async (req, res) => {
   try {
     const { offer_id, sellerId } = req.body;
-    const authHeader = req.headers.authorization;
-    const token = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(token);
-    const user_id = decoded["user_id"];
-
+    const user_id = req.user.id;
     if (user_id === null || user_id === undefined || user_id === "") {
       return res.json({
         success: false,
@@ -727,11 +697,7 @@ exports.getQuestionAnswerForBuyer = async (req, res) => {
 exports.uploadBuyerQuestion = async (req, res) => {
   try {
     const { offer_id, sellerId, question } = req.body;
-    const authHeader = req.headers.authorization;
-    const token = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(token);
-    const user_id = decoded["user_id"];
-
+    const user_id = req.user.id;
     if (user_id === null || user_id === undefined || user_id === "") {
       return res.json({
         success: false,
@@ -788,11 +754,7 @@ exports.uploadBuyerQuestion = async (req, res) => {
 exports.uploadSellerAnswer = async (req, res) => {
   try {
     const { id, offer_id, answer } = req.body;
-    const authHeader = req.headers.authorization;
-    const token = authHeader.replace("Bearer ", "");
-    const decoded = jwt.decode(token);
-    const user_id = decoded["user_id"];
-
+    const user_id = req.user.id;
     if (user_id === null || user_id === undefined || user_id === "") {
       return res.json({
         success: false,

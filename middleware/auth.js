@@ -6,7 +6,7 @@ const { findAdminById } = require("../models/admin");
 const auth = async (req, res, next) => {
   try {
     const bearerHeader = req.headers["authorization"];
-    if (typeof beareHeader != undefined) {
+    if (bearerHeader != undefined) {
       const bearer = bearerHeader.split(" ");
       req.token = bearer[1];
       const verifyUser = jwt.verify(req.token, 'SecretKey')
@@ -15,32 +15,44 @@ const auth = async (req, res, next) => {
         req.user = user[0];
         next();
       } else {
-        return res.json({
-          message: "Access Forbidden",
-          status: 401,
-          success: "0",
-        });
+        return res.status(401).json({ error: true, message: "Unauthorized access", success: false, status: 401 });
       }
     } else {
-      return res.json({
-        message: "Token Not Provided",
-        status: 400,
-        success: false,
-      });
+      return res.status(400).json({ error: true, message: "Token not provided", success: false, status: 400 });
     }
   } catch (err) {
-    return res.json({
-      message: "Access forbidden",
-      status: 401,
-      success: "0",
-    });
+    if (err.name === 'TokenExpiredError') {
+      // Handle token expired error
+      return res.status(401).json({
+        error: true,
+        message: "Session expired, please log in again",
+        success: false,
+        status: 401
+      });
+    } else if (err.name === 'JsonWebTokenError') {
+      // Handle other JWT errors (e.g., invalid signature)
+      return res.status(400).json({
+        error: true,
+        message: "Invalid or expired token",
+        success: false,
+        status: 400
+      });
+    } else {
+      // Handle other errors
+      return res.status(500).json({
+        error: true,
+        message: "Internal Server Error" + ': ' + err.message,
+        success: false,
+        status: 500
+      });
+    }
   }
 };
 
 const adminAuth = async (req, res, next) => {
   try {
     const bearerHeader = req.headers["authorization"];
-    if (typeof beareHeader != undefined) {
+    if (bearerHeader != undefined) {
       const bearer = bearerHeader.split(" ");
       req.token = bearer[1];
       const verifyUser = jwt.verify(req.token, 'SecretKey')
@@ -48,25 +60,37 @@ const adminAuth = async (req, res, next) => {
       if (user !== null) {
         next();
       } else {
-        return res.json({
-          message: "Access Forbidden",
-          status: 401,
-          success: "0",
-        });
+        return res.status(401).json({ error: true, message: "Unauthorized access", success: false, status: 401 });
       }
     } else {
-      return res.json({
-        message: "Token Not Provided",
-        status: 400,
-        success: "0",
-      });
+      return res.status(400).json({ error: true, message: "Token not provided", success: false, status: 400 });
     }
   } catch (err) {
-    return res.json({
-      message: "Access forbidden",
-      status: 401,
-      success: false,
-    });
+    if (err.name === 'TokenExpiredError') {
+      // Handle token expired error
+      return res.status(401).json({
+        error: true,
+        message: "Session expired, please log in again",
+        success: false,
+        status: 401
+      });
+    } else if (err.name === 'JsonWebTokenError') {
+      // Handle other JWT errors (e.g., invalid signature)
+      return res.status(400).json({
+        error: true,
+        message: "Invalid or expired token",
+        success: false,
+        status: 400
+      });
+    } else {
+      // Handle other errors
+      return res.status(500).json({
+        error: true,
+        message: "Internal Server Error" + ': ' + err.message,
+        success: false,
+        status: 500
+      });
+    }
   }
 };
 

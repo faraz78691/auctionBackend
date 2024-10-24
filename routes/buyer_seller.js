@@ -1,18 +1,19 @@
 const express = require('express');
 const buyerSellerController = require('../controller/buyerSellerController');
 const router = express.Router();
+const { auth } = require('../middleware/auth');
 
 router.post('/suggestPrice', buyerSellerController.suggestPrice);
 router.post('/acceptPrice', buyerSellerController.acceptPrice);
 router.post('/rejectPrice', buyerSellerController.rejectPrice);
-router.post('/getPriceSuggestedBySellerStatus', buyerSellerController.getPriceSuggestedBySellerStatus);
-router.post('/getPriceSuggestedForBuyer', buyerSellerController.getPriceSuggestedForBuyer);
-router.get('/getSellingSectionForSeller', buyerSellerController.getSellingSectionForSeller);
-router.post('/uploadBuyerQuestion', buyerSellerController.uploadBuyerQuestion);
-router.post('/uploadSellerAnswer', buyerSellerController.uploadSellerAnswer);
-router.post('/getQuestionAnswerForBuyer', buyerSellerController.getQuestionAnswerForBuyer);
-router.get('/getQuestionAnswerForSeller', buyerSellerController.getQuestionAnswerForSeller);
-router.get('/getSoldSectionForSeller', buyerSellerController.getSoldSectionForSeller);
-router.get('/getOffersByBuyer', buyerSellerController.getOffersByBuyer);
+router.post('/getPriceSuggestedBySellerStatus', auth, buyerSellerController.getPriceSuggestedBySellerStatus);
+router.post('/getPriceSuggestedForBuyer', auth, buyerSellerController.getPriceSuggestedForBuyer);
+router.get('/getSellingSectionForSeller', auth, buyerSellerController.getSellingSectionForSeller);
+router.post('/uploadBuyerQuestion', auth, buyerSellerController.uploadBuyerQuestion);
+router.post('/uploadSellerAnswer', auth, buyerSellerController.uploadSellerAnswer);
+router.post('/getQuestionAnswerForBuyer', auth, buyerSellerController.getQuestionAnswerForBuyer);
+router.get('/getQuestionAnswerForSeller', auth, buyerSellerController.getQuestionAnswerForSeller);
+router.get('/getSoldSectionForSeller', auth, buyerSellerController.getSoldSectionForSeller);
+router.get('/getOffersByBuyer', auth, buyerSellerController.getOffersByBuyer);
 
 module.exports = router;
