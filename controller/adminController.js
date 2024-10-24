@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 var moment = require('moment-timezone');
 
-const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid } = require("../models/admin");
+const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid, getTransactionByOfferId, findAllTransaction } = require("../models/admin");
 const { updateData } = require("../models/common");
 
 exports.login = async (req, res) => {
@@ -1401,13 +1401,39 @@ exports.getLiveHighestBid = async (req, res) => {
         for (let element of result) {
             const endDate = moment(element.end_date);
             if (endDate.isBefore(currDate)) {
-                const resultTransaction = await getTransactionByOfferId(element.offer_id)
+                const resultTransaction = await getTransactionByOfferId(element.offer_id);
+                if (resultTransaction && resultTransaction.length > 0) {
+                    element.status = 'Finish';
+                    element.buyer = {
+                        id: resultTransaction[0].id,
+                        name: resultTransaction[0].full_name,
+                    };
+                } else {
+                    element.status = 'Open';
+                    element.buyer = '';
+                }
+            } else {
+                element.status = 'Open';
+                element.buyer = '';
             }
         }
         if (result.length > 0) {
             return res.status(200).json({ error: false, message: "Highest bid successfully found", success: true, status: 200, highestBid: result });
         } else {
             return res.status(404).json({ error: true, message: "Highest bid not found", success: false, status: 404, highestBid: null });
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
+    }
+};
+
+exports.getAllTransaction = async (req, res) => {
+    try {
+        const resultTransaction = await findAllTransaction();
+        if (resultTransaction.length > 0) {
+            return res.status(200).json({ error: false, message: "Transaction successfully found", success: true, status: 200, transdactionData: resultTransaction });
+        } else {
+            return res.status(404).json({ error: true, message: "Transaction not found", success: false, status: 404, highestBid: null });
         }
     } catch (error) {
         return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })

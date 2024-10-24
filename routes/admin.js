@@ -35,5 +35,6 @@ router.get('/getSubAttributesByProductAttributesMappingId', adminAuth, adminCont
 router.post('/updateSubAttributesById', adminAuth, adminController.updateSubAttributesById);
 router.delete('/deleteSubAttributesById', adminAuth, adminController.deleteSubAttributesById);
 router.get('/getLiveHighestBid', adminAuth, adminController.getLiveHighestBid);
+router.get('/getAllTransaction', adminAuth, adminController.getAllTransaction);
 
 module.exports = router;

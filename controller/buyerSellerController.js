@@ -488,7 +488,6 @@ exports.getSoldSectionForSeller = async (req, res) => {
         if (thumbnail.length > 0) {
           tempObj.main_image = thumbnail[0]?.main_image;
         }
-        tempObj.status = "Wait for payment";
         var bidRes = await getMaxBidbyOfferID(offerId);
         if (bidRes.length > 0) {
           tempObj.price = bidRes[0]?.price;
