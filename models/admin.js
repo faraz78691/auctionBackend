@@ -133,7 +133,7 @@ module.exports = {
     },
 
     findLiveHighestBid: async () => {
-        return await db.query('SELECT user_bids.offer_id, MAX(user_bids.bid) AS highest_bid, sum(user_bids.count) AS total_bid, offers_created.offer_unique_id, offers_created.start_price, offers_created.title, offers_created.start_date, offers_created.end_date FROM user_bids LEFT JOIN offers_created ON offers_created.id = user_bids.offer_id GROUP BY user_bids.offer_id;');
+        return await db.query("SELECT user_bids.offer_id, MAX(user_bids.bid) AS highest_bid, SUM(user_bids.count) AS total_bid, offers_created.offer_unique_id, offers_created.start_price, offers_created.title, offers_created.start_date, offers_created.end_date, user_bids.user_id, CONCAT(users.first_name, ' ', users.last_name) AS user_name FROM user_bids LEFT JOIN offers_created ON offers_created.id = user_bids.offer_id LEFT JOIN users ON users.id = user_bids.user_id GROUP BY user_bids.offer_id, offers_created.offer_unique_id, offers_created.start_price, offers_created.title, offers_created.start_date, offers_created.end_date, user_bids.user_id, users.first_name, users.last_name;");
     },
 
     getTransactionByOfferId: async (id) => {
