@@ -362,7 +362,7 @@ module.exports = {
 
 
   getOffersAutoUpdate: async () => {
-    return db.query(`select id, user_id, product_id, offer_unique_id from offers_created where is_bid_or_fixed=1 and offfer_buy_status=0 and TIMESTAMP(end_date) < '${currDate}'`);
+    return db.query(`select id, user_id, product_id, offer_unique_id from offers_created where is_bid_or_fixed=1 AND offfer_buy_status=0 AND no_of_times_reactivated = 0 AND TIMESTAMP(end_date) < '${currDate}'`);
   },
 
   getMaxBidOnOffer: async (offer_id) => {
