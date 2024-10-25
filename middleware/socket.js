@@ -2,6 +2,7 @@ const db = require("../utils/database");
 const { Server } = require("socket.io");
 const { createNewBid, getBitCountByOfferId } = require("../controller/productController");
 const { updateOnlineStatus } = require("../controller/userController");
+const { fetchUserById } = require("../models/users");
 const { adminUpdateLoginStatus } = require("../controller/adminController");
 const { getAllChatUsers, getLastMessageAllUser } = require('../models/admin')
 // socket.js
@@ -24,16 +25,17 @@ module.exports = function (server) {
         console.log("A user connected");
 
         // Listen for 'newBid' events from the client
-        socket.on("newBid", (data) => {
-            createNewBid(data)
-                .then(() => getBitCountByOfferId(data))
-                .then((count) => {
-                    const bidCount = count[0].bidCount
-                    io.emit("updateBid", { ...data, bidCount });
-                })
-                .catch((error) => {
-                    console.error("Error handling new bid:", error);
-                });
+        socket.on("newBid", async(data) => {
+            try {
+                await createNewBid(data);
+                const count = await getBitCountByOfferId(data);
+                const user = await fetchUserById(data.user_id);  // Wait for the user data to be fetched
+                const bidCount = count[0].bidCount;
+                data.user_name = `${user[0].first_name} ${user[0].last_name}`;
+                io.emit("updateBid", { ...data, bidCount });
+            } catch (error) {
+                console.error("Error handling new bid:", error);
+            }
         });
 
         // User goes online
