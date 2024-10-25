@@ -630,9 +630,9 @@ exports.updateOffer = async (req, res) => {
 exports.getOffers = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
-    const token = authHeader.replace("Bearer ", "");
+    const token = authHeader != undefined ? authHeader.replace("Bearer ", "") : '';
     const decoded = jwt.decode(token);
-    const user_id = decoded["user_id"];
+    const user_id = decoded != null ? decoded["user_id"] : '';
     const { product_id, page, page_size } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
@@ -779,6 +779,7 @@ exports.getOffers = async (req, res) => {
       });
     }
   } catch (err) {
+    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",
