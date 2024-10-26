@@ -524,9 +524,6 @@ exports.getOffersByBuyer = async (req, res) => {
     }
 
     const offersDetails = await getOffersByBuyerID(user_id);
-    console.log(offersDetails);
-    
-
     if (offersDetails.length > 0) {
       var finalOutput = [];
       for (el of offersDetails) {

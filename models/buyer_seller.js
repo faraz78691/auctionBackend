@@ -88,7 +88,7 @@ END AS is_favorite FROM offers_created LEFT JOIN favourites_offer ON favourites_
 
   getBidDetailsByID: async (offerId, user_id) => {
     return db.query(
-      `SELECT bid FROM user_bids WHERE offer_id = ${offerId} and user_id = ${user_id}`
+      `SELECT MAX(bid) AS bid FROM user_bids WHERE offer_id = ${offerId} and user_id = ${user_id}`
     );
   },
 
