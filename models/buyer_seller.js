@@ -82,9 +82,7 @@ END AS is_favorite FROM offers_created LEFT JOIN favourites_offer ON favourites_
   },
 
   getOffersByBuyerID: async (buyer) => {
-    return db.query(
-      `SELECT offer_id FROM user_bids WHERE user_id = ${buyer} ORDER BY created_at DESC`
-    );
+    return db.query(`SELECT offer_id, MAX(created_at) AS latest_created_at FROM user_bids WHERE user_id = ${buyer} GROUP BY offer_id ORDER BY latest_created_at DESC;`);
   },
 
 
