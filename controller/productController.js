@@ -881,6 +881,7 @@ exports.createUserBids = async (req, res) => {
       bid: bid,
       offer_id: offer_id,
       user_id: user_id,
+      created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
     };
     const resultInserted = await insertBidByUser(bid_created);
     if (resultInserted.affectedRows > 0) {
@@ -2144,7 +2145,7 @@ exports.createNewBid = async (data) => {
       Joi.object({
         bid: Joi.number().required().empty(),
         offer_id: Joi.number().required().empty(),
-        user_id: Joi.number().required().empty()
+        user_id: Joi.number().required().empty(),
       })
     );
     const result = schema.validate(data);
@@ -2155,6 +2156,7 @@ exports.createNewBid = async (data) => {
         bid: bid,
         offer_id: offer_id,
         user_id: user_id,
+        created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
       };
       const resultInserted = await insertBidByUser(bid_created);
     }
@@ -2285,7 +2287,7 @@ exports.getOffersByProductId = async (req, res) => {
 
 exports.updateOfferExpired = async (req, res) => {
   try {
-    var offerResult = await getOffersAutoUpdate();
+    var offerResult = await getOffersAutoUpdate();    
     if (offerResult.length > 0) {
       for (item of offerResult) {
         var offerId = item.id;
@@ -2296,7 +2298,6 @@ exports.updateOfferExpired = async (req, res) => {
         var buyer = 0;
         var max_bid = 0;
         const result = await getMaxBidOnOffer(offerId);
-
         if (result.length > 0) {
           buyer = result[0].user_id;
           max_bid = result[0].bid
@@ -2321,8 +2322,8 @@ exports.updateOfferExpired = async (req, res) => {
           is_buy_now: 0,
           is_max_bid: 1,
           created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
-        };
-        const resultInserted = await insertTransaction(transactionDetails);
+        };        
+        const resultInserted = await insertTransaction(transactionDetails);        
         if (resultInserted.affectedRows > 0) {
           const offerupdate = await updateOfferBuyStatus("1", offerId);
           if (offerupdate.affectedRows > 0) {
@@ -2343,8 +2344,15 @@ exports.updateOfferExpired = async (req, res) => {
           }
         }
       }
+    } else{
+      return res.json({
+        success: true,
+        message: "Offer Already Updated",
+        status: 200,
+        error: false
+      });
     }
-  } catch (error) {
+  } catch (error) {    
     return res.json({
       success: false,
       message: "Internal server error" + ':' + error.message,
