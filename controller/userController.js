@@ -294,8 +294,7 @@ exports.login = async (req, res) => {
             {
               user_id: result[0].id,
             },
-            "SecretKey",
-            { expiresIn: "24h" }
+            "SecretKey"
           );
 
           await tokenUpdate(token, result[0].id);

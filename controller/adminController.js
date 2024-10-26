@@ -45,8 +45,7 @@ exports.login = async (req, res) => {
                     {
                         user_id: getAdmin[0].id,
                     },
-                    "SecretKey",
-                    { expiresIn: "24h" }
+                    "SecretKey"
                 );
 
                 await tokenUpdate(`"${token}"`, getAdmin[0].id);

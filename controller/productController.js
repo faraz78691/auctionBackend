@@ -34,6 +34,7 @@ const {
   checkTransactionID,
   insertTransaction,
   getProductIdsByName,
+  getffersByName,
   getTransactionsHistory,
   getTransactionsHistoryUpdated,
   getoffer_images,
@@ -1130,12 +1131,33 @@ exports.getOffersFilter = async (req, res) => {
 
     const offset = (parseInt(page) - 1) * parseInt(page_size);
     const productIds = await getProductIdsByName(product_name);
+    const offerData = await getffersByName(product_name);
     var product_id = "";
-    if (productIds.length > 0) {
+    if (productIds.length > 0 && offerData.length > 0) {
+      const allProductIds = [
+        ...productIds.map(p => p.id),
+        ...offerData.map(offer => offer.product_id)
+      ];
+
+      // Remove duplicates by converting to a Set and back to an array
+      const uniqueProductIds = [...new Set(allProductIds)];
+
+      for (i = 0; i < uniqueProductIds.length; i++) {
+        if (i === uniqueProductIds.length - 1)
+          product_id = product_id + "'" + uniqueProductIds[i] + "'";
+        else product_id = product_id + "'" + uniqueProductIds[i] + "'" + ",";
+      }
+    } else if (productIds.length > 0) {
       for (i = 0; i < productIds.length; i++) {
         if (i === productIds.length - 1)
           product_id = product_id + "'" + productIds[i].id + "'";
         else product_id = product_id + "'" + productIds[i].id + "'" + ",";
+      }
+    } else if (offerData.length > 0) {
+      for (i = 0; i < offerData.length; i++) {
+        if (i === offerData.length - 1)
+          product_id = product_id + "'" + offerData[i].product_id + "'";
+        else product_id = product_id + "'" + offerData[i].product_id + "'" + ",";
       }
     } else {
       return res.json({
@@ -1144,35 +1166,49 @@ exports.getOffersFilter = async (req, res) => {
         status: 400,
       });
     }
-
+    var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
     var whereClause = "";
     if (
       product_name.length > 0 &&
       product_name !== null &&
       product_name !== undefined
     ) {
-      whereClause = ` where product_id in (${product_id}) and  offfer_buy_status != '1' `;
+      whereClause = `WHERE product_id IN (${product_id}) and offfer_buy_status != '1' and TIMESTAMP(end_date) >= '${currDate}'`; //updated code 26-07-2024
+    } else {
+      whereClause = ` where offfer_buy_status != '1' and TIMESTAMP(end_date) >= '${currDate}'`;
     }
-
-    var offers = await getOffersByWhereClause(whereClause, page_size, offset);
+    const user_id = ''
+    var offers = await getOffersByWhereClause(whereClause, user_id, page_size, offset);
     for (element of offers) {
       var startDateTime = element.start_date.toString();
       element.start_date = startDateTime;
       var time = element.remaining_time;
       var timeArray = time.split(":");
+
       var hours = Number(timeArray[0]) % 24;
+      console.log(hours);
       time = hours.toString() + ":" + timeArray[1] + ":" + timeArray[1];
       element.remaining_time = time;
       if (element.product_id != 0) {
-        const countR = await getNoOfBids(element.product_id, element.id);
+        const countR = await getNoOfBids(element.id);
         //const maxBidR = await getMaxBidF(element.product_id);
         if (countR.length > 0) {
-          element.count = countR[0].count;
-          element.max_bid = countR[0].max_bid;
+          element.user_bid = {
+            user_id: (countR.length > 0 && countR[0]?.user_id != null) ? countR[0]?.user_id : 0,
+            max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
+            count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
+          }
+        } else {
+          element.user_bid = {
+            user_id: (countR.length > 0 && countR[0]?.user_id != null) ? countR[0]?.user_id : 0,
+            max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
+            count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
+          }
         }
 
         const categoryRes = await getCategoryIdByProductId(element.product_id);
         if (categoryRes.length > 0) {
+          element.product_name = categoryRes[0].name;
           var categoryId = categoryRes[0].category_id;
           const categoryNameRes = await getCategorybyId(categoryId);
           if (categoryNameRes.length > 0) {
@@ -1187,22 +1223,40 @@ exports.getOffersFilter = async (req, res) => {
         }
       }
     }
+    const categoryRes = await getCategoryIdByProductId(product_id);
+    let categoryNameRes;
+    if (categoryRes.length > 0) {
+      categoryNameRes = await getCategorybyId(categoryRes[0].category_id);
+    } else {
+      categoryNameRes = []
+    }
     if (offers.length > 0) {
       return res.json({
         success: true,
         message: "Offer Sorted by time",
+        categoryName: offers[0].category_name,
+        productName: offers[0].product_name,
         offers: offers,
         status: 200,
       });
-    } else {
+    } else if (categoryRes.length > 0 || categoryNameRes.length > 0) {
+      return res.json({
+        success: false,
+        message: "Offer Sorted by time only category name and product name find",
+        categoryName: categoryNameRes.length > 0 ? categoryNameRes[0].cat_name : null,
+        productName: categoryRes.length > 0 ? categoryRes[0].name : null,
+        offers: null,
+        status: 400,
+      });
+    }
+    else {
       return res.json({
         success: false,
         message: "No Offers Found",
         status: 400,
       });
     }
-  } catch (err) {
-    console.log(err);
+  } catch (err) {    
     return res.json({
       success: false,
       message: "Internal server error",

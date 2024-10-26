@@ -238,6 +238,10 @@ module.exports = {
     return db.query(`select id from product where name like '%${product_name}%'`);
   },
 
+  getffersByName: async (product_name) => {
+    return await db.query(`SELECT id, title, product_id FROM offers_created WHERE title LIKE '%${product_name}%'`);
+  },
+
   getTransactionsHistory: async (user_id) => {
     return db.query(`select * from  buy_sell_transactions where buyer_id = '${user_id}'`);
   },
