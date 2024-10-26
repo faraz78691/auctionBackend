@@ -135,12 +135,13 @@ exports.acceptPrice = async (req, res) => {
       transaction_id: transactionId,
       buyer_id: buyer,
       seller_id: seller,
-      product_id: product_id,
+      // product_id: product_id,
       offer_id: offer_id,
       amount: price,
       is_buy_now: 1,
       is_max_bid: 0,
       buy_status: 1,
+      created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
     };
     const resultInserted = await insertTransaction(transactionDetails);
     if (resultInserted.affectedRows > 0) {
@@ -393,17 +394,17 @@ exports.getSellingSectionForSeller = async (req, res) => {
         tempObj.name = el.title;
         var endDate = el.end_date;
 
-        if (bidRes.length > 0) {
-          var newEndDate = moment(endDate).tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
-          var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
+        // if (bidRes.length > 0) {
+        var newEndDate = moment(endDate).tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
+        var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
 
 
-          if (currDate > newEndDate) {
-            tempObj.status = "Not Sold";
-          } else {
-            tempObj.status = "Open";
-          }
+        if (currDate > newEndDate) {
+          tempObj.status = "Not Sold";
+        } else {
+          tempObj.status = "Open";
         }
+        // }
         if (buyer_id != 0) {
           var buyerNameArr = await getUserNamebyId(buyer_id);
           if (buyerNameArr.length > 0) {
@@ -464,6 +465,7 @@ exports.getSoldSectionForSeller = async (req, res) => {
             ? 0
             : el?.buyer_id;
         if (OfferDetail.length > 0) {
+          tempObj.offer_unique_id = OfferDetail[0].offer_unique_id;
           tempObj.title = OfferDetail[0]?.title;
           tempObj.end_date = OfferDetail[0]?.end_date;
         }

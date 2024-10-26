@@ -5,7 +5,7 @@ const {
   insertTransaction,
   updateOfferBuyStatus
 } = require("../models/product");
-
+var moment = require("moment");
 var randomstring = require("randomstring");
 
 module.exports = {
@@ -41,12 +41,13 @@ module.exports = {
             transaction_id: transactionId,
             buyer_id: buyer,
             seller_id: seller,
-            product_id: productId,
+            // product_id: productId,
             offer_id: offerId,
             amount: max_bid,
             is_buy_now: 0,
             is_max_bid: 1,
-          };       
+            created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+          };
           const resultInserted = await insertTransaction(transactionDetails);
           if (resultInserted.affectedRows > 0) {
             const offerupdate = await updateOfferBuyStatus("1", offerId);
