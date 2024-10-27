@@ -400,7 +400,7 @@ module.exports = {
   },
 
   findBidCountUserId: async (offer_id) => {
-    return db.query(`SELECT SUM(count) as bidCount FROM user_bids WHERE offer_id = ${offer_id}`);
+    return db.query(`SELECT created_at, (SELECT SUM(count) FROM user_bids WHERE offer_id = ${offer_id}) AS bidCount FROM user_bids WHERE offer_id = ${offer_id} ORDER BY created_at DESC LIMIT 1;`);
   }
 
 }                       

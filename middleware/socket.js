@@ -36,23 +36,36 @@ module.exports = function (server) {
                 const bidCount = count[0].bidCount;
                 data.user_name = `${user[0].first_name} ${user[0].last_name}`;
                 var offerRes = await getOfferDetailsByID(data.offer_id);
-                var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
-                if (offerRes[0].offfer_buy_status != 1 && moment(offerRes[0].end_date).format('YYYY-MM-DD HH:mm:ss') <= currDate && (offerRes[0].is_reactivable == 0 || (offerRes[0].is_reactivable == 1 && offerRes[0].no_of_times_reactivated == 0))) {
-                    const newEndDate = moment(offerRes[0].end_date).add(3, 'minutes').format('YYYY-MM-DD HH:mm:ss'); // Add length of time (in days)
-                    const offerStartDate = moment(offerRes[0].offerStart).add(3, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+                const endMoment = moment(offerRes[0].end_date); // Leave as a moment object
+                const createdMoment = moment(count[0].created_at);
+                if (offerRes[0].offfer_buy_status != 1 && endMoment.diff(createdMoment) <= 180000 && (offerRes[0].is_reactivable == 0 || (offerRes[0].is_reactivable == 1 && offerRes[0].no_of_times_reactivated == 0))) {
+                    const currMoment = moment().tz('Europe/Zurich');
+                    console.log("currMoment =>", currMoment);
+
+                    const differenceInMilliseconds = currMoment.diff(endMoment);
+                    console.log("differenceInMilliseconds =>", differenceInMilliseconds);
+
+                    // if (differenceInMilliseconds <= 180000) {
+                    const time = 180000 - differenceInMilliseconds;
+                    console.log("time =>", time);
+                    const differenceInMinutes = moment.duration(time).asMinutes();
+                    const newEndDate = moment(offerRes[0].end_date).add(differenceInMinutes, 'minutes').format('YYYY-MM-DD HH:mm:ss'); // Add length of time (in days)
+                    const offerStartDate = moment(offerRes[0].offerStart).add(differenceInMinutes, 'minutes').format('YYYY-MM-DD HH:mm:ss');
 
                     // Update the number of times the offer has been reactivated, but ensure it doesn't go below zero
                     offerRes[0].no_of_times_reactivated = '';
 
                     // Update the offer's end date and reactivation count in the database
                     await updateOfferEndDate(offerRes[0].id, offerStartDate, newEndDate, offerRes[0].no_of_times_reactivated);
-
+                    // }
                     const offerById = await await getOfferDetailsByID(data.offer_id);
                     const new_offerstart_date = offerById[0].offerStart
-                    io.emit("updateBid", { ...data, bidCount, new_offerstart_date });
+                    const length_oftime = offerRes[0].length_oftime
+                    io.emit("updateBid", { ...data, bidCount, new_offerstart_date, length_oftime });
                 } else {
                     const new_offerstart_date = null
-                    io.emit("updateBid", { ...data, bidCount, new_offerstart_date });
+                    const length_oftime = offerRes[0].length_oftime
+                    io.emit("updateBid", { ...data, bidCount, new_offerstart_date, length_oftime });
                 }
             } catch (error) {
                 console.error("Error handling new bid:", error);
