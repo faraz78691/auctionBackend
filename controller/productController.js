@@ -707,9 +707,7 @@ exports.getOffers = async (req, res) => {
       element.start_date = startDateTime;
       var time = element.remaining_time;
       var timeArray = time.split(":");
-
       var hours = Number(timeArray[0]) % 24;
-      console.log(hours);
       time = hours.toString() + ":" + timeArray[1] + ":" + timeArray[1];
       element.remaining_time = time;
       if (element.product_id != 0) {
@@ -780,7 +778,6 @@ exports.getOffers = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",
@@ -913,6 +910,18 @@ exports.getOffer = async (req, res) => {
     const { offerId } = req.query;
     var offerRes = await getOfferDetailsByID(offerId);
     if (offerRes.length > 0) {
+      const newEndDate = moment(offerRes[0].end_date)
+        .add(Number(offerRes[0].length_oftime), 'days').format('YYYY-MM-DD HH:mm:ss'); // Add length of time (in days)
+
+      const offerStartDate = moment(offerRes[0].offerStart)
+        .add(Number(offerRes[0].length_oftime), 'days').format('YYYY-MM-DD HH:mm:ss');
+
+      // Update the number of times the offer has been reactivated, but ensure it doesn't go below zero
+      offerRes[0].no_of_times_reactivated = offerRes[0].no_of_times_reactivated > 0 ? offerRes[0].no_of_times_reactivated - 1 : 0;
+
+      // Update the offer's end date and reactivation count in the database
+      await updateOfferEndDate(offerRes[0].id, offerStartDate, newEndDate, offerRes[0].no_of_times_reactivated);
+
       var startDateTime = offerRes[0].start_date.toString();
       offerRes[0].start_date = startDateTime;
       var EndDateTime = offerRes[0].end_date.toString();
@@ -988,6 +997,7 @@ exports.getOffer = async (req, res) => {
       });
     }
   } catch (err) {
+    console.error(err);
     return res.json({
       success: false,
       message: "Internal server error",
@@ -2287,7 +2297,7 @@ exports.getOffersByProductId = async (req, res) => {
 
 exports.updateOfferExpired = async (req, res) => {
   try {
-    var offerResult = await getOffersAutoUpdate();    
+    var offerResult = await getOffersAutoUpdate();
     if (offerResult.length > 0) {
       for (item of offerResult) {
         var offerId = item.id;
@@ -2322,8 +2332,8 @@ exports.updateOfferExpired = async (req, res) => {
           is_buy_now: 0,
           is_max_bid: 1,
           created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
-        };        
-        const resultInserted = await insertTransaction(transactionDetails);        
+        };
+        const resultInserted = await insertTransaction(transactionDetails);
         if (resultInserted.affectedRows > 0) {
           const offerupdate = await updateOfferBuyStatus("1", offerId);
           if (offerupdate.affectedRows > 0) {
@@ -2344,7 +2354,7 @@ exports.updateOfferExpired = async (req, res) => {
           }
         }
       }
-    } else{
+    } else {
       return res.json({
         success: true,
         message: "Offer Already Updated",
@@ -2352,7 +2362,7 @@ exports.updateOfferExpired = async (req, res) => {
         error: false
       });
     }
-  } catch (error) {    
+  } catch (error) {
     return res.json({
       success: false,
       message: "Internal server error" + ':' + error.message,
