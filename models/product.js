@@ -388,7 +388,11 @@ module.exports = {
   },
 
   updateOfferEndDate: async (offer_id, offerStartDate, newEndDate, noOfReactivations) => {
-    return db.query('UPDATE offers_created SET end_date = ?, offerStart = ?, no_of_times_reactivated = ? WHERE id = ?', [newEndDate, offerStartDate, noOfReactivations, offer_id]);
+    if (noOfReactivations == '') {
+      return db.query('UPDATE offers_created SET end_date = ?, offerStart = ? WHERE id = ?', [newEndDate, offerStartDate, offer_id]);
+    } else {
+      return db.query('UPDATE offers_created SET end_date = ?, offerStart = ?, no_of_times_reactivated = ? WHERE id = ?', [newEndDate, offerStartDate, noOfReactivations, offer_id]);
+    }
   },
 
   getLatestOffer: async () => {

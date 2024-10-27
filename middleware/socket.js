@@ -1,8 +1,11 @@
 const db = require("../utils/database");
+var moment = require('moment-timezone');
 const { Server } = require("socket.io");
+
 const { createNewBid, getBitCountByOfferId } = require("../controller/productController");
 const { updateOnlineStatus } = require("../controller/userController");
 const { fetchUserById } = require("../models/users");
+const { getOfferDetailsByID, updateOfferEndDate } = require("../models/product");
 const { adminUpdateLoginStatus } = require("../controller/adminController");
 const { getAllChatUsers, getLastMessageAllUser } = require('../models/admin')
 // socket.js
@@ -25,14 +28,32 @@ module.exports = function (server) {
         console.log("A user connected");
 
         // Listen for 'newBid' events from the client
-        socket.on("newBid", async(data) => {
+        socket.on("newBid", async (data) => {
             try {
                 await createNewBid(data);
                 const count = await getBitCountByOfferId(data);
                 const user = await fetchUserById(data.user_id);  // Wait for the user data to be fetched
                 const bidCount = count[0].bidCount;
                 data.user_name = `${user[0].first_name} ${user[0].last_name}`;
-                io.emit("updateBid", { ...data, bidCount });
+                var offerRes = await getOfferDetailsByID(data.offer_id);
+                var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
+                if (offerRes[0].offfer_buy_status != 1 && moment(offerRes[0].end_date).format('YYYY-MM-DD HH:mm:ss') <= currDate && (offerRes[0].is_reactivable == 0 || (offerRes[0].is_reactivable == 1 && offerRes[0].no_of_times_reactivated == 0))) {
+                    const newEndDate = moment(offerRes[0].end_date).add(3, 'minutes').format('YYYY-MM-DD HH:mm:ss'); // Add length of time (in days)
+                    const offerStartDate = moment(offerRes[0].offerStart).add(3, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+
+                    // Update the number of times the offer has been reactivated, but ensure it doesn't go below zero
+                    offerRes[0].no_of_times_reactivated = '';
+
+                    // Update the offer's end date and reactivation count in the database
+                    await updateOfferEndDate(offerRes[0].id, offerStartDate, newEndDate, offerRes[0].no_of_times_reactivated);
+
+                    const offerById = await await getOfferDetailsByID(data.offer_id);
+                    const new_offerstart_date = offerById[0].offerStart
+                    io.emit("updateBid", { ...data, bidCount, new_offerstart_date });
+                } else {
+                    const new_offerstart_date = null
+                    io.emit("updateBid", { ...data, bidCount, new_offerstart_date });
+                }
             } catch (error) {
                 console.error("Error handling new bid:", error);
             }

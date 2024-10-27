@@ -910,17 +910,20 @@ exports.getOffer = async (req, res) => {
     const { offerId } = req.query;
     var offerRes = await getOfferDetailsByID(offerId);
     if (offerRes.length > 0) {
-      const newEndDate = moment(offerRes[0].end_date)
-        .add(Number(offerRes[0].length_oftime), 'days').format('YYYY-MM-DD HH:mm:ss'); // Add length of time (in days)
+      var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
+      if (offerRes[0].offfer_buy_status != 1 && offerRes[0].is_reactivable == 1 && moment(offerRes[0].end_date).format('YYYY-MM-DD HH:mm:ss') <= currDate && offerRes[0].no_of_times_reactivated != 0) {
+        const newEndDate = moment(offerRes[0].end_date)
+          .add(Number(offerRes[0].length_oftime), 'days').format('YYYY-MM-DD HH:mm:ss'); // Add length of time (in days)
 
-      const offerStartDate = moment(offerRes[0].offerStart)
-        .add(Number(offerRes[0].length_oftime), 'days').format('YYYY-MM-DD HH:mm:ss');
+        const offerStartDate = moment(offerRes[0].offerStart)
+          .add(Number(offerRes[0].length_oftime), 'days').format('YYYY-MM-DD HH:mm:ss');
 
-      // Update the number of times the offer has been reactivated, but ensure it doesn't go below zero
-      offerRes[0].no_of_times_reactivated = offerRes[0].no_of_times_reactivated > 0 ? offerRes[0].no_of_times_reactivated - 1 : 0;
+        // Update the number of times the offer has been reactivated, but ensure it doesn't go below zero
+        offerRes[0].no_of_times_reactivated = offerRes[0].no_of_times_reactivated > 0 ? offerRes[0].no_of_times_reactivated - 1 : 0;
 
-      // Update the offer's end date and reactivation count in the database
-      await updateOfferEndDate(offerRes[0].id, offerStartDate, newEndDate, offerRes[0].no_of_times_reactivated);
+        // Update the offer's end date and reactivation count in the database
+        await updateOfferEndDate(offerRes[0].id, offerStartDate, newEndDate, offerRes[0].no_of_times_reactivated);
+      }
 
       var startDateTime = offerRes[0].start_date.toString();
       offerRes[0].start_date = startDateTime;
