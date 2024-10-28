@@ -11,6 +11,7 @@ router.post('/getProductsAttrTypeByProductID', auth, productController.getProduc
 router.post('/createOffer', auth, productController.createOffer);
 router.post('/updateOffer', auth, productController.updateOffer);
 router.post('/getOffers', productController.getOffers);
+router.post('/getOffersByUserId', productController.getOffersByUserId);
 router.post('/getOffersCountDown', productController.getOffersCountDown);
 router.post('/createUserBids', auth, productController.createUserBids);
 router.get('/getOffer', productController.getOffer);

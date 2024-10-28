@@ -243,7 +243,7 @@ exports.signup = async (req, res) => {
 exports.login = async (req, res) => {
   try {
 
-    const { email, password } = req.body;
+    const { email, password , fcm_token } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
         email: Joi.string()
@@ -258,6 +258,7 @@ exports.login = async (req, res) => {
           "string.min": "minimum 5 value required",
           "string.max": "maximum 10 values allowed",
         }),
+        fcm_token: Joi.string().required().empty(),
       })
     );
     const result = schema.validate(req.body);
@@ -297,7 +298,7 @@ exports.login = async (req, res) => {
             "SecretKey"
           );
 
-          await tokenUpdate(token, result[0].id);
+          await tokenUpdate(token,fcm_token, result[0].id);
 
           const result1 = await fetchUserByEmail(email);
 
