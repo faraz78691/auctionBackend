@@ -386,7 +386,7 @@ module.exports = {
   getOffers: async (currDate) => {
     return db.query(`SELECT offers_created.*, product.name AS product_name FROM offers_created LEFT JOIN product ON product.id = offers_created.product_id WHERE offfer_buy_status != '1' AND is_reactivable = 1 AND TIMESTAMP(end_date) <= '${currDate}' AND no_of_times_reactivated != 0`);
   },
-  getOffersByUserid: async (currDate) => {
+  getOffersByUserid: async (userId,currDate) => {
     return db.query(`SELECT offers_created.*, product.name AS product_name FROM offers_created LEFT JOIN product ON product.id = offers_created.product_id WHERE user_id = ${userId} offfer_buy_status != '1' AND is_reactivable = 1 AND TIMESTAMP(end_date) <= '${currDate}' AND no_of_times_reactivated != 0`);
   },
 

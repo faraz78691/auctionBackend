@@ -817,7 +817,7 @@ exports.getOffersByUserId = async (req, res) => {
 
     var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
 
-    const offer = await getOffersByUserid(currDate);
+    const offer = await getOffersByUserid(userProfileId,currDate);
 
     for (let element of offer) {
       const newEndDate = moment(element.end_date)
