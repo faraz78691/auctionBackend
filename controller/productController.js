@@ -62,6 +62,11 @@ const {
   getOffersByUserid,
   getOffersByUSerId
 } = require("../models/product");
+
+const {send_notification} = require("../helper/sendNotification");
+const {
+getData,getSelectedColumn
+} = require("../models/common");
 const db = require("../utils/database");
 const Joi = require("joi");
 const jwt = require("jsonwebtoken");
@@ -2310,20 +2315,19 @@ exports.createNewBid = async (data) => {
         created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
       };
       const resultInserted = await insertBidByUser(bid_created);
-      const getSellerID = await
-        // const message = {
-        //   notification: {
-        //     title: 'Bid Received',
-        //     body: `${name} has invited you to join the team.`
-        //   },
-        //   data: {
-        //     member_id: String(id)
-        //     ,
-        //     requester_id: String(student_id),
-        //     notification_type: '1'
-        //   },
-        //   token: fcm_token
-        // };
+      const getSellerID = await getSelectedColumn( `offers_created`, `where id = ${offer_id}`,'user_id');
+      console.log("getSellerID", getSellerID);
+      const getFCM = await getSelectedColumn( `users`, `where id = ${getSellerID[0].user_id}`, 'fcm_token');
+      console.log("getFCM",getFCM), 
+      console.log(getSellerID);
+        const message = {
+          notification: {
+            title: 'Bid Received',
+            body: `Faraz has bidded in your product`
+          },
+
+          token: getFCM[0].fcm_token
+        };
         await send_notification(message);
     }
   } catch (err) {
