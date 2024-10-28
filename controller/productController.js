@@ -818,126 +818,134 @@ exports.getOffersByUserId = async (req, res) => {
     var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
 
     const offer = await getOffersByUserid(userProfileId,currDate);
+if(offer.length > 0){
+  for (let element of offer) {
+    const newEndDate = moment(element.end_date)
+      .add(Number(element.length_oftime), 'days').format('YYYY-MM-DD HH:mm:ss'); // Add length of time (in days)
 
-    for (let element of offer) {
-      const newEndDate = moment(element.end_date)
-        .add(Number(element.length_oftime), 'days').format('YYYY-MM-DD HH:mm:ss'); // Add length of time (in days)
+    const offerStartDate = moment(element.offerStart)
+      .add(Number(element.length_oftime), 'days').format('YYYY-MM-DD HH:mm:ss');
 
-      const offerStartDate = moment(element.offerStart)
-        .add(Number(element.length_oftime), 'days').format('YYYY-MM-DD HH:mm:ss');
+    // Update the number of times the offer has been reactivated, but ensure it doesn't go below zero
+    element.no_of_times_reactivated = element.no_of_times_reactivated > 0 ? element.no_of_times_reactivated - 1 : 0;
 
-      // Update the number of times the offer has been reactivated, but ensure it doesn't go below zero
-      element.no_of_times_reactivated = element.no_of_times_reactivated > 0 ? element.no_of_times_reactivated - 1 : 0;
+    // Update the offer's end date and reactivation count in the database
+    await updateOfferEndDate(element.id, offerStartDate, newEndDate, element.no_of_times_reactivated);
+  }
 
-      // Update the offer's end date and reactivation count in the database
-      await updateOfferEndDate(element.id, offerStartDate, newEndDate, element.no_of_times_reactivated);
-    }
-
-    if (user_id == '') {
-      var whereClause = "";
-      if (
-        product_id.length > 0 &&
-        product_id !== null &&
-        product_id !== undefined
-      ) {
-        whereClause = `WHERE product_id IN (${product_id}) and offfer_buy_status != '1' and TIMESTAMP(end_date) >= '${currDate}'`; //updated code 26-07-2024
-      } else {
-        whereClause = ` where offfer_buy_status != '1' and TIMESTAMP(end_date) >= '${currDate}'`;
-      }
-
-      const offset = (parseInt(page) - 1) * parseInt(page_size);
-      var offers = await getOffersByWhereClause(whereClause, user_id, page_size, offset);
+  if (user_id == '') {
+    var whereClause = "";
+    if (
+      product_id.length > 0 &&
+      product_id !== null &&
+      product_id !== undefined
+    ) {
+      whereClause = `WHERE product_id IN (${product_id}) and offfer_buy_status != '1' and TIMESTAMP(end_date) >= '${currDate}'`; //updated code 26-07-2024
     } else {
-      var whereClause = "";
-      if (
-        product_id.length > 0 &&
-        product_id !== null &&
-        product_id !== undefined
-      ) {
-        whereClause = `WHERE offers_created.product_id IN (${product_id}) and offers_created.offfer_buy_status != '1' and TIMESTAMP(offers_created.end_date) >= '${currDate}'`; //updated code 26-07-2024
-      } else {
-        whereClause = ` where offers_created.offfer_buy_status != '1' and TIMESTAMP(offers_created.end_date) >= '${currDate}'`;
-      }
-
-      const offset = (parseInt(page) - 1) * parseInt(page_size);
-      var offers = await getOffersByWhereClause(whereClause, user_id, page_size, offset);
+      whereClause = ` where offfer_buy_status != '1' and TIMESTAMP(end_date) >= '${currDate}'`;
     }
 
-    for (element of offers) {
-      var startDateTime = element.start_date.toString();
-      element.start_date = startDateTime;
-      var time = element.remaining_time;
-      var timeArray = time.split(":");
-      var hours = Number(timeArray[0]) % 24;
-      time = hours.toString() + ":" + timeArray[1] + ":" + timeArray[1];
-      element.remaining_time = time;
-      if (element.product_id != 0) {
-        const countR = await getNoOfBids(element.id);
-        //const maxBidR = await getMaxBidF(element.product_id);
-        if (countR.length > 0) {
-          element.user_bid = {
-            user_id: (countR.length > 0 && countR[0]?.user_id != null) ? countR[0]?.user_id : 0,
-            max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
-            count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
-          }
-        } else {
-          element.user_bid = {
-            user_id: (countR.length > 0 && countR[0]?.user_id != null) ? countR[0]?.user_id : 0,
-            max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
-            count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
-          }
-        }
-
-        const categoryRes = await getCategoryIdByProductId(element.product_id);
-        if (categoryRes.length > 0) {
-          element.product_name = categoryRes[0].name;
-          var categoryId = categoryRes[0].category_id;
-          const categoryNameRes = await getCategorybyId(categoryId);
-          if (categoryNameRes.length > 0) {
-            element.category_name = categoryNameRes[0].cat_name;
-          }
-        }
-      }
-      if (element.images_id > 0) {
-        const imageR = await getMainImage(element.images_id);
-        if (imageR.length > 0) {
-          element.main_image_link = imageR[0].main_image;
-        }
-      }
-    }
-    const categoryRes = await getCategoryIdByProductId(product_id);
-    let categoryNameRes;
-    if (categoryRes.length > 0) {
-      categoryNameRes = await getCategorybyId(categoryRes[0].category_id);
+    const offset = (parseInt(page) - 1) * parseInt(page_size);
+    var offers = await getOffersByWhereClause(whereClause, user_id, page_size, offset);
+  } else {
+    var whereClause = "";
+    if (
+      product_id.length > 0 &&
+      product_id !== null &&
+      product_id !== undefined
+    ) {
+      whereClause = `WHERE offers_created.product_id IN (${product_id}) and offers_created.offfer_buy_status != '1' and TIMESTAMP(offers_created.end_date) >= '${currDate}'`; //updated code 26-07-2024
     } else {
-      categoryNameRes = []
+      whereClause = ` where offers_created.offfer_buy_status != '1' and TIMESTAMP(offers_created.end_date) >= '${currDate}'`;
     }
-    if (offers.length > 0) {
-      return res.json({
-        success: true,
-        message: "Offer Sorted by time",
-        categoryName: offers[0].category_name,
-        productName: offers[0].product_name,
-        offers: offers,
-        status: 200,
-      });
-    } else if (categoryRes.length > 0 || categoryNameRes.length > 0) {
-      return res.json({
-        success: false,
-        message: "Offer Sorted by time only category name and product name find",
-        categoryName: categoryNameRes.length > 0 ? categoryNameRes[0].cat_name : null,
-        productName: categoryRes.length > 0 ? categoryRes[0].name : null,
-        offers: null,
-        status: 400,
-      });
+
+    const offset = (parseInt(page) - 1) * parseInt(page_size);
+    var offers = await getOffersByWhereClause(whereClause, user_id, page_size, offset);
+  }
+
+  for (element of offers) {
+    var startDateTime = element.start_date.toString();
+    element.start_date = startDateTime;
+    var time = element.remaining_time;
+    var timeArray = time.split(":");
+    var hours = Number(timeArray[0]) % 24;
+    time = hours.toString() + ":" + timeArray[1] + ":" + timeArray[1];
+    element.remaining_time = time;
+    if (element.product_id != 0) {
+      const countR = await getNoOfBids(element.id);
+      //const maxBidR = await getMaxBidF(element.product_id);
+      if (countR.length > 0) {
+        element.user_bid = {
+          user_id: (countR.length > 0 && countR[0]?.user_id != null) ? countR[0]?.user_id : 0,
+          max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
+          count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
+        }
+      } else {
+        element.user_bid = {
+          user_id: (countR.length > 0 && countR[0]?.user_id != null) ? countR[0]?.user_id : 0,
+          max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
+          count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
+        }
+      }
+
+      const categoryRes = await getCategoryIdByProductId(element.product_id);
+      if (categoryRes.length > 0) {
+        element.product_name = categoryRes[0].name;
+        var categoryId = categoryRes[0].category_id;
+        const categoryNameRes = await getCategorybyId(categoryId);
+        if (categoryNameRes.length > 0) {
+          element.category_name = categoryNameRes[0].cat_name;
+        }
+      }
     }
-    else {
-      return res.json({
-        success: false,
-        message: "No Offers Found",
-        status: 400,
-      });
+    if (element.images_id > 0) {
+      const imageR = await getMainImage(element.images_id);
+      if (imageR.length > 0) {
+        element.main_image_link = imageR[0].main_image;
+      }
     }
+  }
+  const categoryRes = await getCategoryIdByProductId(product_id);
+  let categoryNameRes;
+  if (categoryRes.length > 0) {
+    categoryNameRes = await getCategorybyId(categoryRes[0].category_id);
+  } else {
+    categoryNameRes = []
+  }
+  if (offers.length > 0) {
+    return res.json({
+      success: true,
+      message: "Offer Sorted by time",
+      categoryName: offers[0].category_name,
+      productName: offers[0].product_name,
+      offers: offers,
+      status: 200,
+    });
+  } else if (categoryRes.length > 0 || categoryNameRes.length > 0) {
+    return res.json({
+      success: false,
+      message: "Offer Sorted by time only category name and product name find",
+      categoryName: categoryNameRes.length > 0 ? categoryNameRes[0].cat_name : null,
+      productName: categoryRes.length > 0 ? categoryRes[0].name : null,
+      offers: null,
+      status: 400,
+    });
+  }
+  else {
+    return res.json({
+      success: false,
+      message: "No Offers Found",
+      status: 400,
+    });
+  }
+
+}else{
+  return res.json({
+    success: false,
+    message: "No Offers Found",
+    status: 400,
+  });
+}
   } catch (err) {
     return res.json({
       success: false,
