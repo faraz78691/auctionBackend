@@ -112,6 +112,38 @@ module.exports = {
                                   ORDER BY remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset};`);
     }
   },
+  getOffersByUSerId: async (where, limit, offset) => {
+      return db.query(`SELECT
+        id,
+        offer_unique_id,
+        product_id,
+        title,
+        product_type,
+        images_id,
+        offerStart,
+        is_bid_or_fixed,
+        start_date,
+        length_oftime,
+        end_date,
+        FLOOR(
+            HOUR(
+                TIMEDIFF(end_date, CURRENT_TIMESTAMP)
+            ) / 24
+        ) AS remaining_days,
+        (
+            TIMEDIFF(end_date, CURRENT_TIMESTAMP)
+        ) AS remaining_time,
+        start_price,
+        increase_step,
+        buyto_price,
+        fixed_offer_price,
+        duration,
+        offfer_buy_status,
+        user_id
+                                  from offers_created ${where}
+                                  ORDER BY remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset};`);
+    
+  },
 
   getOffersByCategoryWhereClause: async (where, limit, offset) => {
     return db.query(`select offers_created.id,
