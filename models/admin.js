@@ -127,6 +127,9 @@ module.exports = {
     updateSubAttributeMappingById: async (id, value) => {
         return await db.query('UPDATE `sub_attribute_mapping` SET `value`= ? WHERE id = ?', [value, id]);
     },
+    updateMsgCount: async (id) => {
+        return await db.query('UPDATE tbl_messages SET is_read = "1" WHERE user_id = ?', [ id]);
+    },
 
     deleteSubAttributesById: async (id) => {
         return await db.query('DELETE FROM `sub_attribute_mapping` WHERE id = ?', [id]);

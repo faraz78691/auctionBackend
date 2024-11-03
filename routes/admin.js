@@ -31,6 +31,7 @@ router.post('/deleteProductTypeAttribute', adminAuth, adminController.deleteProd
 router.post('/deleteProductAttributeMapping', adminAuth, adminController.deleteProductAttributeMapping);
 router.post('/updateProductAttributeMapping', adminAuth, adminController.updateProductAttributeMapping);
 router.post('/addSubAttributesMapping', adminAuth, adminController.addSubAttributesMapping);
+router.post('/updateMsgCount', adminAuth, adminController.updateMsgCount);
 router.get('/getSubAttributesByProductAttributesMappingId', adminAuth, adminController.getSubAttributesByProductAttributesMappingId);
 router.post('/updateSubAttributesById', adminAuth, adminController.updateSubAttributesById);
 router.delete('/deleteSubAttributesById', adminAuth, adminController.deleteSubAttributesById);

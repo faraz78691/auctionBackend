@@ -6,7 +6,7 @@ admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });
 
-exports.send_notification = async (message) => {
+exports.send_notification = async (message , userId) => {
     try {
         const response = await admin.messaging().send(message);
 
@@ -14,7 +14,7 @@ exports.send_notification = async (message) => {
         const responseText = JSON.stringify(response);
         // Save notification details to the database
         // const result = await create_notification(message, status, responseText)
-        console.log('Notification saved to database:', result.insertId);
+        console.log('Notification saved to database:', response);
 
         if (status === 'failed') {
             const failedTokens = [];
@@ -29,10 +29,18 @@ exports.send_notification = async (message) => {
                 success: true,
                 message: 'Notification sent successfully',
                 data: response,
-                insertId: result.insertId
             };
         }
     } catch (error) {
+        if (errorCode == "messaging/registration-token-not-registered") {
+
+        //    delete krna h fcm token user k
+            return {
+                success: false,
+                message: 'FCM token  expired'
+               
+            };
+        }
         console.error('Error sending notification:', error);
     }
 };

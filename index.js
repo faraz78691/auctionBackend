@@ -46,7 +46,7 @@ app.get('/', (req, res) => {
 
 setInterval(updateOfferExpired, 600000);
 
-server.listen(5000, function () {
+server.listen(3000, function () {
   console.log('Node app is running on port 5000');
 });
 

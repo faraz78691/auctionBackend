@@ -258,7 +258,7 @@ exports.login = async (req, res) => {
           "string.min": "minimum 5 value required",
           "string.max": "maximum 10 values allowed",
         }),
-        fcm_token: Joi.string().required().empty(),
+        fcm_token: Joi.string().allow(null).empty(''),
       })
     );
     const result = schema.validate(req.body);

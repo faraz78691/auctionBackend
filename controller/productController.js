@@ -2328,7 +2328,7 @@ exports.createNewBid = async (data) => {
 
           token: getFCM[0].fcm_token
         };
-        await send_notification(message);
+        await send_notification(message , getSellerID[0].user_id);
     }
   } catch (err) {
     console.log("Internal Seerver Error =>", err);
