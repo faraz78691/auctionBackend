@@ -2,6 +2,7 @@ const {
   getOffersAutoUpdate,
   getMaxBidOnOffer,
   checkTransactionID,
+  insertPaymentFlowInsert,
   insertTransaction,
   updateOfferBuyStatus
 } = require("../models/product");
@@ -50,6 +51,15 @@ module.exports = {
           };
           const resultInserted = await insertTransaction(transactionDetails);
           if (resultInserted.affectedRows > 0) {
+            const transactionDetail = {
+              offer_id: offerId,
+              transaction_id: transactionId,
+              buyer_id: buyer,
+              seller_id: seller,
+              buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
+              seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+            };
+            const paymenytFlowInsert = await insertPaymentFlowInsert(transactionDetail);
             const offerupdate = await updateOfferBuyStatus("1", offerId);
           }
         }

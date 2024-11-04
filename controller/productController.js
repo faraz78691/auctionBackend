@@ -32,6 +32,7 @@ const {
   getOffersAutoUpdate,
   getMaxBidOnOffer,
   checkTransactionID,
+  insertPaymentFlowInsert,
   insertTransaction,
   getProductIdsByName,
   getffersByName,
@@ -63,9 +64,9 @@ const {
   getOffersByUSerId
 } = require("../models/product");
 
-const {send_notification} = require("../helper/sendNotification");
+const { send_notification } = require("../helper/sendNotification");
 const {
-getData,getSelectedColumn
+  getData, getSelectedColumn
 } = require("../models/common");
 const db = require("../utils/database");
 const Joi = require("joi");
@@ -1204,6 +1205,15 @@ exports.createBuyTransaction = async (req, res) => {
     };
     const resultInserted = await insertTransaction(transactionDetails);
     if (resultInserted.affectedRows > 0) {
+      const transactionDetail = {
+        offer_id: offerId,
+        transaction_id: transactionId,
+        buyer_id: buyer,
+        seller_id: seller,
+        buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
+        seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+      };
+      const paymenytFlowInsert = await insertPaymentFlowInsert(transactionDetail);
       const offerupdate = await updateOfferBuyStatus("1", offer_id);
 
       return res.json({
@@ -2315,20 +2325,20 @@ exports.createNewBid = async (data) => {
         created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
       };
       const resultInserted = await insertBidByUser(bid_created);
-      const getSellerID = await getSelectedColumn( `offers_created`, `where id = ${offer_id}`,'user_id');
+      const getSellerID = await getSelectedColumn(`offers_created`, `where id = ${offer_id}`, 'user_id');
       console.log("getSellerID", getSellerID);
-      const getFCM = await getSelectedColumn( `users`, `where id = ${getSellerID[0].user_id}`, 'fcm_token');
-      console.log("getFCM",getFCM), 
-      console.log(getSellerID);
-        const message = {
-          notification: {
-            title: 'Bid Received',
-            body: `Faraz has bidded in your product`
-          },
+      const getFCM = await getSelectedColumn(`users`, `where id = ${getSellerID[0].user_id}`, 'fcm_token');
+      console.log("getFCM", getFCM),
+        console.log(getSellerID);
+      const message = {
+        notification: {
+          title: 'Bid Received',
+          body: `Faraz has bidded in your product`
+        },
 
-          token: getFCM[0].fcm_token
-        };
-        await send_notification(message , getSellerID[0].user_id);
+        token: getFCM[0].fcm_token
+      };
+      await send_notification(message, getSellerID[0].user_id);
     }
   } catch (err) {
     console.log("Internal Seerver Error =>", err);
@@ -2495,6 +2505,15 @@ exports.updateOfferExpired = async (req, res) => {
         };
         const resultInserted = await insertTransaction(transactionDetails);
         if (resultInserted.affectedRows > 0) {
+          const transactionDetail = {
+            offer_id: offerId,
+            transaction_id: transactionId,
+            buyer_id: buyer,
+            seller_id: seller,
+            buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
+            seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+          };
+          const paymenytFlowInsert = await insertPaymentFlowInsert(transactionDetail);
           const offerupdate = await updateOfferBuyStatus("1", offerId);
           if (offerupdate.affectedRows > 0) {
             return res.json({

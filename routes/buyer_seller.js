@@ -15,5 +15,6 @@ router.post('/getQuestionAnswerForBuyer', auth, buyerSellerController.getQuestio
 router.get('/getQuestionAnswerForSeller', auth, buyerSellerController.getQuestionAnswerForSeller);
 router.get('/getSoldSectionForSeller', auth, buyerSellerController.getSoldSectionForSeller);
 router.get('/getOffersByBuyer', auth, buyerSellerController.getOffersByBuyer);
+router.post('/ordersummary', auth, buyerSellerController.productOfferOrderDetail);
 
 module.exports = router;

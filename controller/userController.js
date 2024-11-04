@@ -33,7 +33,6 @@ const hbs = require("nodemailer-express-handlebars");
 var base64url = require('base64url');
 var crypto = require('crypto');
 var admin = require("firebase-admin");
-const serviceAccount = require('../config/firebase_serviceacoount.json');
 const { initializeApp } = require("firebase/app");
 const { getMessaging, getToken, isSupported } = require("firebase/messaging");
 const { hashPassword } = require('../helper/hashPassword');
@@ -243,7 +242,7 @@ exports.signup = async (req, res) => {
 exports.login = async (req, res) => {
   try {
 
-    const { email, password , fcm_token } = req.body;
+    const { email, password, fcm_token } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
         email: Joi.string()
@@ -298,7 +297,7 @@ exports.login = async (req, res) => {
             "SecretKey"
           );
 
-          await tokenUpdate(token,fcm_token, result[0].id);
+          await tokenUpdate(token, fcm_token, result[0].id);
 
           const result1 = await fetchUserByEmail(email);
 
@@ -1357,6 +1356,78 @@ exports.updateProfile = async (req, res) => {
       }
     }
   } catch (error) {
-    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false })
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };
+
+exports.orderUpdateStatus = async (req, res) => {
+  try {
+    const { offer_id, buyer_id, seller_id, buyer_status, seller_status } = req.body;
+    const schema = Joi.object({
+      offer_id: Joi.number().required().messages({
+        'number.base': 'Offer Id must be a number',
+        'number.empty': 'Offer Id is required',
+        'any.required': 'Offer Id is required',
+      }),
+      buyer_id: Joi.number().required().messages({
+        'number.base': 'Buyer Id must be a number',
+        'number.empty': 'Buyer Id is required',
+        'any.required': 'Buyer Id is required',
+      }),
+      seller_id: Joi.number().required().messages({
+        'number.base': 'Seller Id must be a number',
+        'number.empty': 'Seller Id is required',
+        'any.required': 'Seller Id is required',
+      }),
+      buyer_status: Joi.number().allow('').messages({
+        'number.base': 'Buyer status must be a number',
+        'number.empty': 'Buyer status is required',
+        'any.required': 'Buyer status is required',
+      }),
+      seller_status: Joi.number().allow('').messages({
+        'number.base': 'Seller status must be a number',
+        'number.empty': 'Seller status is required',
+        'any.required': 'Seller status is required',
+      })
+    });
+
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        errors: true,
+        message: error.details[0].message,
+        status: 400,
+        success: false
+      });
+    } else {
+      if (seller_status == '' || seller_status == null) {
+        const result = await findOfferOrderDetailsById(offer_id, buyer_id, seller_id);
+        if (result.length > 0) {
+          const resultOrderSummary = await findOrderSummaryDeatils(result[0].offer_id, buyer_id, seller_id);
+          const data = {
+            result: result,
+            resultOrderSummary: resultOrderSummary
+          }
+          return res.json({
+            error: false,
+            message: "Offer Details Found",
+            status: 200,
+            data: data,
+            success: true,
+          });
+        } else {
+          return res.json({
+            error: true,
+            message: "Offer Details Not Found",
+            status: 200,
+            success: false,
+          });
+        }
+      } else if (buyer_status == '' || buyer_status == null) {
+
+      }
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+}

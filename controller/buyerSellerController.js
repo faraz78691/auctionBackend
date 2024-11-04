@@ -20,13 +20,16 @@ const {
   getOffersByOfferId,
   getOffersDetailsNotBoughtByOfferId,
   getQuestionAnsForSeller,
-  getQuestionAnsForBuyer
+  getQuestionAnsForBuyer,
+  findOfferOrderDetailsById,
+  findOrderSummaryDeatils,
 } = require("../models/buyer_seller");
 
 const {
   getOfferDetailsByID,
   checkTransactionID,
   insertTransaction,
+  insertPaymentFlowInsert,
   getMainImage,
 } = require("../models/product");
 
@@ -147,6 +150,15 @@ exports.acceptPrice = async (req, res) => {
     };
     const resultInserted = await insertTransaction(transactionDetails);
     if (resultInserted.affectedRows > 0) {
+      const transactionDetail = {
+        offer_id: offerId,
+        transaction_id: transactionId,
+        buyer_id: buyer,
+        seller_id: seller,
+        buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
+        seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+      };
+      const paymenytFlowInsert = await insertPaymentFlowInsert(transactionDetail);
       const updateResult = await updateStatus(offer_id, buyer, seller);
       if (updateResult.affectedRows > 0) {
         return res.json({
@@ -805,5 +817,63 @@ exports.uploadSellerAnswer = async (req, res) => {
       error: err,
       status: 500,
     });
+  }
+};
+
+exports.productOfferOrderDetail = async (req, res) => {
+  try {
+    const { offer_id, buyer_id, seller_id } = req.body;
+    const schema = Joi.object({
+      offer_id: Joi.number().required().messages({
+        'number.base': 'Offer Id must be a number',
+        'number.empty': 'Offer Id is required',
+        'any.required': 'Offer Id is required',
+      }),
+      buyer_id: Joi.number().allow('').messages({
+        'number.base': 'Buyer Id must be a number',
+        'number.empty': 'Buyer Id is required',
+        'any.required': 'Buyer Id is required',
+      }),
+      seller_id: Joi.number().allow('').messages({
+        'number.base': 'Seller Id must be a number',
+        'number.empty': 'Seller Id is required',
+        'any.required': 'Seller Id is required',
+      })
+    });
+
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        errors: true,
+        message: error.details[0].message,
+        status: 400,
+        success: false
+      });
+    } else {
+      const result = await findOfferOrderDetailsById(offer_id, buyer_id, seller_id);
+      if (result.length > 0) {
+        const resultOrderSummary = await findOrderSummaryDeatils(result[0].offer_id, buyer_id, seller_id);
+        const data = {
+          result: result,
+          resultOrderSummary: resultOrderSummary
+        }
+        return res.json({
+          error: false,
+          message: "Offer Details Found",
+          status: 200,
+          data: data,
+          success: true,
+        });
+      } else {
+        return res.json({
+          error: true,
+          message: "Offer Details Not Found",
+          status: 200,
+          success: false,
+        });
+      }
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };

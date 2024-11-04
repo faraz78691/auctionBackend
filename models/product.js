@@ -113,7 +113,7 @@ module.exports = {
     }
   },
   getOffersByUSerId: async (where, limit, offset) => {
-      return db.query(`SELECT
+    return db.query(`SELECT
         id,
         offer_unique_id,
         product_id,
@@ -142,7 +142,7 @@ module.exports = {
         user_id
                                   from offers_created ${where}
                                   ORDER BY remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset};`);
-    
+
   },
 
   getOffersByCategoryWhereClause: async (where, limit, offset) => {
@@ -260,6 +260,10 @@ module.exports = {
 
   checkTransactionID: async (transactionID) => {
     return db.query("select count(*) from buy_sell_transactions where transaction_id = ?", [transactionID]);
+  },
+
+  insertPaymentFlowInsert: async (data) => {
+    return db.query('insert into tbl_payment_flow_status set ?', [data]);
   },
 
   insertTransaction: async (data) => {
@@ -418,7 +422,7 @@ module.exports = {
   getOffers: async (currDate) => {
     return db.query(`SELECT offers_created.*, product.name AS product_name FROM offers_created LEFT JOIN product ON product.id = offers_created.product_id WHERE offfer_buy_status != '1' AND is_reactivable = 1 AND TIMESTAMP(end_date) <= '${currDate}' AND no_of_times_reactivated != 0`);
   },
-  getOffersByUserid: async (userId,currDate) => {
+  getOffersByUserid: async (userId, currDate) => {
     return db.query(`SELECT offers_created.*, product.name AS product_name FROM offers_created LEFT JOIN product ON product.id = offers_created.product_id WHERE user_id = ${userId} AND offfer_buy_status != '1' AND is_reactivable = 1 AND TIMESTAMP(end_date) <= '${currDate}' AND no_of_times_reactivated != 0`);
   },
 

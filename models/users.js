@@ -60,8 +60,8 @@ module.exports = {
     ]);
   },
 
-  tokenUpdate: async (token,fcm_token, id) => {
-    return db.query("update users set token=?,fcm_token = ?  where id=?", [token,fcm_token, id]);
+  tokenUpdate: async (token, fcm_token, id) => {
+    return db.query("update users set token=?,fcm_token = ?  where id=?", [token, fcm_token, id]);
   },
 
   updateUserById: async (user, id) => {

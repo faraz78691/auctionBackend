@@ -1433,7 +1433,6 @@ exports.getAllTransaction = async (req, res) => {
     }
 };
 
-
 exports.updateMsgCount = async (req, res) => {
     try {
         const { id } = req.body;
