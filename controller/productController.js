@@ -1835,7 +1835,7 @@ exports.getOffersAdvancedFilter = async (req, res) => {
 
 // exports.getOfferAdvancedFilter = async (req, res) => {
 //   try {
-//     const { condition, auctionType, brand, brand_length,product_id, page, page_size } =
+//     const { condition, auctionType, brand, brand_length, product_id, page, page_size } =
 //       req.body;
 //     const schema = Joi.alternatives(
 //       Joi.object({
@@ -1844,8 +1844,10 @@ exports.getOffersAdvancedFilter = async (req, res) => {
 //         page_size: Joi.number().required().empty(),
 //         condition: Joi.string().optional().allow("").allow(null),
 //         brand: Joi.string().optional().allow("").allow(null),
-//         brand_length:Joi.number().optional().allow("").allow(null),
-//         auctionType: Joi.number().optional().allow("").allow(null),
+//         brand_length: Joi.number().optional().allow("").allow(null),
+//         auctionType: Joi.string().optional().allow("").allow(null),
+//         attributes: Joi.string().optional().allow("").allow(null),
+//         price: Joi.string().optional().allow("").allow(null)
 //       })
 //     );
 //     const result = schema.validate(req.body);
@@ -1893,7 +1895,7 @@ exports.getOffersAdvancedFilter = async (req, res) => {
 //       brand !== null &&
 //       brand !== undefined
 //     ) {
-//        var brandLength = Number(brand_length)
+//       var brandLength = Number(brand_length)
 
 //       whereClause =
 //         whereClause +
@@ -1955,6 +1957,7 @@ exports.getOffersAdvancedFilter = async (req, res) => {
 //     }
 //   } catch (err) {
 //     console.log(err);
+    
 //     return res.json({
 //       success: false,
 //       message: "Internal server error",
@@ -1963,7 +1966,6 @@ exports.getOffersAdvancedFilter = async (req, res) => {
 //     });
 //   }
 // };
-
 
 exports.getOfferAdvancedFilter = async (req, res) => {
   try {
@@ -2052,8 +2054,7 @@ exports.getOfferAdvancedFilter = async (req, res) => {
       (parsedCondition.length > 0 && (conditionOfferIds === null || conditionOfferIds.length === 0)) ||
       (parsedAttributes.length > 0 && (attributeOfferIds === null || attributeOfferIds.length === 0)) ||
       (parsedAuctionType.length > 0 && (auctionTypeOfferIds === null || auctionTypeOfferIds.length === 0))
-    ) {
-
+    ) {      
       return res.json({
         success: false,
         offer_ids: [],
@@ -2066,7 +2067,6 @@ exports.getOfferAdvancedFilter = async (req, res) => {
       conditionOfferIds,
       auctionTypeOfferIds
     ].filter(ids => ids !== null);
-    console.log("allOfferIds", allOfferIds);
 
     // If no filters are provided, return an empty array
     if (allOfferIds.length === 0) {
@@ -2086,6 +2086,7 @@ exports.getOfferAdvancedFilter = async (req, res) => {
       page_size,
       offset
     );
+
     for (element of offers) {
       var startDateTime = element.start_date.toString();
       element.start_date = startDateTime;
@@ -2467,9 +2468,9 @@ exports.getOffersByProductId = async (req, res) => {
 
 exports.updateOfferExpired = async (req, res) => {
   try {
-    var offerResult = await getOffersAutoUpdate();
+    var offerResult = await getOffersAutoUpdate();    
     if (offerResult.length > 0) {
-      for (item of offerResult) {
+      for (item of offerResult) {        
         var offerId = item.id;
         var doContinue = 1;
         var transactionId = 0;
@@ -2478,6 +2479,8 @@ exports.updateOfferExpired = async (req, res) => {
         var buyer = 0;
         var max_bid = 0;
         const result = await getMaxBidOnOffer(offerId);
+        console.log(result);
+        
         if (result.length > 0) {
           buyer = result[0].user_id;
           max_bid = result[0].bid

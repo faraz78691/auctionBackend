@@ -399,13 +399,13 @@ module.exports = {
     }
   },
 
-
+  
   getOffersAutoUpdate: async () => {
-    return db.query(`select id, user_id, product_id, offer_unique_id from offers_created where is_bid_or_fixed=1 AND offfer_buy_status = 0 AND (is_reactivable = 0 OR (is_reactivable = 1 AND no_of_times_reactivated = 0)) AND TIMESTAMP(end_date) < '${currDate}'`);
+    return await db.query(`select id, user_id, product_id, offer_unique_id from offers_created where is_bid_or_fixed=1 AND offfer_buy_status = 0 AND (is_reactivable = 0 OR (is_reactivable = 1 AND no_of_times_reactivated = 0)) AND TIMESTAMP(end_date) < '${currDate}'`);
   },
 
   getMaxBidOnOffer: async (offer_id) => {
-    var max_bid = await db.query(`select max(bid) as max from user_bids where offer_id = ${offer_id}`);
+    var max_bid = await db.query(`select max(bid) as max from user_bids where offer_id = ${offer_id}`);    
     return db.query(`select user_id, bid from user_bids where offer_id = ${offer_id} and bid =${max_bid[0].max}`);
   },
 
