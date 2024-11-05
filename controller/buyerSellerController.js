@@ -23,6 +23,9 @@ const {
   getQuestionAnsForBuyer,
   findOfferOrderDetailsById,
   findOrderSummaryDeatils,
+  findOfferByOfferBuyerSellerId,
+  updateOfferBuyerStatus,
+  addPaymenetFlowStatus
 } = require("../models/buyer_seller");
 
 const {
@@ -874,6 +877,102 @@ exports.productOfferOrderDetail = async (req, res) => {
       }
     }
   } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
+
+exports.updateTransactionStatus = async (req, res) => {
+  try {
+    const { offer_id, buyer_id, seller_id, buyer_status, seller_status } = req.body;
+    const schema = Joi.object({
+      offer_id: Joi.number().required().messages({
+        'number.base': 'Offer Id must be a number',
+        'number.empty': 'Offer Id is required',
+        'any.required': 'Offer Id is required',
+      }),
+      buyer_id: Joi.number().required().messages({
+        'number.base': 'Buyer Id must be a number',
+        'number.empty': 'Buyer Id is required',
+        'any.required': 'Buyer Id is required',
+      }),
+      seller_id: Joi.number().required().messages({
+        'number.base': 'Seller Id must be a number',
+        'number.empty': 'Seller Id is required',
+        'any.required': 'Seller Id is required',
+      }),
+      buyer_status: Joi.string().allow(null).messages({
+        'string.base': 'Buyer status must be a string',
+        'string.empty': 'Seller status is required',
+        'any.required': 'Seller status is required',
+      }),
+      seller_status: Joi.string().allow(null).messages({
+        'string.base': 'Seller status must be a string',
+        'string.empty': 'Seller status is required',
+        'any.required': 'Seller status is required',
+      })
+    });
+
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        errors: true,
+        message: error.details[0].message,
+        status: 400,
+        success: false
+      });
+    } else {
+      const offerResult = await findOfferByOfferBuyerSellerId(offer_id, buyer_id, seller_id);
+      
+      if (offerResult.length > 0) {        
+        if (seller_status == 'null') {
+          const updateBuuer = await updateOfferBuyerStatus(offer_id, buyer_id, seller_id, buyer_status, offerResult[0].seller_status)
+          const addPaymenetFlow = {
+            offer_id: offer_id,
+            transaction_id: offerResult[0].transaction_id,
+            buyer_id: buyer_id,
+            seller_id: seller_id,
+            buyer_status: buyer_status,
+            seller_status: offerResult[0].seller_status,
+            buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
+            seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+          }
+          const insertPaymentFlow = await addPaymenetFlowStatus(addPaymenetFlow);
+          if (insertPaymentFlow.affectedRows > 0) {
+            return res.status(200).json({ error: false, message: "Status update successfully", status: 200, success: true })
+          } else {
+            return res.status(400).json({ error: true, message: "Status not update", status: 400, success: false })
+          }
+        } else {
+          const updateBuuer = await updateOfferBuyerStatus(offer_id, buyer_id, seller_id, offerResult[0].buyer_status, seller_status);
+          const addPaymenetFlow = {
+            offer_id: offer_id,
+            transaction_id: offerResult[0].transaction_id,
+            buyer_id: buyer_id,
+            seller_id: seller_id,
+            buyer_status: offerResult[0].buyer_status,
+            seller_status: seller_status,
+            buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
+            seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+          }
+          const insertPaymentFlow = await addPaymenetFlowStatus(addPaymenetFlow);
+          if (insertPaymentFlow.affectedRows > 0) {
+            return res.status(200).json({ error: false, message: "Status update successfully", status: 200, success: true })
+          } else {
+            return res.status(400).json({ error: true, message: "Status not update", status: 400, success: false })
+          }
+        }
+      } else {
+        return res.status(400).json({
+          errors: true,
+          message: "Offer not found",
+          status: 400,
+          success: false
+        });
+      }
+    }
+  } catch (error) {
+    console.log(error);
+    
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };

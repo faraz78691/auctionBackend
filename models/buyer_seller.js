@@ -156,5 +156,18 @@ END AS is_favorite FROM offers_created LEFT JOIN favourites_offer ON favourites_
   findOrderSummaryDeatils: async (offer_id, buyer_id, seller_id) => {
     return await db.query('SELECT buyer_status, seller_status, buyer_created_at, seller_created_at FROM `tbl_payment_flow_status` WHERE offer_id = ? AND (buyer_id = ? OR seller_id = ?)', [offer_id, buyer_id, seller_id]);
   },
+
+  findOfferByOfferBuyerSellerId: async (offer_id, buyer_id, seller_id) => {
+    return await db.query('SELECT * FROM `buy_sell_transactions` WHERE offer_id = ? AND buyer_id = ? AND seller_id = ?', [offer_id, buyer_id, seller_id]);
+  },
+
+  updateOfferBuyerStatus: async (offer_id, buyer_id, seller_id, buyer_status, seller_status) => {
+    return await db.query('UPDATE `buy_sell_transactions` SET `buyer_status`= "' + buyer_status + '",`seller_status`= "' + seller_status + '" WHERE offer_id = ? AND buyer_id = ? AND seller_id = ?', [offer_id, buyer_id, seller_id]);
+  },
+
+  addPaymenetFlowStatus: async (data) => {
+    return await db.query("INSERT INTO `tbl_payment_flow_status` set ?", [data]);
+  }
+
 };
 
