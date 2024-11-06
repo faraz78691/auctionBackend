@@ -910,12 +910,12 @@ exports.updateTransactionStatus = async (req, res) => {
         'string.empty': 'Seller status is required',
         'any.required': 'Seller status is required',
       }),
-      buyer_message: Joi.string().required().messages({
+      buyer_message: Joi.string().required().allow(null).messages({
         'string.base': 'Buyer message must be a string',
         'string.empty': 'Seller message is required',
         'any.required': 'Seller message is required',
       }),
-      seller_message: Joi.string().required().messages({
+      seller_message: Joi.string().required().allow(null).messages({
         'string.base': 'Seller message must be a string',
         'string.empty': 'Seller message is required',
         'any.required': 'Seller message is required',
@@ -985,8 +985,6 @@ exports.updateTransactionStatus = async (req, res) => {
       }
     }
   } catch (error) {
-    console.log(error);
-
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };
