@@ -883,7 +883,7 @@ exports.productOfferOrderDetail = async (req, res) => {
 
 exports.updateTransactionStatus = async (req, res) => {
   try {
-    const { offer_id, buyer_id, seller_id, buyer_status, seller_status } = req.body;
+    const { offer_id, buyer_id, seller_id, buyer_status, seller_status, buyer_message, seller_message } = req.body;
     const schema = Joi.object({
       offer_id: Joi.number().required().messages({
         'number.base': 'Offer Id must be a number',
@@ -909,6 +909,16 @@ exports.updateTransactionStatus = async (req, res) => {
         'string.base': 'Seller status must be a string',
         'string.empty': 'Seller status is required',
         'any.required': 'Seller status is required',
+      }),
+      buyer_message: Joi.string().required().messages({
+        'string.base': 'Buyer message must be a string',
+        'string.empty': 'Seller message is required',
+        'any.required': 'Seller message is required',
+      }),
+      seller_message: Joi.string().required().messages({
+        'string.base': 'Seller message must be a string',
+        'string.empty': 'Seller message is required',
+        'any.required': 'Seller message is required',
       })
     });
 
@@ -922,8 +932,8 @@ exports.updateTransactionStatus = async (req, res) => {
       });
     } else {
       const offerResult = await findOfferByOfferBuyerSellerId(offer_id, buyer_id, seller_id);
-      
-      if (offerResult.length > 0) {        
+
+      if (offerResult.length > 0) {
         if (seller_status == 'null') {
           const updateBuuer = await updateOfferBuyerStatus(offer_id, buyer_id, seller_id, buyer_status, offerResult[0].seller_status)
           const addPaymenetFlow = {
@@ -933,6 +943,8 @@ exports.updateTransactionStatus = async (req, res) => {
             seller_id: seller_id,
             buyer_status: buyer_status,
             seller_status: offerResult[0].seller_status,
+            buyer_message: buyer_message,
+            seller_message: seller_message,
             buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
             seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
           }
@@ -951,6 +963,8 @@ exports.updateTransactionStatus = async (req, res) => {
             seller_id: seller_id,
             buyer_status: offerResult[0].buyer_status,
             seller_status: seller_status,
+            buyer_message: buyer_message,
+            seller_message: seller_message,
             buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
             seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
           }
@@ -972,7 +986,7 @@ exports.updateTransactionStatus = async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    
+
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };

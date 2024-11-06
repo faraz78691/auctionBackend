@@ -1958,7 +1958,7 @@ exports.getOffersAdvancedFilter = async (req, res) => {
 //     }
 //   } catch (err) {
 //     console.log(err);
-    
+
 //     return res.json({
 //       success: false,
 //       message: "Internal server error",
@@ -2055,7 +2055,7 @@ exports.getOfferAdvancedFilter = async (req, res) => {
       (parsedCondition.length > 0 && (conditionOfferIds === null || conditionOfferIds.length === 0)) ||
       (parsedAttributes.length > 0 && (attributeOfferIds === null || attributeOfferIds.length === 0)) ||
       (parsedAuctionType.length > 0 && (auctionTypeOfferIds === null || auctionTypeOfferIds.length === 0))
-    ) {      
+    ) {
       return res.json({
         success: false,
         offer_ids: [],
@@ -2469,9 +2469,9 @@ exports.getOffersByProductId = async (req, res) => {
 
 exports.updateOfferExpired = async (req, res) => {
   try {
-    var offerResult = await getOffersAutoUpdate();    
+    var offerResult = await getOffersAutoUpdate();
     if (offerResult.length > 0) {
-      for (item of offerResult) {        
+      for (item of offerResult) {
         var offerId = item.id;
         var doContinue = 1;
         var transactionId = 0;
@@ -2481,7 +2481,7 @@ exports.updateOfferExpired = async (req, res) => {
         var max_bid = 0;
         const result = await getMaxBidOnOffer(offerId);
         console.log(result);
-        
+
         if (result.length > 0) {
           buyer = result[0].user_id;
           max_bid = result[0].bid
@@ -2514,6 +2514,8 @@ exports.updateOfferExpired = async (req, res) => {
             transaction_id: transactionId,
             buyer_id: buyer,
             seller_id: seller,
+            buyer_message: 'Congratulations, you have purchased this item!',
+            seller_message: 'Congratulations, you have sold this item!',
             buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
             seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
           };
