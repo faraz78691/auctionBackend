@@ -1279,8 +1279,8 @@ exports.getSubAttributesByProductAttributesMappingId = async (req, res) => {
                     subAttributeData: result
                 });
             } else {
-                return res.status(404).json({
-                    error: true, message: "Data not found", success: false, status: 404, category: {
+                return res.status(200).json({
+                    error: true, message: "Data not found", success: false, status: 200, category: {
                         id: getCategory[0].id,
                         name: getCategory[0].cat_name
                     },
@@ -1301,8 +1301,6 @@ exports.getSubAttributesByProductAttributesMappingId = async (req, res) => {
             }
         }
     } catch (error) {
-        console.log(error);
-
         return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
     }
 };
