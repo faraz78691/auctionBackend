@@ -83,6 +83,7 @@ exports.signup = async (req, res) => {
       state,
       country,
       role_id,
+      country_code,
       phone_number,
       company_reg_no,
       signing_authority,
@@ -92,7 +93,6 @@ exports.signup = async (req, res) => {
     const actToken = betweenRandomNumber(10000000, 99999999);
     var status = 1;
     var login_status = 1;
-    var country_code = "+91";
     const schema = Joi.alternatives(
       Joi.object({
         email: Joi.string()
@@ -122,6 +122,7 @@ exports.signup = async (req, res) => {
         state: Joi.string().empty().required(),
         country: Joi.string().empty().required(),
         role_id: Joi.number().required(),
+        country_code: Joi.string().empty().required(),
         phone_number: Joi.number().required(),
         company_reg_no: Joi.string().empty().required(),
         signing_authority: Joi.string().empty().required(),
@@ -164,6 +165,7 @@ exports.signup = async (req, res) => {
               state: state,
               country: country,
               role_id: role_id,
+              country_code: country_code,
               phone_number: phone_number,
               company_reg_no: company_reg_no,
               signing_authority: signing_authority,
@@ -230,7 +232,6 @@ exports.signup = async (req, res) => {
       }
     }
   } catch (error) {
-    console.log(error, "<==error");
     return res.json({
       message: "Internal server error",
       status: 500,

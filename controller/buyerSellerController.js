@@ -26,7 +26,8 @@ const {
   findOfferByOfferBuyerSellerId,
   updateOfferBuyerStatus,
   addPaymenetFlowStatus,
-  getAllCommissionFeesPayByUserId
+  getAllCommissionFeesPayByUserId,
+  getAllBidsByOfferId
 } = require("../models/buyer_seller");
 
 const {
@@ -992,14 +993,46 @@ exports.updateTransactionStatus = async (req, res) => {
 
 exports.getFeesPayUserId = async (req, res) => {
   try {
-    const seller_id = req.user.id;    
+    const seller_id = req.user.id;
     const findFeesPayData = await getAllCommissionFeesPayByUserId(seller_id);
     if (findFeesPayData.length > 0) {
-      return res.status(200).json({ error: false, message: "User commission fees fetched successfully", status: 200, success: true })
+      return res.status(200).json({ error: false, message: "User commission fees fetched successfully", status: 200, success: true, data: findFeesPayData })
     } else {
-      return res.status(200).json({ error: true, message: "User commission fess not fetched", status: 200, success: false })
+      return res.status(200).json({ error: true, message: "User commission fess not fetched", status: 200, success: false, data: [] })
     }
   } catch (error) {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };
+
+exports.getAllBidsByOfferId = async (req, res) => {
+  try {
+    const { offer_id } = req.query;
+    const schema = Joi.object({
+      offer_id: Joi.number().required().messages({
+        'number.base': 'Offer Id must be a number',
+        'number.empty': 'Offer Id is required',
+        'any.required': 'Offer Id is required',
+      })
+    });
+
+    const { error } = schema.validate(req.query);
+    if (error) {
+      return res.status(400).json({
+        errors: true,
+        message: error.details[0].message,
+        status: 400,
+        success: false
+      });
+    } else {
+      const findBids = await getAllBidsByOfferId(offer_id);
+      if (findBids.length > 0) {
+        return res.status(200).json({ error: false, message: "Bids fetched successfully", status: 200, success: true, data: findBids })
+      } else {
+        return res.status(200).json({ error: true, message: "Bids not fetched", status: 200, success: false, data: [] })
+      }
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+}

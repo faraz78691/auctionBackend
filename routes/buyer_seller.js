@@ -18,5 +18,6 @@ router.get('/getOffersByBuyer', auth, buyerSellerController.getOffersByBuyer);
 router.post('/ordersummary', auth, buyerSellerController.productOfferOrderDetail);
 router.post('/updatetransaction-status', auth, buyerSellerController.updateTransactionStatus);
 router.get('/getfeespay-userid', auth, buyerSellerController.getFeesPayUserId);
+router.get('/getallbid-offerid', auth, buyerSellerController.getAllBidsByOfferId);
 
 module.exports = router;
