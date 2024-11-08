@@ -33,6 +33,7 @@ const {
   getMaxBidOnOffer,
   checkTransactionID,
   insertPaymentFlowInsert,
+  insertUserFeesPay,
   insertTransaction,
   getProductIdsByName,
   getffersByName,
@@ -2509,6 +2510,19 @@ exports.updateOfferExpired = async (req, res) => {
         };
         const resultInserted = await insertTransaction(transactionDetails);
         if (resultInserted.affectedRows > 0) {
+          const userFessPayDetails = {
+            transaction_id: transactionId,
+            buyer_id: buyer,
+            seller_id: seller,
+            offer_id: offerId,
+            amount: max_bid,
+            commissin_percent: 5,
+            pay_amount: (max_bid * 5) / 100,
+            is_buy_now: 0,
+            is_max_bid: 1,
+            created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+          };
+          const addUserFeesPayDetails = await insertUserFeesPay(userFessPayDetails);
           const transactionDetail = {
             offer_id: offerId,
             transaction_id: transactionId,
