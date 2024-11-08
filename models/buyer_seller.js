@@ -167,6 +167,10 @@ END AS is_favorite FROM offers_created LEFT JOIN favourites_offer ON favourites_
 
   addPaymenetFlowStatus: async (data) => {
     return await db.query("INSERT INTO `tbl_payment_flow_status` set ?", [data]);
+  },
+
+  getAllCommissionFeesPayByUserId: async (seller_id) => {
+    return await db.query('SELECT tbl_user_commissin_fees.*, offers_created.offer_unique_id FROM `tbl_user_commissin_fees` LEFT JOIN offers_created ON offers_created.id = tbl_user_commissin_fees.offer_id WHERE tbl_user_commissin_fees.seller_id = ?', [seller_id]);
   }
 
 };

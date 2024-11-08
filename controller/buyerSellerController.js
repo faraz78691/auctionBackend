@@ -25,7 +25,8 @@ const {
   findOrderSummaryDeatils,
   findOfferByOfferBuyerSellerId,
   updateOfferBuyerStatus,
-  addPaymenetFlowStatus
+  addPaymenetFlowStatus,
+  getAllCommissionFeesPayByUserId
 } = require("../models/buyer_seller");
 
 const {
@@ -983,6 +984,20 @@ exports.updateTransactionStatus = async (req, res) => {
           success: false
         });
       }
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
+
+exports.getFeesPayUserId = async (req, res) => {
+  try {
+    const seller_id = req.user.id;    
+    const findFeesPayData = await getAllCommissionFeesPayByUserId(seller_id);
+    if (findFeesPayData.length > 0) {
+      return res.status(200).json({ error: false, message: "User commission fees fetched successfully", status: 200, success: true })
+    } else {
+      return res.status(200).json({ error: true, message: "User commission fess not fetched", status: 200, success: false })
     }
   } catch (error) {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
