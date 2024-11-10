@@ -1208,10 +1208,12 @@ exports.createBuyTransaction = async (req, res) => {
     const resultInserted = await insertTransaction(transactionDetails);
     if (resultInserted.affectedRows > 0) {
       const transactionDetail = {
-        offer_id: offerId,
+        offer_id: offer_id,
         transaction_id: transactionId,
-        buyer_id: buyer,
-        seller_id: seller,
+        buyer_id: user_id,
+        seller_id: seller_id,
+        buyer_message:'Congratulations, you have purchased this item!',
+        seller_message:'Congratulations, you have sold this item!',
         buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
         seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
       };
