@@ -1,6 +1,4 @@
 const db = require("../utils/database");
-var moment = require('moment-timezone');
-var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
 
 module.exports = {
   getProductDetails: async () => {
