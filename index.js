@@ -44,6 +44,33 @@ app.get('/', (req, res) => {
   }
 })
 
+app.post('/fish/add', async (req, res) => {
+  try {
+    const { name, location, height, weight, uu_id } = req.body;
+    const addResult = await db.query('INSERT INTO `tbl_fish`(`name`, `location`, `height`, `weight`, `uu_id`) VALUES (?,?,?,?,?)', [name, location, height, weight, uu_id == '' || uu_id == null ? null : uu_id]);
+    if (addResult.affectedRows > 0) {
+      return res.status(200).json({ error: false, message: "fish data add successfully", status: 200, success: true });
+    } else {
+      return res.status(200).json({ error: true, message: "fish data not add", status: 200, success: false });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+});
+
+app.get('/fish/get-all', async (req, res) => {
+  try {
+    const getResult = await db.query('SELECT * FROM `tbl_fish`');
+    if (getResult.length > 0) {
+      return res.status(200).json(getResult);
+    } else {
+      return res.status(200).json([]);
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+});
+
 setInterval(updateOfferExpired, 600000);
 
 server.listen(5000, function () {
