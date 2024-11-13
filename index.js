@@ -3,7 +3,7 @@ const http = require('http');
 const cors = require('cors');
 const app = express();
 require('dotenv').config();
-
+const db = require("./utils/database");
 // Setup HTTP server
 const server = http.createServer(app);
 
