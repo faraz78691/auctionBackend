@@ -41,6 +41,10 @@ module.exports = {
     return db.query("insert into offers_created set ?", [data]);
   },
 
+  findBootPlanById: async(id) => {
+    return await db.query('SELECT * FROM `tbl_boost_plan` WHERE id = ?', [id]);
+  },
+
   updateOfferById: async (data, offer_id) => {
     return db.query("update offers_created set ? where id = ?", [data, offer_id]);
   },
@@ -72,6 +76,7 @@ module.exports = {
         buyto_price,
         fixed_offer_price,
         duration,
+        boost_plan_id,
         offfer_buy_status,
         user_id
                                   from offers_created ${where}
@@ -102,6 +107,7 @@ module.exports = {
         offers_created.buyto_price,
         offers_created.fixed_offer_price,
         offers_created.duration,
+        offers_created.boost_plan_id,
         offers_created.offfer_buy_status,
         offers_created.user_id,  
         CASE 

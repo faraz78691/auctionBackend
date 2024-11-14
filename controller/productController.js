@@ -6,6 +6,7 @@ const {
   getProductAttributeTypeMapping,
   findProductById,
   insertOfferCreated,
+  findBootPlanById,
   updateOfferById,
   getOffersByWhereClause,
   getOffersByCategoryWhereClause,
@@ -319,6 +320,7 @@ exports.createOffer = async (req, res) => {
       length_oftime,
       images_id,
       offerStart,
+      boost_plan_id,
       start_date,
       is_reactivable,
       is_psuggestion_enable,
@@ -342,6 +344,7 @@ exports.createOffer = async (req, res) => {
         length_oftime: Joi.number().required().empty(),
         images_id: Joi.number().required().empty(),
         offerStart: Joi.string().required().empty(),
+        boost_plan_id: Joi.number().optional().allow(null).allow(""),
         start_date: Joi.string().required().empty(),
         is_reactivable: Joi.number().required().empty(),
         is_psuggestion_enable: Joi.number().required().empty(),
@@ -407,6 +410,7 @@ exports.createOffer = async (req, res) => {
         length_oftime: length_oftime,
         images_id: images_id,
         offerStart: offerStart,
+        boost_plan_id: boost_plan_id == null || boost_plan_id == '' ? null : boost_plan_id,
         start_date: startDate,
         end_date: endDate,
         user_id: user_id,
@@ -417,8 +421,34 @@ exports.createOffer = async (req, res) => {
       var offerId = 0;
       var attributesInserted = 0;
       var condInserted = 0;
+      var transactionId = 0;
       const resultInserted = await insertOfferCreated(offer_created);
       if (resultInserted.affectedRows > 0) {
+        if (boost_plan_id) {
+          const getBootplan = await findBootPlanById(boost_plan_id);
+          do {
+            transactionId = randomstring.generate({
+              length: 12,
+              charset: "alphanumeric",
+            });
+            const found = await checkTransactionID(transactionId);
+            if (found.length > 0) {
+              doContinue = 0;
+            }
+          } while (doContinue);
+          const data = {
+            fees_type: '2',
+            transaction_id: transactionId,
+            seller_id: user_id,
+            offer_id: resultInserted.insertId,
+            amount: getBootplan[0].price,
+            pay_amount: getBootplan[0].price,
+            is_buy_now: 0,
+            is_max_bid: 0,
+            created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+          }
+          await insertUserFeesPay(data);
+        }
         offerId = resultInserted.insertId;
         if (itemsJson.length > 0) {
           for (element of itemsJson) {
@@ -761,12 +791,38 @@ exports.getOffers = async (req, res) => {
       categoryNameRes = []
     }
     if (offers.length > 0) {
+
+      // Separate the offers based on boost_plan_id
+      const notNullOffers = offers.filter(offer => offer.boost_plan_id !== null);
+      const nullOffers = offers.filter(offer => offer.boost_plan_id === null);
+
+      // Result array to store the organized offers
+      const organizedOffers = [];
+      let i = 0, j = 0;
+
+      // Alternating logic
+      while (i < notNullOffers.length || j < nullOffers.length) {
+        // Add one from notNullOffers if available
+        if (i < notNullOffers.length) {
+          organizedOffers.push(notNullOffers[i]);
+          i++;
+        }
+
+        // Add up to three from nullOffers if available
+        let nullCount = 0;
+        while (j < nullOffers.length && nullCount < 3) {
+          organizedOffers.push(nullOffers[j]);
+          j++;
+          nullCount++;
+        }
+      }
+
       return res.json({
         success: true,
         message: "Offer Sorted by time",
-        categoryName: offers[0].category_name,
-        productName: offers[0].product_name,
-        offers: offers,
+        categoryName: organizedOffers[0].category_name,
+        productName: organizedOffers[0].product_name,
+        offers: organizedOffers,
         status: 200,
       });
     } else if (categoryRes.length > 0 || categoryNameRes.length > 0) {
@@ -787,6 +843,8 @@ exports.getOffers = async (req, res) => {
       });
     }
   } catch (err) {
+    console.log(err);
+
     return res.json({
       success: false,
       message: "Internal server error",
@@ -1212,8 +1270,8 @@ exports.createBuyTransaction = async (req, res) => {
         transaction_id: transactionId,
         buyer_id: user_id,
         seller_id: seller_id,
-        buyer_message:'Congratulations, you have purchased this item!',
-        seller_message:'Congratulations, you have sold this item!',
+        buyer_message: 'Congratulations, you have purchased this item!',
+        seller_message: 'Congratulations, you have sold this item!',
         buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
         seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
       };
@@ -2340,7 +2398,6 @@ exports.createNewBid = async (data) => {
           title: 'Bid Received',
           body: `Faraz has bidded in your product`
         },
-
         token: getFCM[0].fcm_token
       };
       await send_notification(message, getSellerID[0].user_id);
@@ -2483,8 +2540,6 @@ exports.updateOfferExpired = async (req, res) => {
         var buyer = 0;
         var max_bid = 0;
         const result = await getMaxBidOnOffer(offerId);
-        console.log(result);
-
         if (result.length > 0) {
           buyer = result[0].user_id;
           max_bid = result[0].bid
