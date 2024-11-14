@@ -5,7 +5,9 @@ const {
   tokenUpdate,
   fetchUserToken,
   updateVerifyUser,
+  addUserNotificartion,
   fetchUserById,
+  updateStripeCustomerId,
   updateUserbyPass,
   updateUserById,
   updateUser,
@@ -21,7 +23,9 @@ const {
   fetchAllUsers,
   fetchAllUsersOffers,
   updateMessageCount,
-  getAllMessageByUserId
+  getAllMessageByUserId,
+  updateUserCommissinFees,
+  getNotificationsByUserId
 } = require("../models/users");
 const { updateData } = require("../models/common");
 const Joi = require("joi");
@@ -36,7 +40,11 @@ var admin = require("firebase-admin");
 const { initializeApp } = require("firebase/app");
 const { getMessaging, getToken, isSupported } = require("firebase/messaging");
 const { hashPassword } = require('../helper/hashPassword');
+const twilio = require('twilio');
+const client = ''
+var moment = require('moment-timezone');
 require('dotenv').config();
+const stripe = require('stripe')(process.env.STRIPE_SECRERT_KEY);
 
 function randomStringAsBase64Url(size) {
   return base64url(crypto.randomBytes(size));
@@ -77,6 +85,7 @@ exports.signup = async (req, res) => {
       password,
       first_name,
       last_name,
+      user_name,
       company,
       street,
       street_number,
@@ -115,7 +124,7 @@ exports.signup = async (req, res) => {
           "string.empty": "last_name can't be empty",
           "string.required": "last_name is required",
         }),
-
+        user_name: Joi.string().empty().required(),
         company: Joi.string().empty().required(),
         street: Joi.string().empty().required(),
         street_number: Joi.number().empty().required(),
@@ -144,18 +153,16 @@ exports.signup = async (req, res) => {
     } else {
       const result1 = await fetchUserByEmail(email);
 
-      console.log(result1, "result1result1result1")
-
       if (result1.length === 0) {
         bcrypt.genSalt(saltRounds, async function (err, salt) {
           bcrypt.hash(password, salt, async function (err, hash) {
             if (err) throw err;
-
             let user = {
               email: email,
               password: hash,
               first_name: first_name,
               last_name: last_name,
+              user_name: user_name,
               company: company,
               act_token: actToken,
               status: status,
@@ -172,9 +179,7 @@ exports.signup = async (req, res) => {
               city: city,
               postal_code: postal_code
             };
-            console.log(user);
             const result = await addUser(user);
-
             if (result.affectedRows > 0) {
               let mailOptions = {
                 from: "aarif.ctinfotech@gmail.com",
@@ -189,7 +194,6 @@ exports.signup = async (req, res) => {
               };
 
               transporter.sendMail(mailOptions, async function (error, info) {
-                console.log(error);
                 if (error) {
                   return res.json({
                     success: true,
@@ -199,16 +203,16 @@ exports.signup = async (req, res) => {
                   });
                 } else {
                   if (result.insertId > 0) {
-                    results = await fetchUserById(result.insertId);
+                    await addUserNotificartion(result.insertId)
+                    const results = await fetchUserById(result.insertId);
+                    return res.json({
+                      success: true,
+                      message:
+                        "Your account has been successfully created. An email has been sent to you with detailed instructions on how to activate it.",
+                      userinfo: results[0],
+                      status: 200,
+                    });
                   }
-                  console.log("mail sent to ");
-                  return res.json({
-                    success: true,
-                    message:
-                      "Your account has been successfully created. An email has been sent to you with detailed instructions on how to activate it.",
-                    userinfo: results[0],
-                    status: 200,
-                  });
                 }
               });
             } else {
@@ -222,7 +226,6 @@ exports.signup = async (req, res) => {
           });
         });
       } else {
-        // console.log(result);
         return res.json({
           success: false,
           message: "Already Exists",
@@ -1427,6 +1430,215 @@ exports.orderUpdateStatus = async (req, res) => {
       } else if (buyer_status == '' || buyer_status == null) {
 
       }
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
+
+exports.sendOtp = async (req, res) => {
+  try {
+    const { phone_number } = req.body
+
+    // Check and format phone number
+    if (!phone_number) {
+      return res.status(400).json({ error: true, message: 'Phone number is required', status: 400, success: false });
+    }
+
+    const formattedPhoneNumber = phone_number.startsWith('+') ? phone_number : `+91${phone_number}`; // Adjust the country code as needed
+
+    const Otp = Math.floor(100000 + Math.random() * 900000);
+    const message = await client.messages.create({
+      body: `Your verification code is: ${Otp}`,
+      from: '+14697891146', // e.g., +123456789
+      to: formattedPhoneNumber
+    });
+    return Otp; // Return OTP for further verification
+  } catch (error) {
+    if (error.code === 21608) { // Twilio error code for unverified numbers in trial mode
+      return res.status(400).json({
+        error: true,
+        message: "The number is unverified. Verify it in your Twilio Console or upgrade your account to send messages to any number.",
+        status: 400,
+        success: false
+      });
+    }
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
+
+exports.createCheckoutSession = async (req, res) => {
+  const userId = req.user.id;
+  const { offer_id, amount, currency, payment_method_types } = req.body;
+
+  try {
+    // Retrieve or create a Stripe customer
+    const user = await fetchUserById(userId);
+
+    if (user.length > 0) {
+      let customerId = user[0].stripe_customer_id;
+
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user[0].email,
+          name: user[0].user_name
+        });
+        customerId = customer.id;
+        await updateStripeCustomerId(customerId, userId)
+      }
+      const payment_method = payment_method_types == '1' ? ['card'] : ['twint']
+
+      // Create Checkout session
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: payment_method_types == '1' ? ['card'] : ['twint'],
+        mode: 'payment',
+        customer: customerId,
+        line_items: [
+          {
+            price_data: {
+              currency: currency,
+              product_data: { name: 'Order Payment' },
+              unit_amount: amount * 100 // amount in cents
+            },
+            quantity: 1
+          }
+        ],
+        success_url: `${process.env.baseUrl}amount_add_successfull?session_id={CHECKOUT_SESSION_ID}&user_id=${userId}&amount=${amount}&totalAmount=${amount}&payment_method=${payment_method}&offer_id=${offer_id}`,
+        cancel_url: `${process.env.baseUrl}amount_add_cancelled?user_id=${userId}&amount=${amount}`,
+        saved_payment_method_options: {
+          payment_method_save: 'enabled',
+        },
+      });
+
+      res.json({ url: session.url });
+    } else {
+      return res.status(404).json({
+        error: true,
+        message: "User not found. Please provide a correct ID.",
+        status: 404,
+        success: false,
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
+
+exports.getSavedCards = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    // Retrieve or create a Stripe customer
+    const user = await fetchUserById(userId);
+    const customerId = user[0].stripe_customer_id;
+
+    if (!customerId) {
+      return res.status(404).json({
+        error: true,
+        message: 'No Stripe customer found for the given user.',
+        status: 404,
+        success: false
+      });
+    }
+
+    // Fetch saved cards from Stripe
+    const paymentMethods = await stripe.paymentMethods.list({
+      customer: customerId,
+      type: 'card'
+    });
+
+    // Respond with the list of saved cards
+    res.json(paymentMethods.data);
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
+
+exports.payWithSavedCard = async (req, res) => {
+  try {
+    const { userId, paymentMethodId, amount, currency, offerId } = req.body;
+    // Retrieve Stripe customer ID from your database
+    const user = await fetchUserById(userId);
+    const customerId = user[0].stripe_customer_id;
+
+    if (!customerId) {
+      return res.status(404).json({
+        error: true,
+        message: 'No Stripe customer found for the given user.',
+        status: 404,
+        success: false
+      });
+    }
+
+    // Create a PaymentIntent with the saved payment method
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount * 100, // amount in cents
+      currency: currency,
+      customer: customerId,
+      payment_method: paymentMethodId,
+      off_session: true, // to charge without requiring card details again
+      confirm: true,     // confirms and attempts to complete the payment
+      metadata: { offerId } // Pass the offer ID as metadata
+    });
+
+    // Update offer status in database as 'paid' after successful payment
+    if (paymentIntent.status === 'succeeded') {
+      const status = '1'
+      const payment_date = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+      const payment_method = 'card'
+      await updateUserCommissinFees(userId, offerId, status, payment_method, paymentMethodId, payment_date, currency)
+      res.json({ success: true, message: 'Payment successful', paymentIntent });
+    } else {
+      res.json({ success: false, message: 'Payment requires further action', paymentIntent });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
+
+exports.getnotificationByUserId = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const notifications = await getNotificationsByUserId(userId);
+    if (notifications.length > 0) {
+      return res.json({
+        message: "fetch user all notification",
+        status: 200,
+        success: true,
+        data: notifications,
+      });
+    } else {
+      return res.json({
+        error: true,
+        message: "Notification not found",
+        status: 200,
+        success: false,
+        data: []
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
+
+exports.updatenotificationByUserId = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const updateNotificaton = await updateData('tbl_user_notifications', `WHERE user_id = ${userId}`, req.body);
+    if (updateNotificaton.affectedRows > 0) {
+      return res.json({
+        message: "Update successfully",
+        status: 200,
+        success: true,
+        data: updateNotificaton,
+      });
+    } else {
+      return res.json({
+        error: true,
+        message: "Update failed",
+        status: 200,
+        success: false,
+        data: []
+      });
     }
   } catch (error) {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });

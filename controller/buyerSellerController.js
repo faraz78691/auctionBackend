@@ -27,6 +27,7 @@ const {
   updateOfferBuyerStatus,
   addPaymenetFlowStatus,
   getAllCommissionFeesPayByUserId,
+  getAllAdminCommissionFees,
   getAllBidsByOfferId
 } = require("../models/buyer_seller");
 
@@ -1034,5 +1035,18 @@ exports.getAllBidsByOfferId = async (req, res) => {
     }
   } catch (error) {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
+
+exports.getAllAdminCommissionFees = async (req, res) => {
+  try {
+      const findAllCommissionFees = await getAllAdminCommissionFees();
+      if(findAllCommissionFees.length > 0){
+        return res.status(200).json({ error: false, message: "Commission fees fetched successfully", status: 200, success: true, data: findAllCommissionFees })
+      } else{
+        return res.status(200).json({ error: true, message: "Commission fees not fetched", status: 200, success: false, data: [] })
+      }
+  } catch (error) {    
+      return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
   }
 }

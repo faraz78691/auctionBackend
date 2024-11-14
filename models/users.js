@@ -30,8 +30,16 @@ module.exports = {
     ]);
   },
 
+  addUserNotificartion: async (id) => {
+    return await db.query('INSERT INTO `tbl_user_notifications`(`user_id`) VALUES (?)', [id]);
+  },
+
   fetchUserById: async (id) => {
-    return db.query("select * from users where id = ?", [id]);
+    return await db.query("select * from users where id = ?", [id]);
+  },
+
+  updateStripeCustomerId: async (customerId, userId) => {
+    return await db.query('UPDATE users SET stripe_customer_id = ? WHERE id = ?', [customerId, userId])
   },
 
   fetchAlluser: async () => {
@@ -107,7 +115,7 @@ module.exports = {
   },
 
   getuserProfileDetails: async (user_id) => {
-    return db.query("select * from  user_profile where  user_id=?", [
+    return await db.query("select * from  user_profile where  user_id=?", [
       user_id
     ]);
   },
@@ -122,6 +130,14 @@ module.exports = {
 
   updateMessageCount: async (id) => {
     return await db.query('UPDATE `tbl_messages` SET `is_read` = "1" WHERE user_id = "' + id + '"');
+  },
+
+  updateUserCommissinFees: async (userId, offerId, status, payment_method, paymentMethodId, payment_date, currency) => {
+    return await db.query('UPDATE `tbl_user_commissin_fees` SET `payment_type`= "' + payment_method + '", `payment_id` = "' + paymentMethodId + '", `payment_date` = "' + payment_date + '", `currency` = "' + currency + '", `status` = "' + status + '" WHERE offer_id = "' + offerId + '" AND seller_id = "' + userId + '"');
+  },
+
+  getNotificationsByUserId: async (id) => {
+    return await db.query('SELECT * FROM `tbl_user_notifications` WHERE user_id = ?', [id]);
   }
 
 };
