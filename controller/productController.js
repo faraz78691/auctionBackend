@@ -2389,10 +2389,7 @@ exports.createNewBid = async (data) => {
       };
       const resultInserted = await insertBidByUser(bid_created);
       const getSellerID = await getSelectedColumn(`offers_created`, `where id = ${offer_id}`, 'user_id');
-      console.log("getSellerID", getSellerID);
       const getFCM = await getSelectedColumn(`users`, `where id = ${getSellerID[0].user_id}`, 'fcm_token');
-      console.log("getFCM", getFCM),
-        console.log(getSellerID);
       const message = {
         notification: {
           title: 'Bid Received',
