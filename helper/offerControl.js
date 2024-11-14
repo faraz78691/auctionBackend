@@ -13,7 +13,8 @@ var randomstring = require("randomstring");
 module.exports = {
   updateOfferExpired: async () => {
     try {
-      var offerResult = await getOffersAutoUpdate();
+      var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
+      var offerResult = await getOffersAutoUpdate(currDate);
       if (offerResult.length > 0) {
         for (item of offerResult) {
           var offerId = item.id;

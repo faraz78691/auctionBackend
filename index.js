@@ -6,7 +6,7 @@ require('dotenv').config();
 const db = require("./utils/database");
 // Setup HTTP server
 const server = http.createServer(app);
-
+const stripe = require('stripe')(process.env.STRIPE_SECRERT_KEY);
 // Import the Socket.IO configuration from the socket.js file
 const initializeSocket = require("./middleware/socket");
 const io = initializeSocket(server); // Initialize Socket.IO with the server
