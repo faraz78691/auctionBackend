@@ -1532,7 +1532,7 @@ exports.getSavedCards = async (req, res) => {
     const customerId = user[0].stripe_customer_id;
 
     if (!customerId) {
-      return res.status(404).json({
+      return res.status(200).json({
         error: true,
         message: 'No Stripe customer found for the given user.',
         status: 404,
