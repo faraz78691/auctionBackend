@@ -28,7 +28,7 @@ const {
   addPaymenetFlowStatus,
   getAllCommissionFeesPayByUserId,
   getAllAdminCommissionFees,
-  getAllBidsByOfferId
+  getAllBidsByOfferId,checkUserNameExist
 } = require("../models/buyer_seller");
 
 const {
