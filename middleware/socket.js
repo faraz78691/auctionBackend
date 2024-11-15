@@ -33,7 +33,6 @@ module.exports = function (server) {
   io.on("connection", (socket) => {
     console.log("A user connected");
 
-    // Listen for 'newBid' events from the client
     socket.on("newBid", async (data) => {
       try {
         await createNewBid(data);
@@ -98,13 +97,22 @@ module.exports = function (server) {
       }
     });
 
-
-
-    console.log(onlineUsers)
     socket.on("user_connected", (userId) => {
+      const user_id = userId
+      if (user_id) {
+        userSockets[user_id] = socket.id; // Add user socket
+      }
       onlineUsers.set(userId, socket.id);
-      console.log(onlineUsers)
       io.emit("update_online_status", Array.from(onlineUsers.keys()));
+    });
+
+    socket.on("admin_connected", (adminId) => {
+      console.log(true);
+      
+      const admin_id = adminId;
+      if (admin_id) {
+        adminSockets[admin_id] = socket.id; // Add user socket
+      }
     });
 
     socket.on('user_disconnected', (userId) => {
@@ -112,13 +120,11 @@ module.exports = function (server) {
       io.emit('update_online_status', Array.from(onlineUsers.keys()));
     });
 
-
     // Send online users list to admin when requested
     socket.on('get_online_users', () => {
       console.log("user id ", onlineUsers)
       io.emit('update_online_status', Array.from(onlineUsers.keys()));
     });
-
 
     socket.on("disconnect", () => {
       onlineUsers.forEach((value, key) => {
@@ -132,12 +138,16 @@ module.exports = function (server) {
     // Listen for a new chat message
     socket.on("sendMessage", async (msg) => {
       const { user_id, admin_id, message, sender_id } = msg;
+
       if (
         user_id != "undefined" &&
         admin_id != "undefined" &&
         message != "undefined" &&
         sender_id != "undefined"
       ) {
+        console.log("adminSockets =>", adminSockets[admin_id]);
+        console.log("userSockets =>", userSockets[user_id]);
+
         // Insert the message into the database
         const insertMessageQuery = `INSERT INTO tbl_messages (user_id, admin_id, message, sender_id) VALUES (?, ?, ?, ?)`;
         const addMessage = await db.query(insertMessageQuery, [
@@ -156,7 +166,7 @@ module.exports = function (server) {
           const lastMessage = await db.query(getLastMessage, [
             addMessage.insertId,
           ]);
-          if (user_id === sender_id) {
+          if (user_id == sender_id) {
             const adminSocketId = adminSockets[admin_id];
             const userSocketId = userSockets[user_id];
             if (userSocketId) {
@@ -169,6 +179,7 @@ module.exports = function (server) {
           } else {
             const adminSocketId = adminSockets[admin_id];
             const userSocketId = userSockets[user_id];
+            console.log(adminSocketId);
             if (adminSocketId) {
               io.to(adminSocketId).emit("getMessage", lastMessage[0]);
               io.to(userSocketId).emit("getMessage", lastMessage[0]);
