@@ -20,5 +20,6 @@ router.post('/updatetransaction-status', auth, buyerSellerController.updateTrans
 router.get('/getfeespay-userid', auth, buyerSellerController.getFeesPayUserId);
 router.get('/getallbid-offerid', auth, buyerSellerController.getAllBidsByOfferId);
 router.get('/getAllAdminCommissionFees', buyerSellerController.getAllAdminCommissionFees);
+router.get('/checkUserNameExist/:username', buyerSellerController.checkUserNameExist);
 
 module.exports = router;

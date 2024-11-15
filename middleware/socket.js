@@ -98,8 +98,8 @@ module.exports = function (server) {
       }
     });
 
- 
- 
+
+
     console.log(onlineUsers)
     socket.on("user_connected", (userId) => {
       onlineUsers.set(userId, socket.id);
@@ -108,18 +108,18 @@ module.exports = function (server) {
     });
 
     socket.on('user_disconnected', (userId) => {
-        onlineUsers.delete(userId);
-        io.emit('update_online_status', Array.from(onlineUsers.keys()));
-      });
+      onlineUsers.delete(userId);
+      io.emit('update_online_status', Array.from(onlineUsers.keys()));
+    });
 
 
-        // Send online users list to admin when requested
-  socket.on('get_online_users', () => {
-    console.log("user id ", onlineUsers)
-    io.emit('update_online_status', Array.from(onlineUsers.keys()));
-  });
+    // Send online users list to admin when requested
+    socket.on('get_online_users', () => {
+      console.log("user id ", onlineUsers)
+      io.emit('update_online_status', Array.from(onlineUsers.keys()));
+    });
 
-    
+
     socket.on("disconnect", () => {
       onlineUsers.forEach((value, key) => {
         if (value === socket.id) {

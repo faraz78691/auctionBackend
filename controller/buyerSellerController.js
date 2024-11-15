@@ -1005,6 +1005,19 @@ exports.getFeesPayUserId = async (req, res) => {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };
+exports.checkUserNameExist = async (req, res) => {
+  try {
+    const username = req.params.username;
+    const userExist = await checkUserNameExist(username);
+    if (userExist.length > 0) {
+      return res.status(200).json({ error: false, message: "Username already exist", status: 200, success: false, data: [] })
+    } else {
+      return res.status(200).json({ error: true, message: "Proceed", status: 200, success: true, data: [] })
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
 
 exports.getAllBidsByOfferId = async (req, res) => {
   try {
