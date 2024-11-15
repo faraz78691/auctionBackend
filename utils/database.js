@@ -9,21 +9,21 @@ const util = require('util');
     database: 'vanya'
 };*/
 
-var db_config = {
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    port:3306,
-    database: 'auction'
-};
-
 // var db_config = {
-//     host: '98.80.36.64',
-//     user: 'auction',
-//     password: 'OlTheZ6a63T',
+//     host: 'localhost',
+//     user: 'root',
+//     password: '',
 //     port:3306,
 //     database: 'auction'
 // };
+
+var db_config = {
+    host: '98.80.36.64',
+    user: 'auction',
+    password: 'OlTheZ6a63T',
+    port:3306,
+    database: 'auction'
+};
 
 var connection;
 
