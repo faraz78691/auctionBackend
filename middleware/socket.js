@@ -106,9 +106,7 @@ module.exports = function (server) {
       io.emit("update_online_status", Array.from(onlineUsers.keys()));
     });
 
-    socket.on("admin_connected", (adminId) => {
-      console.log(true);
-      
+    socket.on("admin_connected", (adminId) => {      
       const admin_id = adminId;
       if (admin_id) {
         adminSockets[admin_id] = socket.id; // Add user socket
@@ -145,8 +143,6 @@ module.exports = function (server) {
         message != "undefined" &&
         sender_id != "undefined"
       ) {
-        console.log("adminSockets =>", adminSockets[admin_id]);
-        console.log("userSockets =>", userSockets[user_id]);
 
         // Insert the message into the database
         const insertMessageQuery = `INSERT INTO tbl_messages (user_id, admin_id, message, sender_id) VALUES (?, ?, ?, ?)`;

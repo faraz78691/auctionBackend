@@ -1504,7 +1504,7 @@ exports.createCheckoutSession = async (req, res) => {
           }
         ],
         success_url: `${process.env.baseUrl}amount_add_successfull?session_id={CHECKOUT_SESSION_ID}&user_id=${userId}&amount=${amount}&totalAmount=${amount}&payment_method=${payment_method}&offer_id=${offer_id}`,
-        cancel_url: `${process.env.baseUrl}amount_add_cancelled?user_id=${userId}&amount=${amount}`,
+        cancel_url: `${process.env.baseUrl}amount_add_cancelled?session_id={CHECKOUT_SESSION_ID}`,
         saved_payment_method_options: {
           payment_method_save: 'enabled',
         },
@@ -1587,9 +1587,9 @@ exports.payWithSavedCard = async (req, res) => {
       const payment_date = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
       const payment_method = 'card'
       await updateUserCommissinFees(userId, offerId, status, payment_method, paymentMethodId, payment_date, currency)
-      res.json({ success: true, message: 'Payment successful', paymentIntent });
+      res.json({ success: true, message: 'Payment successful' });
     } else {
-      res.json({ success: false, message: 'Payment requires further action', paymentIntent });
+      res.json({ success: false, message: 'Payment requires further action' });
     }
   } catch (error) {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
