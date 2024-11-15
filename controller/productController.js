@@ -1060,6 +1060,7 @@ exports.getOffersCountDown = async (req, res) => {
 exports.createUserBids = async (req, res) => {
   try {
     const user_id = req.user.id;
+    const user_name = req.user.user_name
     const { bid, offer_id } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
@@ -1085,6 +1086,17 @@ exports.createUserBids = async (req, res) => {
       created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
     };
     const resultInserted = await insertBidByUser(bid_created);
+    const getSellerID = await getSelectedColumn(`offers_created`, `where id = ${offer_id}`, 'user_id');
+    const getFCM = await getSelectedColumn(`users`, `where id = ${getSellerID[0].user_id}`, 'fcm_token');
+    const message = {
+      notification: {
+        title: `${user_name} has placed a bid`,
+        body: `${user_name} has bid on your product. View the details and respond accordingly.`
+      },
+      token: getFCM[0].fcm_token
+    };
+    
+    await send_notification(message, getSellerID[0].user_id);
     if (resultInserted.affectedRows > 0) {
       return res.json({
         success: true,
@@ -1099,7 +1111,7 @@ exports.createUserBids = async (req, res) => {
         status: 400,
       });
     }
-  } catch (err) {
+  } catch (err) {    
     return res.json({
       success: false,
       message: "Internal server error",
@@ -2369,7 +2381,7 @@ exports.getOffersByCategoryId = async (req, res) => {
 
 exports.createNewBid = async (data) => {
   try {
-    const { bid, offer_id, user_id } = data;
+    const { bid, offer_id, user_id } = data;    
     const schema = Joi.alternatives(
       Joi.object({
         bid: Joi.number().required().empty(),
@@ -2389,14 +2401,13 @@ exports.createNewBid = async (data) => {
       };
       const resultInserted = await insertBidByUser(bid_created);
       const getSellerID = await getSelectedColumn(`offers_created`, `where id = ${offer_id}`, 'user_id');
-      console.log("getSellerID", getSellerID);
+      const getUserWhoBid = await getSelectedColumn(`users`, `WHERE id = ${user_id}`, `user_name`)
+      
       const getFCM = await getSelectedColumn(`users`, `where id = ${getSellerID[0].user_id}`, 'fcm_token');
-      console.log("getFCM", getFCM),
-        console.log(getSellerID);
       const message = {
         notification: {
-          title: 'Bid Received',
-          body: `Faraz has bidded in your product`
+          title: 'New Bid on Your Product',
+          body: `You have received a bid from ${getUserWhoBid[0].user_name} on your product.`
         },
         token: getFCM[0].fcm_token
       };

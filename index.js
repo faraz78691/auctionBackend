@@ -73,10 +73,6 @@ app.get('/amount_add_cancelled', (req, res) => {
   }
 })
 
-
-
-
-
 setInterval(updateOfferExpired, 600000);
 
 const PORT = process.env.PORT || 5000;
