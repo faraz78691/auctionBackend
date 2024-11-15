@@ -22,7 +22,7 @@ router.post('/order-updatestatus', auth, userController.orderUpdateStatus);
 router.post('/send-otp', userController.sendOtp);
 router.post('/createCheckoutSession', auth, userController.createCheckoutSession);
 router.get('/getSavedCards', auth, userController.getSavedCards);
-router.post('/payWithSavedCard', userController.payWithSavedCard);
+router.post('/payWithSavedCard', auth, userController.payWithSavedCard);
 router.get('/getnotificationByUserId', auth, userController.getnotificationByUserId);
 router.post('/updatenotificationByUserId', auth, userController.updatenotificationByUserId);
 

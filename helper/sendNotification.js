@@ -7,9 +7,7 @@ admin.initializeApp({
 });
 
 exports.send_notification = async (message , userId) => {
-    try {
-        console.log(message);
-        
+    try {        
         const response = await admin.messaging().send(message);
 
         const status = response.failureCount > 0 ? 'failed' : 'success';

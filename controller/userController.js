@@ -1555,7 +1555,8 @@ exports.getSavedCards = async (req, res) => {
 
 exports.payWithSavedCard = async (req, res) => {
   try {
-    const { userId, paymentMethodId, amount, currency, offerId } = req.body;
+    const userId = req.user.id;
+    const { paymentMethodId, amount, currency, offerId } = req.body;
     // Retrieve Stripe customer ID from your database
     const user = await fetchUserById(userId);
     const customerId = user[0].stripe_customer_id;
@@ -1643,4 +1644,4 @@ exports.updatenotificationByUserId = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
-}
+};

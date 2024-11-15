@@ -9,6 +9,7 @@ const {
 } = require("../models/product");
 var moment = require("moment");
 var randomstring = require("randomstring");
+const { send_notification } = require("../helper/sendNotification");
 
 module.exports = {
   updateOfferExpired: async () => {
@@ -53,6 +54,14 @@ module.exports = {
           };
           const resultInserted = await insertTransaction(transactionDetails);
           if (resultInserted.affectedRows > 0) {
+            const message = {
+              notification: {
+                title: 'New Bid on Your Product',
+                body: `You have received a bid from ${getUserWhoBid[0].user_name} on your product.`
+              },
+              token: getFCM[0].fcm_token
+            };
+            await send_notification(message, seller);
             const userFessPayDetails = {
               transaction_id: transactionId,
               buyer_id: buyer,

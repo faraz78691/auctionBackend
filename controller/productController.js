@@ -68,7 +68,7 @@ const {
 
 const { send_notification } = require("../helper/sendNotification");
 const {
-  getData, getSelectedColumn
+  getData, getSelectedColumn, insertData
 } = require("../models/common");
 const db = require("../utils/database");
 const Joi = require("joi");
@@ -1087,16 +1087,26 @@ exports.createUserBids = async (req, res) => {
     };
     const resultInserted = await insertBidByUser(bid_created);
     const getSellerID = await getSelectedColumn(`offers_created`, `where id = ${offer_id}`, 'user_id');
-    const getFCM = await getSelectedColumn(`users`, `where id = ${getSellerID[0].user_id}`, 'fcm_token');
-    const message = {
-      notification: {
-        title: `${user_name} has placed a bid`,
-        body: `${user_name} has bid on your product. View the details and respond accordingly.`
-      },
-      token: getFCM[0].fcm_token
-    };
+    const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${user_id}`, `users.user_name, tbl_user_notifications.bid_received`);
+    const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received');
     
-    await send_notification(message, getSellerID[0].user_id);
+    if (getFCM[0].bid_received == 1) {
+      const message = {
+        notification: {
+          title: 'New Bid on Your Product',
+          body: `You have received a bid from ${getUserWhoBid[0].user_name} on your product.`
+        },
+        token: getFCM[0].fcm_token
+      };
+      const data = {
+        user_id: user_id,
+        notification_type: 'Alert',
+        title: 'New Bid on Your Product',
+        message: `You have received a bid from ${getUserWhoBid[0].user_name} on your product.`
+      }
+      await insertData('tbl_notification_messages', '', data);
+      await send_notification(message, getSellerID[0].user_id);
+    }
     if (resultInserted.affectedRows > 0) {
       return res.json({
         success: true,
@@ -1111,7 +1121,7 @@ exports.createUserBids = async (req, res) => {
         status: 400,
       });
     }
-  } catch (err) {    
+  } catch (err) {
     return res.json({
       success: false,
       message: "Internal server error",
@@ -2381,7 +2391,7 @@ exports.getOffersByCategoryId = async (req, res) => {
 
 exports.createNewBid = async (data) => {
   try {
-    const { bid, offer_id, user_id } = data;    
+    const { bid, offer_id, user_id } = data;
     const schema = Joi.alternatives(
       Joi.object({
         bid: Joi.number().required().empty(),
@@ -2401,17 +2411,26 @@ exports.createNewBid = async (data) => {
       };
       const resultInserted = await insertBidByUser(bid_created);
       const getSellerID = await getSelectedColumn(`offers_created`, `where id = ${offer_id}`, 'user_id');
-      const getUserWhoBid = await getSelectedColumn(`users`, `WHERE id = ${user_id}`, `user_name`)
+      const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${user_id}`, `users.user_name, tbl_user_notifications.bid_received`);
+      const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received');
       
-      const getFCM = await getSelectedColumn(`users`, `where id = ${getSellerID[0].user_id}`, 'fcm_token');
-      const message = {
-        notification: {
+      if (getFCM[0].bid_received == 1) {
+        const message = {
+          notification: {
+            title: 'New Bid on Your Product',
+            body: `You have received a bid from ${getUserWhoBid[0].user_name} on your product.`
+          },
+          token: getFCM[0].fcm_token
+        };
+        const data = {
+          user_id: user_id,
+          notification_type: 'Alert',
           title: 'New Bid on Your Product',
-          body: `You have received a bid from ${getUserWhoBid[0].user_name} on your product.`
-        },
-        token: getFCM[0].fcm_token
-      };
-      await send_notification(message, getSellerID[0].user_id);
+          message: `You have received a bid from ${getUserWhoBid[0].user_name} on your product.`
+        }
+        await insertData('tbl_notification_messages', '', data);
+        await send_notification(message, getSellerID[0].user_id);
+      }
     }
   } catch (err) {
     console.log("Internal Seerver Error =>", err);
