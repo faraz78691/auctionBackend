@@ -8,6 +8,8 @@ admin.initializeApp({
 
 exports.send_notification = async (message , userId) => {
     try {
+        console.log(message);
+        
         const response = await admin.messaging().send(message);
 
         const status = response.failureCount > 0 ? 'failed' : 'success';
@@ -32,15 +34,16 @@ exports.send_notification = async (message , userId) => {
             };
         }
     } catch (error) {
-        if (errorCode == "messaging/registration-token-not-registered") {
+        console.log(error);
+        // if (errorCode == "messaging/registration-token-not-registered") {
 
-        //    delete krna h fcm token user k
-            return {
-                success: false,
-                message: 'FCM token  expired'
+        // //    delete krna h fcm token user k
+        //     return {
+        //         success: false,
+        //         message: 'FCM token  expired'
                
-            };
-        }
+        //     };
+        // }
         console.error('Error sending notification:', error);
     }
 };

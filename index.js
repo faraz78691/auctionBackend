@@ -3,13 +3,10 @@ const http = require('http');
 const cors = require('cors');
 const app = express();
 require('dotenv').config();
-const path = require('path');
-const moment = require('moment-timezone');
 const db = require("./utils/database");
-const stripe = require('stripe')(process.env.STRIPE_SECRERT_KEY);
 // Setup HTTP server
 const server = http.createServer(app);
-
+const stripe = require('stripe')(process.env.STRIPE_SECRERT_KEY);
 // Import the Socket.IO configuration from the socket.js file
 const initializeSocket = require("./middleware/socket");
 const io = initializeSocket(server); // Initialize Socket.IO with the server
@@ -75,38 +72,6 @@ app.get('/amount_add_cancelled', (req, res) => {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 })
-
-app.post('/fish/add', async (req, res) => {
-  try {
-    const { name, location, height, weight, uu_id } = req.body;
-    const findByUId = await db.query('SELECT * FROM `tbl_fish` WHERE uu_id = "' + uu_id + '"');
-    if (findByUId.length > 0) {
-      return res.status(200).json({ error: true, message: "uu_id already insert", status: 200, success: false });
-    } else {
-      const addResult = await db.query('INSERT INTO `tbl_fish`(`name`, `location`, `height`, `weight`, `uu_id`) VALUES (?,?,?,?,?)', [name, location, height, weight, uu_id == '' || uu_id == null ? null : uu_id]);
-      if (addResult.affectedRows > 0) {
-        return res.status(200).json({ error: false, message: "fish data add successfully", status: 200, success: true });
-      } else {
-        return res.status(200).json({ error: true, message: "fish data not add", status: 200, success: false });
-      }
-    }
-  } catch (error) {
-    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
-  }
-});
-
-app.get('/fish/get-all', async (req, res) => {
-  try {
-    const getResult = await db.query('SELECT * FROM `tbl_fish`');
-    if (getResult.length > 0) {
-      return res.status(200).json(getResult);
-    } else {
-      return res.status(200).json({ data: [] });
-    }
-  } catch (error) {
-    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
-  }
-});
 
 setInterval(updateOfferExpired, 600000);
 
