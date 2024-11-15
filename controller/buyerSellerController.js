@@ -29,7 +29,8 @@ const {
   getAllCommissionFeesPayByUserId,
   getAllAdminCommissionFees,
   getAllBidsByOfferId,
-  checkUserNameExist
+  checkUserNameExist,
+  getBoostPlan
 } = require("../models/buyer_seller");
 
 const {
@@ -39,9 +40,9 @@ const {
   insertPaymentFlowInsert,
   getMainImage,
 } = require("../models/product");
-
+const { send_notification } = require("../helper/sendNotification");
 const {
-  getData, insertData, updateData
+  getData, insertData, updateData, getSelectedColumn
 } = require("../models/common");
 
 const { getUserNamebyId } = require("../models/users");
@@ -157,8 +158,27 @@ exports.acceptPrice = async (req, res) => {
     };
     const resultInserted = await insertTransaction(transactionDetails);
     if (resultInserted.affectedRows > 0) {
+      const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id WHERE offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name');
+      const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received');
+      if (getFCM[0].item_sold == 1) {
+        const message = {
+          notification: {
+            title: 'Your Item Has Been Sold!',
+            body: `Congratulations! Your product "${getSellerID[0].name}" has been sold. Thank you for using our platform!`
+          },
+          token: getFCM[0].fcm_token
+        };
+        const data = {
+          user_id: getSellerID[0].user_id,
+          notification_type: 'Alert',
+          title: 'Your Item Has Been Sold!',
+          message: `Congratulations! Your product "${getSellerID[0].name}" has been sold. Thank you for using our platform!`
+        }
+        await insertData('tbl_notification_messages', '', data);
+        await send_notification(message, getSellerID[0].user_id);
+      }
       const transactionDetail = {
-        offer_id: offerId,
+        offer_id: offer_id,
         transaction_id: transactionId,
         buyer_id: buyer,
         seller_id: seller,
@@ -1060,6 +1080,19 @@ exports.getAllAdminCommissionFees = async (req, res) => {
       return res.status(200).json({ error: false, message: "Commission fees fetched successfully", status: 200, success: true, data: findAllCommissionFees })
     } else {
       return res.status(200).json({ error: true, message: "Commission fees not fetched", status: 200, success: false, data: [] })
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
+  }
+};
+
+exports.getBoostPlan = async (req, res) => {
+  try {
+    const findAllBoostPlan = await getBoostPlan();
+    if (findAllBoostPlan.length > 0) {
+      return res.status(200).json({ error: false, message: "Boost plan fetched successfully", status: 200, success: true, data: findAllBoostPlan })
+    } else {
+      return res.status(200).json({ error: true, message: "Boost plan not fetched", status: 200, success: false, data: [] })
     }
   } catch (error) {
     return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })

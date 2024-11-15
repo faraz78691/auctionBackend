@@ -178,11 +178,15 @@ END AS is_favorite FROM offers_created LEFT JOIN favourites_offer ON favourites_
     return await db.query('SELECT user_name from users where user_name = ? ', [username]);
   },
 
+  getBoostPlan: async () => {
+    return await db.query('SELECT * FROM `tbl_boost_plan`');
+  },
+
   getAllBidsByOfferId: async (offer_id) => {
     return await db.query('SELECT user_bids.*, offers_created.offer_unique_id, offers_created.title, users.user_name FROM `user_bids` LEFT JOIN offers_created ON offers_created.id = user_bids.offer_id LEFT JOIN users ON users.id = user_bids.user_id WHERE user_bids.offer_id = ? ORDER BY user_bids.id', [offer_id]);
   },
 
-  getAllAdminCommissionFees: async() => {
+  getAllAdminCommissionFees: async () => {
     return await db.query('SELECT tbl_user_commissin_fees.*, offers_created.offer_unique_id, offers_created.title, seller_user.user_name AS seller_name, buyer_user.user_name AS buyer_name FROM `tbl_user_commissin_fees` LEFT JOIN offers_created ON offers_created.id = tbl_user_commissin_fees.offer_id LEFT JOIN users AS buyer_user ON buyer_user.id = tbl_user_commissin_fees.buyer_id LEFT JOIN users AS seller_user ON seller_user.id = tbl_user_commissin_fees.seller_id;');
   }
 
