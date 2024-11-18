@@ -100,7 +100,7 @@ app.get('/amount_add_cancelled', async (req, res) => {
 
 setInterval(updateOfferExpired, 600000);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 server.listen(PORT, function () {
   console.log(`Server running on port ${PORT}`);
 });
