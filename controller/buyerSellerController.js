@@ -1142,7 +1142,7 @@ exports.getBoostPlan = async (req, res) => {
 
 exports.addRatingReview = async (req, res) => {
   try {
-    const { offer_id, buyer_id, seller_id, sender_id, rating, review } = req.body
+    const { offer_id, buyer_id, seller_id, sender_id, rating, review, buyer_status, seller_status } = req.body
     const schema = Joi.object({
       offer_id: Joi.number().required().messages({
         'any.required': 'Offer ID is required.',
@@ -1168,6 +1168,16 @@ exports.addRatingReview = async (req, res) => {
         'any.required': 'Review is required.',
         'string.base': 'Review must be a valid string.',
       }),
+      buyer_status: Joi.string().allow(null).messages({
+        'string.base': 'Buyer status must be a string',
+        'string.empty': 'Seller status is required',
+        'any.required': 'Seller status is required',
+      }),
+      seller_status: Joi.string().allow(null).messages({
+        'string.base': 'Seller status must be a string',
+        'string.empty': 'Seller status is required',
+        'any.required': 'Seller status is required',
+      })
     });
     const result = schema.validate(req.body);
     if (result.error) {
@@ -1180,6 +1190,40 @@ exports.addRatingReview = async (req, res) => {
         success: false,
       });
     } else {
+      const offerResult = await findOfferByOfferBuyerSellerId(offer_id, buyer_id, seller_id);
+      if (offerResult.length > 0) {
+        if (seller_status == 'null') {
+          const updateBuuer = await updateOfferBuyerStatus(offer_id, buyer_id, seller_id, buyer_status, offerResult[0].seller_status)
+          const addPaymenetFlow = {
+            offer_id: offer_id,
+            transaction_id: offerResult[0].transaction_id,
+            buyer_id: buyer_id,
+            seller_id: seller_id,
+            buyer_status: buyer_status,
+            seller_status: offerResult[0].seller_status,
+            buyer_message: buyer_message,
+            seller_message: seller_message,
+            buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
+            seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+          }
+          const insertPaymentFlow = await addPaymenetFlowStatus(addPaymenetFlow);
+        } else {
+          const updateBuuer = await updateOfferBuyerStatus(offer_id, buyer_id, seller_id, offerResult[0].buyer_status, seller_status);
+          const addPaymenetFlow = {
+            offer_id: offer_id,
+            transaction_id: offerResult[0].transaction_id,
+            buyer_id: buyer_id,
+            seller_id: seller_id,
+            buyer_status: offerResult[0].buyer_status,
+            seller_status: seller_status,
+            buyer_message: buyer_message,
+            seller_message: seller_message,
+            buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
+            seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+          }
+          const insertPaymentFlow = await addPaymenetFlowStatus(addPaymenetFlow);
+        }
+      }
       const data = {
         offer_id: offer_id,
         buyer_id: buyer_id,
@@ -1225,7 +1269,7 @@ exports.getRatingReview = async (req, res) => {
       if (findRatingResult.length > 0) {
         return res.status(200).json({
           error: false, message: 'find rating abd review', status: 200, success: true, data: {
-            count:{
+            count: {
               positive_ratings_count: findRatingResult[0].positive_ratings_count,
               neutral_ratings_count: findRatingResult[0].neutral_ratings_count,
               negative_ratings_count: findRatingResult[0].negative_ratings_count
@@ -1239,5 +1283,13 @@ exports.getRatingReview = async (req, res) => {
     }
   } catch (error) {
     return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false });
+  }
+};
+
+exports.getRatingReviewByUserId = async(req, res) => {
+  try{
+
+  } catch(error){
+    
   }
 }
