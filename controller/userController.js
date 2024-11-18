@@ -1722,4 +1722,4 @@ exports.deleteCard = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
-}
+};
