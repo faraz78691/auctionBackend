@@ -902,22 +902,22 @@ exports.getUserRoleDetails = async (req, res) => {
     }
     const userDetails = await fetchUserById(user_id);
     if (userDetails.length > 0) {
-     
-          res.json({
-            success: true,
-            status: 200,
-            msg: "Role Found for User",
-            userRoles: userDetails,
-          });
-        
-      } else {
-        return res.json({
-          success: false,
-          status: 500,
-          msg: "No roles assigned to User",
-        });
-      }
-    
+
+      res.json({
+        success: true,
+        status: 200,
+        msg: "Role Found for User",
+        userRoles: userDetails,
+      });
+
+    } else {
+      return res.json({
+        success: false,
+        status: 500,
+        msg: "No roles assigned to User",
+      });
+    }
+
   } catch (err) {
     console.log(err);
     return res.json({
@@ -1264,49 +1264,70 @@ exports.getChatMessage = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const userInfo = req.user;
-    const { password, first_name, last_name, phone_number, country, postal_code, street,
-      street_number } = req.body;
+    const { password, current_password, first_name, last_name, phone_number, country, postal_code, street,
+      street_number, country_code, city, state } = req.body;
     const schema = Joi.object({
-      first_name: Joi.string().required().messages({
+      first_name: Joi.string().required().allow('').messages({
         'string.base': 'First Name must be a string',
         'string.empty': 'First Name is required',
         'any.required': 'First Name is required',
       }),
-      last_name: Joi.string().required().messages({
+      last_name: Joi.string().required().allow('').messages({
         'string.base': 'Last Name must be a string',
         'string.empty': 'Last Name is required',
         'any.required': 'Last Name is required',
       }),
-      phone_number: Joi.string().required().messages({
+      country_code: Joi.string().required().allow('').messages({
+        'string.base': 'Country code must be a string',
+        'string.empty': 'Country code is required',
+        'any.required': 'Country code is required',
+      }),
+      phone_number: Joi.string().required().allow('').messages({
         'string.base': 'Phone Number must be a string',
         'string.empty': 'Phone Number is required',
         'any.required': 'Phone Number is required',
       }),
-      password: Joi.string().min(6).required().messages({
+      current_password: Joi.string().min(6).required().allow('').messages({
+        'string.base': 'Current Password must be a string',
+        'string.empty': 'Current Password is required',
+        'string.min': 'Current Password must be at least 6 characters long',
+        'any.required': 'Current Password is required',
+      }),
+      password: Joi.string().min(6).required().allow('').messages({
         'string.base': 'Password must be a string',
         'string.empty': 'Password is required',
         'string.min': 'Password must be at least 6 characters long',
         'any.required': 'Password is required',
       }),
-      country: Joi.string().required().messages({
-        'string.base': 'Country must be a string',
-        'string.empty': 'Country is required',
-        'any.required': 'Country is required',
-      }),
-      postal_code: Joi.string().required().messages({
-        'string.base': 'Postal Code must be a string',
-        'string.empty': 'Postal Code is required',
-        'any.required': 'Postal Code is required',
-      }),
-      street: Joi.string().required().messages({
+      street: Joi.string().required().allow('').messages({
         'string.base': 'Street must be a string',
         'string.empty': 'Street is required',
         'any.required': 'Street is required',
       }),
-      street_number: Joi.string().required().messages({
+      street_number: Joi.string().required().allow('').messages({
         'string.base': 'Street Number must be a string',
         'string.empty': 'Street Number is required',
         'any.required': 'Street Number is required',
+      }),
+      city: Joi.string().required().allow('').messages({
+        'string.base': 'City must be a string',
+        'string.empty': 'City is required',
+        'any.required': 'City is required',
+      }),
+      postal_code: Joi.string().required().allow('').messages({
+        'string.base': 'Postal Code must be a string',
+        'string.empty': 'Postal Code is required',
+        'any.required': 'Postal Code is required',
+      }),
+      state: Joi.string().required().allow('').messages({
+        'string.base': 'State must be a string',
+        'string.empty': 'State is required',
+        'any.required': 'State is required',
+      }),
+      country: Joi.string().required().allow('').messages({
+        'string.base': 'Country must be a string',
+        'string.empty': 'Country is required',
+        'any.required': 'Country is required',
       }),
     });
 
@@ -1319,36 +1340,49 @@ exports.updateProfile = async (req, res) => {
         success: false
       });
     } else {
-      const userHashPassword = await hashPassword(password);
-      let user = {
-        first_name: first_name != 'undefined' ? first_name : userInfo.first_name,
-        last_name: last_name != 'undefined' ? last_name : userInfo.last_name,
-        phone_number: phone_number != 'undefined' ? phone_number : userInfo.phone_number,
-        password: password != 'undefined' ? userHashPassword : userInfo.password,
-        country: country != 'undefined' ? country : userInfo.country,
-        postal_code: postal_code != 'undefined' ? postal_code : userInfo.postal_code,
-        street: street != 'undefined' ? street : userInfo.street,
-        street_number: street_number != 'undefined' ? street_number : userInfo.street_number
-      };
-      const updateResult = await updateUserById(user, userInfo.id);
-      if (updateResult.affectedRows > 0) {
-        return res.json({
-          errors: false,
-          message: "Profile successfully update",
-          updateData: updateResult,
-          status: 200,
-          success: true,
-        });
+      if (current_password != 'undefined') {
+        var match = bcrypt.compareSync(current_password, userInfo.password);        
+      }
+
+      if (current_password != 'undefined' ? match : true) {
+        const userHashPassword = password !== undefined ? await hashPassword(password) : userInfo.password;
+        let user = {
+          first_name: first_name != 'undefined' ? first_name : userInfo.first_name,
+          last_name: last_name != 'undefined' ? last_name : userInfo.last_name,
+          country_code: country_code != 'undefined' ? country_code : userInfo.country_code,
+          phone_number: phone_number != 'undefined' ? phone_number : userInfo.phone_number,
+          password: userHashPassword,
+          street: street != 'undefined' ? street : userInfo.street,
+          street_number: street_number != 'undefined' ? street_number : userInfo.street_number,
+          city: city != 'undefined' ? city : userInfo.city,
+          postal_code: postal_code != 'undefined' ? postal_code : userInfo.postal_code,
+          state: state != 'undefined' ? state : userInfo.state,
+          country: country != 'undefined' ? country : userInfo.country,
+        };
+        const updateResult = await updateUserById(user, userInfo.id);
+        if (updateResult.affectedRows > 0) {
+          return res.json({
+            errors: false,
+            message: "Profile successfully update",
+            updateData: updateResult,
+            status: 200,
+            success: true,
+          });
+        } else {
+          return res.json({
+            error: true,
+            message: "Profile not update",
+            status: 200,
+            success: false,
+          });
+        }
       } else {
-        return res.json({
-          error: true,
-          message: "Profile not update",
-          status: 200,
-          success: false,
-        });
+        return res.status(200).json({ error: true, message: "Current password is incorrect. Please try again.", status: 200, success: false });
       }
     }
   } catch (error) {
+    console.log(error);
+
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };

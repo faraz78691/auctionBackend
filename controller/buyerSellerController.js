@@ -30,7 +30,9 @@ const {
   getAllAdminCommissionFees,
   getAllBidsByOfferId,
   checkUserNameExist,
-  getBoostPlan
+  getBoostPlan,
+  addRatingReview,
+  getRatingReview
 } = require("../models/buyer_seller");
 
 const {
@@ -958,14 +960,14 @@ exports.updateTransactionStatus = async (req, res) => {
       const offerResult = await findOfferByOfferBuyerSellerId(offer_id, buyer_id, seller_id);
       if (offerResult.length > 0) {
         if (seller_status == 'null') {
-          const updateBuuer = await updateOfferBuyerStatus(offer_id, buyer_id, seller_id, buyer_status, offerResult[0].seller_status)
+          const updateBuuer = await updateOfferBuyerStatus(offer_id, buyer_id, seller_id, buyer_status, buyer_status == '3' ? '3' : offerResult[0].seller_status)
           const addPaymenetFlow = {
             offer_id: offer_id,
             transaction_id: offerResult[0].transaction_id,
             buyer_id: buyer_id,
             seller_id: seller_id,
             buyer_status: buyer_status,
-            seller_status: offerResult[0].seller_status,
+            seller_status: buyer_status == '3' ? '3' : offerResult[0].seller_status,
             buyer_message: buyer_message,
             seller_message: seller_message,
             buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
@@ -1014,21 +1016,21 @@ exports.updateTransactionStatus = async (req, res) => {
           const insertPaymentFlow = await addPaymenetFlowStatus(addPaymenetFlow);
           if (insertPaymentFlow.affectedRows > 0) {
             const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id WHERE offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name AS product_name');
-            const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${buyer_id}`, `users.user_name, tbl_user_notifications.bid_received`);
-            const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received, tbl_user_notifications.buyer_paid_for_item');
-            if (getFCM[0].buyer_paid_for_item == 1 && buyer_status == '2') {
+            const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${seller_id}`, `users.user_name, tbl_user_notifications.bid_received`);
+            const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${buyer_id}`, 'users.fcm_token, tbl_user_notifications.bid_received, tbl_user_notifications.buyer_paid_for_item, tbl_user_notifications.The_seller_has_shipped_the_item');
+            if (getFCM[0].The_seller_has_shipped_the_item == 1 && buyer_status == '3') {
               const message = {
                 notification: {
                   title: 'Item Shipped',
-                  body: `Your order for "${getSellerID[0].product_name}" has been shipped by the seller ${getSellerDetails[0].seller_name}.`,
+                  body: `Your order for "${getSellerID[0].product_name}" has been shipped by the seller ${getUserWhoBid[0].user_name}.`,
                 },
                 token: getFCM[0].fcm_token
               };
               const data = {
-                user_id: getSellerID[0].user_id,
+                user_id: buyer_id,
                 notification_type: 'Alert',
                 title: 'Item Shipped',
-                message: `Your order for "${getSellerID[0].product_name}" has been shipped by the seller ${getSellerDetails[0].seller_name}.`
+                message: `Your order for "${getSellerID[0].product_name}" has been shipped by the seller ${getSellerDetails[0].user_name}.`
               }
               await insertData('tbl_notification_messages', '', data);
               await send_notification(message, getSellerID[0].user_id);
@@ -1135,5 +1137,107 @@ exports.getBoostPlan = async (req, res) => {
     }
   } catch (error) {
     return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
+  }
+};
+
+exports.addRatingReview = async (req, res) => {
+  try {
+    const { offer_id, buyer_id, seller_id, sender_id, rating, review } = req.body
+    const schema = Joi.object({
+      offer_id: Joi.number().required().messages({
+        'any.required': 'Offer ID is required.',
+        'number.base': 'Offer ID must be a valid number.',
+      }),
+      buyer_id: Joi.number().required().messages({
+        'any.required': 'Buyer ID is required.',
+        'number.base': 'Buyer ID must be a valid number.',
+      }),
+      seller_id: Joi.number().required().messages({
+        'any.required': 'Seller ID is required.',
+        'number.base': 'Seller ID must be a valid number.',
+      }),
+      sender_id: Joi.number().required().messages({
+        'any.required': 'Sender ID is required.',
+        'number.base': 'Sender ID must be a valid number.',
+      }),
+      rating: Joi.string().required().messages({
+        'any.required': 'Rating is required.',
+        'string.base': 'Rating must be a valid string.',
+      }),
+      review: Joi.string().required().messages({
+        'any.required': 'Review is required.',
+        'string.base': 'Review must be a valid string.',
+      }),
+    });
+    const result = schema.validate(req.body);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      return res.json({
+        message: result.error.details[0].message,
+        error: message,
+        missingParams: result.error.details[0].message,
+        status: 200,
+        success: false,
+      });
+    } else {
+      const data = {
+        offer_id: offer_id,
+        buyer_id: buyer_id,
+        seller_id: seller_id,
+        sender_id: sender_id,
+        rating: rating,
+        review: review,
+        created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+      }
+      const insertReviewResult = await addRatingReview(data);
+      if (insertReviewResult.affectedRows > 0) {
+        return res.status(200).json({ error: false, message: "Successfully added rating and review.", status: 200, success: true });
+      } else {
+        return res.status(200).json({ error: true, message: "Failed to add rating and review. Please try again.", status: 200, success: false });
+      }
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false });
+  }
+};
+
+exports.getRatingReview = async (req, res) => {
+  try {
+    const { offer_id } = req.query;
+    const schema = Joi.object({
+      offer_id: Joi.number().required().messages({
+        'any.required': 'Offer ID is required.',
+        'number.base': 'Offer ID must be a valid number.',
+      }),
+    })
+    const result = schema.validate(req.query);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      return res.json({
+        message: result.error.details[0].message,
+        error: message,
+        missingParams: result.error.details[0].message,
+        status: 200,
+        success: false,
+      });
+    } else {
+      const findRatingResult = await getRatingReview(offer_id);
+      if (findRatingResult.length > 0) {
+        return res.status(200).json({
+          error: false, message: 'find rating abd review', status: 200, success: true, data: {
+            count:{
+              positive_ratings_count: findRatingResult[0].positive_ratings_count,
+              neutral_ratings_count: findRatingResult[0].neutral_ratings_count,
+              negative_ratings_count: findRatingResult[0].negative_ratings_count
+            },
+            findRatingResult
+          }
+        });
+      } else {
+        return res.status(200).json({ error: true, message: 'failed rating and review', status: 200, success: false, data: [] });
+      }
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false });
   }
 }

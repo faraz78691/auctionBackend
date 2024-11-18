@@ -188,6 +188,14 @@ END AS is_favorite FROM offers_created LEFT JOIN favourites_offer ON favourites_
 
   getAllAdminCommissionFees: async () => {
     return await db.query('SELECT tbl_user_commissin_fees.*, offers_created.offer_unique_id, offers_created.title, seller_user.user_name AS seller_name, buyer_user.user_name AS buyer_name FROM `tbl_user_commissin_fees` LEFT JOIN offers_created ON offers_created.id = tbl_user_commissin_fees.offer_id LEFT JOIN users AS buyer_user ON buyer_user.id = tbl_user_commissin_fees.buyer_id LEFT JOIN users AS seller_user ON seller_user.id = tbl_user_commissin_fees.seller_id;');
+  },
+
+  addRatingReview: async (data) => {
+    return await db.query("insert into tbl_rating_review set ?", [data]);
+  },
+
+  getRatingReview: async (offer_id) => {
+    return await db.query("SELECT SUM(CASE WHEN tbl_rating_review.rating = 'Positive' THEN 1 ELSE 0 END) AS positive_ratings_count, SUM(CASE WHEN tbl_rating_review.rating = 'Neutral' THEN 1 ELSE 0 END) AS neutral_ratings_count, SUM(CASE WHEN tbl_rating_review.rating = 'Negative' THEN 1 ELSE 0 END) AS negative_ratings_count, tbl_rating_review.id, tbl_rating_review.offer_id, tbl_rating_review.buyer_id, tbl_rating_review.seller_id, tbl_rating_review.rating, tbl_rating_review.review, DATE_FORMAT(tbl_rating_review.created_at, '%M %D, %Y') AS createDate, buyer.user_name AS buyer_name, seller.user_name AS seller_name, offers_created.offer_unique_id FROM tbl_rating_review LEFT JOIN users AS buyer ON tbl_rating_review.buyer_id = buyer.id LEFT JOIN users AS seller ON tbl_rating_review.seller_id = seller.id LEFT JOIN offers_created ON tbl_rating_review.offer_id = offers_created.id WHERE tbl_rating_review.offer_id = ? GROUP BY tbl_rating_review.id;", [offer_id]);
   }
 
 };
