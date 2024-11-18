@@ -199,6 +199,8 @@ exports.acceptPrice = async (req, res) => {
         transaction_id: transactionId,
         buyer_id: buyer,
         seller_id: seller,
+        buyer_message: 'Congratulations, you have purchased this item!',
+        seller_message: 'Congratulations, you have sold this item!',
         buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
         seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
       };
