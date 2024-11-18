@@ -1143,7 +1143,7 @@ exports.getBoostPlan = async (req, res) => {
 
 exports.addRatingReview = async (req, res) => {
   try {
-    const { offer_id, buyer_id, seller_id, sender_id, receiving_id, rating, review, buyer_status, seller_status } = req.body
+    const { offer_id, buyer_id, seller_id, sender_id, receiving_id, rating, review, buyer_status, seller_status, buyer_message, seller_message } = req.body
     const schema = Joi.object({
       offer_id: Joi.number().required().messages({
         'any.required': 'Offer ID is required.',
@@ -1182,6 +1182,16 @@ exports.addRatingReview = async (req, res) => {
         'string.base': 'Seller status must be a string',
         'string.empty': 'Seller status is required',
         'any.required': 'Seller status is required',
+      }),
+      buyer_message: Joi.string().allow(null).messages({
+        'string.base': 'Buyer message must be a string',
+        'string.empty': 'Buyer message is required',
+        'any.required': 'Buyer message is required',
+      }),
+      seller_message: Joi.string().allow(null).messages({
+        'string.base': 'Seller message must be a string',
+        'string.empty': 'Seller message is required',
+        'any.required': 'Seller message is required',
       })
     });
     const result = schema.validate(req.body);
