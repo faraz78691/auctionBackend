@@ -902,24 +902,14 @@ exports.getUserRoleDetails = async (req, res) => {
     }
     const userDetails = await fetchUserById(user_id);
     if (userDetails.length > 0) {
-      const roleId = await getRoleID(user_id);
-      if (roleId.length > 0) {
-        const roleDetails = await getUserRole(roleId[0].role_id);
-        if (roleDetails.length > 0) {
-          userRoles = { ...userDetails[0], ...roleDetails[0] };
+     
           res.json({
             success: true,
             status: 200,
             msg: "Role Found for User",
-            userRoles: userRoles,
+            userRoles: userDetails,
           });
-        } else {
-          return res.json({
-            success: false,
-            status: 500,
-            msg: "No roles assigned to User",
-          });
-        }
+        
       } else {
         return res.json({
           success: false,
@@ -927,7 +917,7 @@ exports.getUserRoleDetails = async (req, res) => {
           msg: "No roles assigned to User",
         });
       }
-    }
+    
   } catch (err) {
     console.log(err);
     return res.json({

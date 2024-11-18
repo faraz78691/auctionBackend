@@ -76,20 +76,24 @@ module.exports = function (server) {
           const offerById = await await getOfferDetailsByID(data.offer_id);
           const new_offerstart_date = offerById[0].offerStart;
           const length_oftime = offerRes[0].length_oftime;
+          const new_end_date = offerRes[0].end_date
           io.emit("updateBid", {
             ...data,
             bidCount,
             new_offerstart_date,
             length_oftime,
+            new_end_date
           });
         } else {
           const new_offerstart_date = null;
+          const new_end_date = null
           const length_oftime = offerRes[0].length_oftime;
           io.emit("updateBid", {
             ...data,
             bidCount,
             new_offerstart_date,
             length_oftime,
+            new_end_date
           });
         }
       } catch (error) {

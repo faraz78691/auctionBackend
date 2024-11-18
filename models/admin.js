@@ -9,7 +9,7 @@ module.exports = {
     },
 
     fetchAllUsers: async () => {
-        return db.query('SELECT id, first_name, last_name, email, phone_number, street_number, street, city, state, country, postal_code,  concat(street_number, " ", street, " ", city, " ", state, " ", country, " ", postal_code ) AS address FROM `users` WHERE role_id = 1');
+        return db.query('SELECT id, first_name, last_name,user_name, email, phone_number, street_number, street, city, state, country, postal_code,  concat(street_number, " ", street, " ", city, " ", state, " ", country, " ", postal_code ) AS address FROM `users` WHERE role_id = 1');
     },
 
     fetchAllUsersOffers: async () => {
