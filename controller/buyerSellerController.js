@@ -43,6 +43,7 @@ const {
   insertTransaction,
   insertPaymentFlowInsert,
   getMainImage,
+  updateOfferBuyStatus,
 } = require("../models/product");
 const { send_notification } = require("../helper/sendNotification");
 const {
@@ -147,7 +148,6 @@ exports.acceptPrice = async (req, res) => {
 
     const length = await getOfferDetailsByID(offer_id);
     if (length.length > 0) var product_id = length[0].product_id;
-
     const transactionDetails = {
       transaction_id: transactionId,
       buyer_id: buyer,
@@ -161,6 +161,7 @@ exports.acceptPrice = async (req, res) => {
     };
     const resultInserted = await insertTransaction(transactionDetails);
     if (resultInserted.affectedRows > 0) {
+      await updateOfferBuyStatus(offer_id, 1);
       const resultSetting = await findSetting();
       const userFessPayDetails = {
         transaction_id: transactionId,
