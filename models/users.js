@@ -138,6 +138,14 @@ module.exports = {
 
   getNotificationsByUserId: async (id) => {
     return await db.query('SELECT * FROM `tbl_user_notifications` WHERE user_id = ?', [id]);
+  },
+
+  addSearch: async (data) => {
+    return await db.query('INSERT INTO `tbl_search` SET ?', [data]);
+  },
+
+  getSearchById: async (id) => {
+    return await db.query('SELECT * FROM `tbl_search` WHERE user_id = ? ORDER BY id DESC', [id]);
   }
 
 };

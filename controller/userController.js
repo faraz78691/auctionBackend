@@ -25,7 +25,9 @@ const {
   updateMessageCount,
   getAllMessageByUserId,
   updateUserCommissinFees,
-  getNotificationsByUserId
+  getNotificationsByUserId,
+  addSearch,
+  getSearchById
 } = require("../models/users");
 const { updateData } = require("../models/common");
 const Joi = require("joi");
@@ -1721,5 +1723,75 @@ exports.deleteCard = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
+
+exports.addSearch = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { search } = req.body;
+    const schema = Joi.object({
+      search: Joi.string().required().messages({
+        'string.base': 'Search must be a string',
+        'string.empty': 'Search is required',
+        'any.required': 'Search is required',
+      }),
+    });
+
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        errors: true,
+        message: error.details[0].message,
+        status: 400,
+        success: false
+      });
+    } else {
+      const add = {
+        user_id: userId,
+        search: search
+      }
+      const insertResult = await addSearch(add);
+      if (insertResult.affectedRows > 0) {
+        return res.status(200).json({ error: false, message: "Successfully add", status: 200, success: true });
+      } else {
+        return res.status(200).json({ error: true, message: "Not add", status: 200, success: false });
+      }
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
+
+exports.getSearch = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const findResult = await getSearchById(userId);
+    if (findResult.length > 0) {
+      return res.json({
+        message: "fetch user all search",
+        status: 200,
+        success: true,
+        data: findResult,
+      });
+    } else {
+      return res.json({
+        error: true,
+        message: "Search not found",
+        status: 200,
+        success: false,
+        data: []
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
+
+exports.addFollowUp = async (req, res) => {
+  try {
+
+  } catch (error) {
+
   }
 };
