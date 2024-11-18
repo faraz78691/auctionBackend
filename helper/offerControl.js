@@ -13,7 +13,7 @@ const {
 var moment = require("moment");
 var randomstring = require("randomstring");
 const { send_notification } = require("../helper/sendNotification");
-
+const { findSetting } = require("../models/admin")
 module.exports = {
   updateOfferExpired: async () => {
     try {
@@ -77,14 +77,15 @@ module.exports = {
               await insertData('tbl_notification_messages', '', data);
               await send_notification(message, getSellerID[0].user_id);
             }
+            const resultSetting = await findSetting();
             const userFessPayDetails = {
               transaction_id: transactionId,
               buyer_id: buyer,
               seller_id: seller,
               offer_id: offerId,
               amount: max_bid,
-              commissin_percent: 5,
-              pay_amount: (max_bid * 5) / 100 <= 200 ? (max_bid * 5) / 100 : 200,
+              commissin_percent: resultSetting[0].commission,
+              pay_amount: (max_bid * resultSetting[0].commission) / 100 <= 200 ? (max_bid * resultSetting[0].commission) / 100 : 200,
               is_buy_now: 0,
               is_max_bid: 1,
               created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')

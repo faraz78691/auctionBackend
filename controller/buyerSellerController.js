@@ -39,6 +39,7 @@ const {
 const {
   getOfferDetailsByID,
   checkTransactionID,
+  insertUserFeesPay,
   insertTransaction,
   insertPaymentFlowInsert,
   getMainImage,
@@ -49,7 +50,7 @@ const {
 } = require("../models/common");
 
 const { getUserNamebyId } = require("../models/users");
-
+const { findSetting } = require("../models/admin");
 
 
 exports.suggestPrice = async (req, res) => {
@@ -161,6 +162,20 @@ exports.acceptPrice = async (req, res) => {
     };
     const resultInserted = await insertTransaction(transactionDetails);
     if (resultInserted.affectedRows > 0) {
+      const resultSetting = await findSetting();
+      const userFessPayDetails = {
+        transaction_id: transactionId,
+        buyer_id: buyer,
+        seller_id: seller,
+        offer_id: offer_id,
+        amount: price,
+        commissin_percent: resultSetting[0].commission,
+        pay_amount: (price * resultSetting[0].commission) / 100 <= 200 ? (price * resultSetting[0].commission) / 100 : 200,
+        is_buy_now: 1,
+        is_max_bid: 0,
+        created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+      };
+      const addUserFeesPayDetails = await insertUserFeesPay(userFessPayDetails);
       const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id WHERE offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name');
       const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received');
       if (getFCM[0].item_sold == 1) {

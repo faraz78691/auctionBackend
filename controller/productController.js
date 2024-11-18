@@ -65,6 +65,7 @@ const {
   getOffersByUserid,
   getOffersByUSerId
 } = require("../models/product");
+const { findSetting } = require("../models/admin");
 const { send_notification } = require("../helper/sendNotification");
 const {
   getData, getSelectedColumn, insertData
@@ -1284,6 +1285,20 @@ exports.createBuyTransaction = async (req, res) => {
     };
     const resultInserted = await insertTransaction(transactionDetails);
     if (resultInserted.affectedRows > 0) {
+      const resultSetting = await findSetting();
+      const userFessPayDetails = {
+        transaction_id: transactionId,
+        buyer_id: user_id,
+        seller_id: seller_id,
+        offer_id: offer_id,
+        amount: amount,
+        commissin_percent: resultSetting[0].commission,
+        pay_amount: (amount * resultSetting[0].commission) / 100 <= 200 ? (amount * resultSetting[0].commission) / 100 : 200,
+        is_buy_now: is_buy_now,
+        is_max_bid: is_max_bid,
+        created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+      };
+      const addUserFeesPayDetails = await insertUserFeesPay(userFessPayDetails);
       const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id WHERE offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name');
       const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received');
       if (getFCM[0].item_sold == 1) {
@@ -1365,7 +1380,7 @@ exports.getOffersFilter = async (req, res) => {
     const offset = (parseInt(page) - 1) * parseInt(page_size);
     const productIds = await getProductIdsByName(product_name);
     const offerData = await getffersByName(product_name);
-        
+
     var product_id = "";
     if (productIds.length > 0 && offerData.length > 0) {
       const allProductIds = [
@@ -1413,7 +1428,7 @@ exports.getOffersFilter = async (req, res) => {
     }
     const user_id = ''
     var offers = await getOffersByWhereClause(whereClause, user_id, page_size, offset);
-    
+
     for (element of offers) {
       var startDateTime = element.start_date.toString();
       element.start_date = startDateTime;
@@ -2700,14 +2715,15 @@ exports.updateOfferExpired = async (req, res) => {
             await insertData('tbl_notification_messages', '', data);
             await send_notification(message, getSellerID[0].user_id);
           }
+          const resultSetting = await findSetting();
           const userFessPayDetails = {
             transaction_id: transactionId,
             buyer_id: buyer,
             seller_id: seller,
             offer_id: offerId,
             amount: max_bid,
-            commissin_percent: 5,
-            pay_amount: (max_bid * 5) / 100 <= 200 ? (max_bid * 5) / 100 : 200,
+            commissin_percent: resultSetting[0].commission,
+            pay_amount: (max_bid * resultSetting[0].commission) / 100 <= 200 ? (max_bid * resultSetting[0].commission) / 100 : 200,
             is_buy_now: 0,
             is_max_bid: 1,
             created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')

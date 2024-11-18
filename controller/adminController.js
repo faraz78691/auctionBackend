@@ -3,8 +3,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 var moment = require('moment-timezone');
 
-const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid, getTransactionByOfferId, findAllTransaction, updateMsgCount } = require("../models/admin");
-const { updateData } = require("../models/common");
+const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid, getTransactionByOfferId, findAllTransaction, updateMsgCount, findSetting, updateSettingById } = require("../models/admin");
+const { updateData, getSelectedColumn } = require("../models/common");
 
 exports.login = async (req, res) => {
     try {
@@ -1430,6 +1430,56 @@ exports.getAllTransaction = async (req, res) => {
         return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
     }
 };
+
+exports.getSetting = async (req, res) => {
+    try {
+        const resultSetting = await findSetting();
+        if (resultSetting.length > 0) {
+            return res.status(200).json({ error: false, message: "Seeting successfully found", success: true, status: 200, transdactionData: resultSetting });
+        } else {
+            return res.status(200).json({ error: true, message: "Setting not found", success: false, status: 404, highestBid: null });
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
+    }
+};
+
+exports.updateSetting = async (req, res) => {
+    try {
+        const { id, commission } = req.body;
+        const schema = Joi.object({
+            id: Joi.number().required().messages({
+                'number.base': 'Id must be a number',
+                'number.empty': 'Id is required',
+                'any.required': 'Id is required',
+            }),
+            commission: Joi.number().required().messages({
+                'number.base': 'Commission must be a number',
+                'number.empty': 'Commission is required',
+                'any.required': 'Commission is required',
+            })
+        })
+
+        const { error } = schema.validate(req.body);
+        if (error) {
+            return res.status(400).json({
+                error: true,
+                message: error.details[0].message,
+                status: 400,
+                success: false
+            });
+        } else {
+            const resultSetting = await updateSettingById(id, commission);
+            if (resultSetting.affectedRows > 0) {
+                return res.status(200).json({ error: false, message: "Seeting update successfully", success: true, status: 200, transdactionData: resultSetting });
+            } else {
+                return res.status(200).json({ error: true, message: "Setting not update", success: false, status: 404, highestBid: null });
+            }
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
+    }
+}
 
 exports.updateMsgCount = async (req, res) => {
     try {

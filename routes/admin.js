@@ -37,5 +37,7 @@ router.post('/updateSubAttributesById', adminAuth, adminController.updateSubAttr
 router.delete('/deleteSubAttributesById', adminAuth, adminController.deleteSubAttributesById);
 router.get('/getLiveHighestBid', adminAuth, adminController.getLiveHighestBid);
 router.get('/getAllTransaction', adminAuth, adminController.getAllTransaction);
+router.get('/get-setting', adminAuth, adminController.getSetting);
+router.post('/update-setting', adminAuth, adminController.updateSetting);
 
 module.exports = router;
