@@ -956,7 +956,6 @@ exports.updateTransactionStatus = async (req, res) => {
       });
     } else {
       const offerResult = await findOfferByOfferBuyerSellerId(offer_id, buyer_id, seller_id);
-
       if (offerResult.length > 0) {
         if (seller_status == 'null') {
           const updateBuuer = await updateOfferBuyerStatus(offer_id, buyer_id, seller_id, buyer_status, offerResult[0].seller_status)
@@ -974,6 +973,26 @@ exports.updateTransactionStatus = async (req, res) => {
           }
           const insertPaymentFlow = await addPaymenetFlowStatus(addPaymenetFlow);
           if (insertPaymentFlow.affectedRows > 0) {
+            const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id WHERE offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name AS product_name');
+            const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${buyer_id}`, `users.user_name, tbl_user_notifications.bid_received`);
+            const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received, tbl_user_notifications.buyer_paid_for_item');
+            if (getFCM[0].buyer_paid_for_item == 1 && buyer_status == '2') {
+              const message = {
+                notification: {
+                  title: 'Payment Received',
+                  body: `${getUserWhoBid[0].user_name} has successfully purchased your product "${getSellerID[0].product_name}".`,
+                },
+                token: getFCM[0].fcm_token
+              };
+              const data = {
+                user_id: getSellerID[0].user_id,
+                notification_type: 'Alert',
+                title: 'Payment Received',
+                message: `${getUserWhoBid[0].user_name} has successfully purchased your product "${getSellerID[0].product_name}".`
+              }
+              await insertData('tbl_notification_messages', '', data);
+              await send_notification(message, getSellerID[0].user_id);
+            }
             return res.status(200).json({ error: false, message: "Status update successfully", status: 200, success: true })
           } else {
             return res.status(400).json({ error: true, message: "Status not update", status: 400, success: false })
@@ -994,6 +1013,26 @@ exports.updateTransactionStatus = async (req, res) => {
           }
           const insertPaymentFlow = await addPaymenetFlowStatus(addPaymenetFlow);
           if (insertPaymentFlow.affectedRows > 0) {
+            const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id WHERE offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name AS product_name');
+            const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${buyer_id}`, `users.user_name, tbl_user_notifications.bid_received`);
+            const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received, tbl_user_notifications.buyer_paid_for_item');
+            if (getFCM[0].buyer_paid_for_item == 1 && buyer_status == '2') {
+              const message = {
+                notification: {
+                  title: 'Item Shipped',
+                  body: `Your order for "${getSellerID[0].product_name}" has been shipped by the seller ${getSellerDetails[0].seller_name}.`,
+                },
+                token: getFCM[0].fcm_token
+              };
+              const data = {
+                user_id: getSellerID[0].user_id,
+                notification_type: 'Alert',
+                title: 'Item Shipped',
+                message: `Your order for "${getSellerID[0].product_name}" has been shipped by the seller ${getSellerDetails[0].seller_name}.`
+              }
+              await insertData('tbl_notification_messages', '', data);
+              await send_notification(message, getSellerID[0].user_id);
+            }
             return res.status(200).json({ error: false, message: "Status update successfully", status: 200, success: true })
           } else {
             return res.status(400).json({ error: true, message: "Status not update", status: 400, success: false })
