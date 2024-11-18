@@ -110,7 +110,7 @@ module.exports = function (server) {
       io.emit("update_online_status", Array.from(onlineUsers.keys()));
     });
 
-    socket.on("admin_connected", (adminId) => {      
+    socket.on("admin_connected", (adminId) => {
       const admin_id = adminId;
       if (admin_id) {
         adminSockets[admin_id] = socket.id; // Add user socket
@@ -147,14 +147,15 @@ module.exports = function (server) {
         message != "undefined" &&
         sender_id != "undefined"
       ) {
-
+        const currTime = moment().tz("Europe/Zurich").format("YYYY-MM-DD HH:mm:ss");
         // Insert the message into the database
-        const insertMessageQuery = `INSERT INTO tbl_messages (user_id, admin_id, message, sender_id) VALUES (?, ?, ?, ?)`;
+        const insertMessageQuery = `INSERT INTO tbl_messages (user_id, admin_id, message, sender_id, created_at) VALUES (?, ?, ?, ?, ?)`;
         const addMessage = await db.query(insertMessageQuery, [
           user_id,
           admin_id,
           message,
           sender_id,
+          currTime
         ]);
 
         if (addMessage.affectedRows > 0) {

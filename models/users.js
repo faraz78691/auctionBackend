@@ -115,7 +115,7 @@ module.exports = {
   },
 
   getuserProfileDetails: async (user_id) => {
-    return await db.query("select * from  user_profile where  user_id=?", [
+    return await db.query("select * from users where id = ?", [
       user_id
     ]);
   },

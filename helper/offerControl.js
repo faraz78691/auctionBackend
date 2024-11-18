@@ -7,6 +7,9 @@ const {
   insertTransaction,
   updateOfferBuyStatus
 } = require("../models/product");
+const {
+  getData, getSelectedColumn, insertData
+} = require("../models/common");
 var moment = require("moment");
 var randomstring = require("randomstring");
 const { send_notification } = require("../helper/sendNotification");
@@ -54,14 +57,26 @@ module.exports = {
           };
           const resultInserted = await insertTransaction(transactionDetails);
           if (resultInserted.affectedRows > 0) {
-            const message = {
-              notification: {
-                title: 'New Bid on Your Product',
-                body: `You have received a bid from ${getUserWhoBid[0].user_name} on your product.`
-              },
-              token: getFCM[0].fcm_token
-            };
-            await send_notification(message, seller);
+            const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id WHERE offers_created.id = ${offerId}`, 'offers_created.user_id, product.name');
+            const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received');
+
+            if (getFCM[0].item_sold == 1) {
+              const message = {
+                notification: {
+                  title: 'Your Item Has Been Sold!',
+                  body: `Congratulations! Your product "${getSellerID[0].name}" has been sold. Thank you for using our platform!`
+                },
+                token: getFCM[0].fcm_token
+              };
+              const data = {
+                user_id: getSellerID[0].user_id,
+                notification_type: 'Alert',
+                title: 'Your Item Has Been Sold!',
+                message: `Congratulations! Your product "${getSellerID[0].name}" has been sold. Thank you for using our platform!`
+              }
+              await insertData('tbl_notification_messages', '', data);
+              await send_notification(message, getSellerID[0].user_id);
+            }
             const userFessPayDetails = {
               transaction_id: transactionId,
               buyer_id: buyer,

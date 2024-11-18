@@ -110,11 +110,10 @@ exports.signup = async (req, res) => {
           .email({ tlds: { allow: false } })
           .lowercase()
           .required(),
-        password: Joi.string().min(5).max(10).required().messages({
-          "any.required": "password is required!!",
-          "string.empty": "can't be empty!!",
-          "string.min": "minimum 5 value required",
-          "string.max": "maximum 10 values allowed",
+        password: Joi.string().min(8).required().messages({
+          "any.required": "Password is required!!",
+          "string.empty": "Password can't be empty!!",
+          "string.min": "Password minimum 8 value required",
         }),
         first_name: Joi.string().empty().required().messages({
           "string.empty": "can't be empty",
@@ -278,6 +277,7 @@ exports.login = async (req, res) => {
       });
     } else {
       const result = await fetchUserByEmail(email);
+
       // console.log(result);
       if (result.length !== 0) {
         const match = bcrypt.compareSync(password, result[0].password);
@@ -502,7 +502,7 @@ exports.verifyhomeUser = async (req, res) => {
 
         const resultUpdate = await updateVerifyUser(data, result[0].id);
         console.log("updateVerifyUser Run");
-        if (resultUpdate.affectedRows) {
+        if (resultUpdate.affectedRows > 0) {
           res.sendFile(path.join(__dirname, '../view/verify.html')); //updated code
           // res.sendFile(__dirname + "../view/verify.html");
         } else {
@@ -1077,11 +1077,10 @@ exports.getUserRoleProfile = async (req, res) => {
     }
     const userDetails = await getuserProfileDetails(user_id);
     if (userDetails.length > 0) {
-
       res.json({
         success: true,
         status: 200,
-        msg: "Role Found for User",
+        msg: "User profile found successfully",
         userDetails: userDetails,
       });
 
@@ -1089,7 +1088,7 @@ exports.getUserRoleProfile = async (req, res) => {
       return res.json({
         success: false,
         status: 500,
-        msg: "No roles assigned to User",
+        msg: "User profile not found",
       });
     }
 
