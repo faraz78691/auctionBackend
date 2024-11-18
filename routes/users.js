@@ -11,7 +11,7 @@ router.post('/forgetPassword', userController.forgetPassword);
 router.get('/verifyPassword/:token/', userController.verifyPassword);
 router.post('/updatePassword', userController.updatePassword);
 router.post('/insertUserRole', auth, userController.insertUserRole);
-router.get('/getUserRoleDetails', auth, userController.getUserRoleDetails);
+router.get('/getUserRoleDetails', userController.getUserRoleDetails);
 router.post('/insertUserProfileC', userController.insertUserProfileC);
 router.post('/updateUserProfileC', userController.updateUserProfileC);
 router.get('/getUserRoleProfile', auth, userController.getUserRoleProfile);

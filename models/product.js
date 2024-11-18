@@ -39,7 +39,7 @@ module.exports = {
     return db.query("insert into offers_created set ?", [data]);
   },
 
-  findBootPlanById: async(id) => {
+  findBootPlanById: async (id) => {
     return await db.query('SELECT * FROM `tbl_boost_plan` WHERE id = ?', [id]);
   },
 
@@ -367,7 +367,7 @@ module.exports = {
     return db.query("SELECT * FROM offers_created WHERE offfer_buy_status != 1 AND id IN (?)", [ids]);
   },
 
-  getOffersByIDsWhereClause: async (ids, price, limit, offset) => {
+  getOffersByIDsWhereClause: async (ids, product_id, price, limit, offset) => {
     if (Array.isArray(price) && price.length === 0 || price == []) {
       return db.query(`select id,
         offer_unique_id,
@@ -384,8 +384,7 @@ module.exports = {
         start_price, increase_step, buyto_price,
         fixed_offer_price,duration,offfer_buy_status,
         user_id
-        from offers_created WHERE offfer_buy_status != 1 AND id IN (?)
-        ORDER BY  remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset}`, [ids]);
+        from offers_created WHERE offfer_buy_status != 1 AND ${ids == undefined ? 'product_id = ?' : 'id IN (?)'} ORDER BY remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset}`, [ids == undefined ? product_id : ids]);
     } else {
       return db.query(`select id,
         offer_unique_id,
@@ -402,8 +401,7 @@ module.exports = {
         start_price, increase_step, buyto_price,
         fixed_offer_price,duration,offfer_buy_status,
         user_id
-        from offers_created WHERE offfer_buy_status != 1 AND id IN (?) AND start_price BETWEEN ${price[0].start_price} AND ${price[1].end_price}
-        ORDER BY  remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset}`, [ids]);
+        from offers_created WHERE offfer_buy_status != 1 AND ${ids == undefined ? 'product_id = ?' : 'id IN (?)'} AND start_price BETWEEN ${price[0].start_price} AND ${price[1].end_price} ORDER BY  remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset}`, [ids == undefined ? product_id : ids]);
     }
   },
 

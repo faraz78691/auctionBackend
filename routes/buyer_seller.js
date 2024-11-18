@@ -22,5 +22,7 @@ router.get('/getallbid-offerid', auth, buyerSellerController.getAllBidsByOfferId
 router.get('/getAllAdminCommissionFees', buyerSellerController.getAllAdminCommissionFees);
 router.get('/checkUserNameExist/:username', buyerSellerController.checkUserNameExist);
 router.get('/getBoostPlan', buyerSellerController.getBoostPlan);
+router.post('/add-ratingreview', buyerSellerController.addRatingReview);
+router.get('/get-ratingreview', buyerSellerController.getRatingReview);
 
 module.exports = router;

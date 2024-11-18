@@ -2070,6 +2070,7 @@ exports.getOffersAdvancedFilter = async (req, res) => {
 exports.getOfferAdvancedFilter = async (req, res) => {
   try {
     const { condition, auctionType, attributes, product_id, price, page, page_size } = req.body;
+    
     const schema = Joi.alternatives(
       Joi.object({
         condition: Joi.string().optional().allow("").allow(null),
@@ -2149,17 +2150,18 @@ exports.getOfferAdvancedFilter = async (req, res) => {
     const auctionTypeOfferIds = parsedAuctionType.length > 0
       ? await getOfferIds(product_id, parsedAuctionType, getOfferIdByAuctionType)
       : null;
+
     // Check if any filter is provided but has no results
-    if (
-      (parsedCondition.length > 0 && (conditionOfferIds === null || conditionOfferIds.length === 0)) ||
-      (parsedAttributes.length > 0 && (attributeOfferIds === null || attributeOfferIds.length === 0)) ||
-      (parsedAuctionType.length > 0 && (auctionTypeOfferIds === null || auctionTypeOfferIds.length === 0))
-    ) {
-      return res.json({
-        success: false,
-        offer_ids: [],
-      });
-    }
+    // if (
+    //   (parsedCondition.length > 0 && (conditionOfferIds === null || conditionOfferIds.length === 0)) ||
+    //   (parsedAttributes.length > 0 && (attributeOfferIds === null || attributeOfferIds.length === 0)) ||
+    //   (parsedAuctionType.length > 0 && (auctionTypeOfferIds === null || auctionTypeOfferIds.length === 0))
+    // ) {
+    //   return res.json({
+    //     success: false,
+    //     offer_ids: [],
+    //   });
+    // }
 
     // Combine all non-null offer ID arrays
     const allOfferIds = [
@@ -2168,13 +2170,13 @@ exports.getOfferAdvancedFilter = async (req, res) => {
       auctionTypeOfferIds
     ].filter(ids => ids !== null);
 
-    // If no filters are provided, return an empty array
-    if (allOfferIds.length === 0) {
-      return res.json({
-        success: false,
-        offer_ids: [],
-      });
-    }
+    // // If no filters are provided, return an empty array
+    // if (allOfferIds.length === 0) {
+    //   return res.json({
+    //     success: false,
+    //     offer_ids: [],
+    //   });
+    // }
 
     // Find the intersection of all non-null offer ID arrays
     const commonOfferIds = allOfferIds.reduce((acc, curr) => acc.filter(id => curr.includes(id)), allOfferIds[0]);
@@ -2182,6 +2184,7 @@ exports.getOfferAdvancedFilter = async (req, res) => {
     const offset = (parseInt(page) - 1) * parseInt(page_size);
     var offers = await getOffersByIDsWhereClause(
       commonOfferIds,
+      product_id,
       parsePrice,
       page_size,
       offset
@@ -2197,10 +2200,20 @@ exports.getOfferAdvancedFilter = async (req, res) => {
       element.remaining_time = time;
       if (element.product_id != 0) {
         const countR = await getNoOfBids(element.product_id, element.id);
+        
         //const maxBidR = await getMaxBidF(element.product_id);
         if (countR.length > 0) {
-          element.count = countR[0].count;
-          element.max_bid = countR[0].max_bid;
+          element.user_bid = {
+            user_id: (countR.length > 0 && countR[0]?.user_id != null) ? countR[0]?.user_id : 0,
+            max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
+            count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
+          }
+        } else {
+          element.user_bid = {
+            user_id: (countR.length > 0 && countR[0]?.user_id != null) ? countR[0]?.user_id : 0,
+            max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
+            count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
+          }
         }
 
         const categoryRes = await getCategoryIdByProductId(element.product_id);
