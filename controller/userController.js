@@ -27,7 +27,9 @@ const {
   updateUserCommissinFees,
   getNotificationsByUserId,
   addSearch,
-  getSearchById
+  getSearchById,
+  addFollowUpByUser,
+  getFollowupById
 } = require("../models/users");
 const { updateData } = require("../models/common");
 const Joi = require("joi");
@@ -1790,8 +1792,62 @@ exports.getSearch = async (req, res) => {
 
 exports.addFollowUp = async (req, res) => {
   try {
+    const userId = req.user.id;
+    const { follow_user_id } = req.body;
+    const schema = Joi.object({
+      follow_user_id: Joi.number().required().messages({
+        'number.base': 'User id must be a number',
+        'number.empty': 'User id is required',
+        'any.required': 'User id is required',
+      }),
+    });
 
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        errors: true,
+        message: error.details[0].message,
+        status: 400,
+        success: false
+      });
+    } else {
+      const add = {
+        user_id: userId,
+        follow_user_id: follow_user_id
+      }
+      const insertResult = await addFollowUpByUser(add);
+      if (insertResult.affectedRows > 0) {
+        return res.status(200).json({ error: false, message: "Successfully add", status: 200, success: true });
+      } else {
+        return res.status(200).json({ error: true, message: "Not add", status: 200, success: false });
+      }
+    }
   } catch (error) {
-
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };
+
+exports.getFollowUp = async(req, res) => {
+  try {
+    const userId = req.user.id;
+    const findResult = await getFollowupById(userId);
+    if (findResult.length > 0) {
+      return res.json({
+        message: "fetch user all followup",
+        status: 200,
+        success: true,
+        data: findResult,
+      });
+    } else {
+      return res.json({
+        error: true,
+        message: "FollowUp not found",
+        status: 200,
+        success: false,
+        data: []
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+}

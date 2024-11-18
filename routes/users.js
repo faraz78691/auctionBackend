@@ -30,5 +30,6 @@ router.post('/delete-card', auth, userController.deleteCard);
 router.post('/add-search', auth, userController.addSearch);
 router.get('/get-search', auth, userController.getSearch);
 router.post('/add-followUp', auth, userController.addFollowUp);
+router.get('/get-followUp', auth, userController.getFollowUp);
 
 module.exports = router;

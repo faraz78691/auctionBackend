@@ -320,7 +320,7 @@ module.exports = {
   },
 
   getSellerDetails: async (id) => {
-    return db.query(`select id,first_name,last_name , concat(street_number, " ", street, " ", city, " ", state, " ", country, " ", postal_code ) AS address from  users where id = '${id}'`);
+    return db.query(`SELECT users.id, users.first_name, users.last_name, CONCAT( users.street_number, " ", users.street, " ", users.city, " ", users.state, " ", users.country, " ", users.postal_code ) AS address, tbl_followup.follow_user_id FROM users LEFT JOIN tbl_followup ON tbl_followup.follow_user_id = users.id WHERE users.id = '${id}'`);
   },
 
   getSubAttributesHeadingByIDValue: async (attributeId, attributeValue) => {

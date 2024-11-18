@@ -146,6 +146,14 @@ module.exports = {
 
   getSearchById: async (id) => {
     return await db.query('SELECT * FROM `tbl_search` WHERE user_id = ? ORDER BY id DESC', [id]);
+  },
+
+  addFollowUpByUser: async (data) => {
+    return await db.query('INSERT INTO `tbl_followup` SET ?', [data]);
+  },
+
+  getFollowupById: async(id) => {
+    return await db.query('SELECT tbl_followup.*, users.user_name FROM `tbl_followup` LEFT JOIN users ON users.id = tbl_followup.follow_user_id WHERE user_id = ? ORDER BY tbl_followup.id DESC', [id]);
   }
 
 };

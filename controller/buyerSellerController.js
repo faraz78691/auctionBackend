@@ -157,7 +157,6 @@ exports.acceptPrice = async (req, res) => {
       amount: price,
       is_buy_now: 1,
       is_max_bid: 0,
-      buy_status: 1,
       created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
     };
     const resultInserted = await insertTransaction(transactionDetails);
