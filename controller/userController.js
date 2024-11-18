@@ -1673,3 +1673,50 @@ exports.updatenotificationByUserId = async (req, res) => {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };
+
+exports.addCrad = async (req, res) => {
+  try {
+    const user = req.user;
+    const { paymentMethodId } = req.body;
+
+    let customerId = user.stripe_customer_id;
+
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        name: user.user_name
+      });
+      customerId = customer.id;
+      await updateStripeCustomerId(customerId, user.id)
+    }
+
+    // Attach the payment method to the customer
+    const paymentMethod = await stripe.paymentMethods.attach(paymentMethodId, {
+      customer: customerId,
+    });
+
+    // Update the default payment method for the customer
+    await stripe.customers.update(customerId, {
+      invoice_settings: { default_payment_method: paymentMethod.id },
+    });
+
+    res.status(200).json({ message: 'Card added successfully', paymentMethod });
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
+
+exports.deleteCard = async (req, res) => {
+  try {
+    const { paymentMethodId } = req.body;
+    // Detach the card from the customer
+    const detachedPaymentMethod = await stripe.paymentMethods.detach(paymentMethodId);
+
+    res.status(200).json({
+      message: 'Card deleted successfully',
+      paymentMethod: detachedPaymentMethod,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+}

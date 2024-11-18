@@ -25,5 +25,7 @@ router.get('/getSavedCards', auth, userController.getSavedCards);
 router.post('/payWithSavedCard', auth, userController.payWithSavedCard);
 router.get('/getnotificationByUserId', auth, userController.getnotificationByUserId);
 router.post('/updatenotificationByUserId', auth, userController.updatenotificationByUserId);
+router.post('/add-card', auth, userController.addCrad);
+router.post('/delete-card', auth, userController.deleteCard);
 
 module.exports = router;

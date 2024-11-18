@@ -283,7 +283,7 @@ module.exports = {
   },
 
   getffersByName: async (product_name) => {
-    return await db.query(`SELECT id, title, product_id FROM offers_created WHERE title LIKE '%${product_name}%'`);
+    return await db.query(`SELECT * FROM offers_created WHERE title LIKE '%${product_name}%'`);
   },
 
   getTransactionsHistory: async (user_id) => {
