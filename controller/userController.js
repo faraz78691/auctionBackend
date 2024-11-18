@@ -893,11 +893,11 @@ exports.getUserRoleDetails = async (req, res) => {
     if (user_id === undefined || user_id === null) {
       return (
         res.
-        json({
-          success: false,
-          status: 500,
-          msg: "The token is expired or incorrect, Please login again",
-        })
+          json({
+            success: false,
+            status: 500,
+            msg: "The token is expired or incorrect, Please login again",
+          })
       );
     }
     const userDetails = await fetchUserById(user_id);
@@ -1065,7 +1065,7 @@ exports.updateUserProfileC = async (req, res) => {
 exports.getUserRoleProfile = async (req, res) => {
   try {
     const user_id = req.user.id;
-   
+
     if (user_id === undefined || user_id === null) {
       return (
         res.json({
@@ -1263,7 +1263,7 @@ exports.getChatMessage = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const userInfo = req.user;
-    const { password, current_password, first_name, last_name, phone_number, country, postal_code, street,
+    const { password, current_password, first_name, last_name, user_name, phone_number, country, postal_code, street,
       street_number, country_code, city, state } = req.body;
     const schema = Joi.object({
       first_name: Joi.string().required().allow('').messages({
@@ -1275,6 +1275,11 @@ exports.updateProfile = async (req, res) => {
         'string.base': 'Last Name must be a string',
         'string.empty': 'Last Name is required',
         'any.required': 'Last Name is required',
+      }),
+      user_name: Joi.string().required().allow('').messages({
+        'string.base': 'User Name must be a string',
+        'string.empty': 'User Name is required',
+        'any.required': 'User Name is required',
       }),
       country_code: Joi.string().required().allow('').messages({
         'string.base': 'Country code must be a string',
@@ -1340,7 +1345,7 @@ exports.updateProfile = async (req, res) => {
       });
     } else {
       if (current_password != 'undefined') {
-        var match = bcrypt.compareSync(current_password, userInfo.password);        
+        var match = bcrypt.compareSync(current_password, userInfo.password);
       }
 
       if (current_password != 'undefined' ? match : true) {
@@ -1348,6 +1353,7 @@ exports.updateProfile = async (req, res) => {
         let user = {
           first_name: first_name != 'undefined' ? first_name : userInfo.first_name,
           last_name: last_name != 'undefined' ? last_name : userInfo.last_name,
+          user_name: user_name != 'user_name' ? user_name : userInfo.user_name,
           country_code: country_code != 'undefined' ? country_code : userInfo.country_code,
           phone_number: phone_number != 'undefined' ? phone_number : userInfo.phone_number,
           password: userHashPassword,

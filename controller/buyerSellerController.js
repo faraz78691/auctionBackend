@@ -1286,10 +1286,31 @@ exports.getRatingReview = async (req, res) => {
   }
 };
 
-exports.getRatingReviewByUserId = async(req, res) => {
-  try{
-
-  } catch(error){
-    
+exports.getRatingReviewByUserId = async (req, res) => {
+  try {
+    const { buyer_id, seller_id } = req.query;
+    const schema = Joi.object({
+      buyer_id: Joi.number().required().messages({
+        'any.required': 'Buyer ID is required.',
+        'number.base': 'Buyer ID must be a valid number.',
+      }),
+      seller_id: Joi.number().required().messages({
+        'any.required': 'Seller ID is required.',
+        'number.base': 'Seller ID must be a valid number.',
+      })
+    })
+    const result = schema.validate(req.query);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      return res.json({
+        message: result.error.details[0].message,
+        error: message,
+        missingParams: result.error.details[0].message,
+        status: 200,
+        success: false,
+      });
+    } else { }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false });
   }
-}
+};
