@@ -892,7 +892,7 @@ exports.getUserRoleDetails = async (req, res) => {
     var userRoles = {};
     if (user_id === undefined || user_id === null) {
       return (
-        res /
+        res.
         json({
           success: false,
           status: 500,
