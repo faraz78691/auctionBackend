@@ -76,8 +76,8 @@ module.exports = function (server) {
           if (update.affectedRows > 0) {
             const offerById = await getOfferDetailsByID(data.offer_id);
             const new_offerstart_date = offerById[0].offerStart;
-            const length_oftime = offerRes[0].length_oftime;
-            const new_end_date = offerRes[0].end_date
+            const length_oftime = offerById[0].length_oftime;
+            const new_end_date = offerById[0].end_date
             io.emit("updateBid", {
               ...data,
               bidCount,
