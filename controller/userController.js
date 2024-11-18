@@ -1065,7 +1065,7 @@ exports.updateUserProfileC = async (req, res) => {
 exports.getUserRoleProfile = async (req, res) => {
   try {
     const user_id = req.user.id;
-    var userRoles = {};
+   
     if (user_id === undefined || user_id === null) {
       return (
         res.json({
@@ -1075,15 +1075,14 @@ exports.getUserRoleProfile = async (req, res) => {
         })
       );
     }
-    const userRoles = await getuserProfileDetails(user_id);
-    if (userRoles.length > 0) {
+    const userDetails = await getuserProfileDetails(user_id);
+    if (userDetails.length > 0) {
       res.json({
         success: true,
         status: 200,
-        msg: "User profile found successfully",
-        userDetails: userRoles,
+        msg: "Role Found for User",
+        userRoles: userDetails,
       });
-
     } else {
       return res.json({
         success: false,
