@@ -1075,13 +1075,13 @@ exports.getUserRoleProfile = async (req, res) => {
         })
       );
     }
-    const userDetails = await getuserProfileDetails(user_id);
-    if (userDetails.length > 0) {
+    const userRoles = await getuserProfileDetails(user_id);
+    if (userRoles.length > 0) {
       res.json({
         success: true,
         status: 200,
         msg: "User profile found successfully",
-        userDetails: userDetails,
+        userDetails: userRoles,
       });
 
     } else {
