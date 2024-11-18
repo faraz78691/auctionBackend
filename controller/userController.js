@@ -43,6 +43,7 @@ const { hashPassword } = require('../helper/hashPassword');
 const twilio = require('twilio');
 const client = ''
 var moment = require('moment-timezone');
+const { error } = require("console");
 require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRERT_KEY);
 
@@ -1715,6 +1716,8 @@ exports.deleteCard = async (req, res) => {
     res.status(200).json({
       message: 'Card deleted successfully',
       paymentMethod: detachedPaymentMethod,
+      error: false,
+      success: true
     });
   } catch (error) {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
