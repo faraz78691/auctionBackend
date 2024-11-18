@@ -24,6 +24,6 @@ router.get('/checkUserNameExist/:username', buyerSellerController.checkUserNameE
 router.get('/getBoostPlan', buyerSellerController.getBoostPlan);
 router.post('/add-ratingreview', buyerSellerController.addRatingReview);
 router.get('/get-ratingreview', buyerSellerController.getRatingReview);
-router.get('/get-ratingreviewbyuser', buyerSellerController.getRatingReviewByUserId);
+router.get('/get-ratingreviewbyreceivingid', buyerSellerController.getRatingReviewByReceivingId);
 
 module.exports = router;

@@ -32,7 +32,8 @@ const {
   checkUserNameExist,
   getBoostPlan,
   addRatingReview,
-  getRatingReview
+  getRatingReview,
+  getRatingReviewByUserId
 } = require("../models/buyer_seller");
 
 const {
@@ -1142,7 +1143,7 @@ exports.getBoostPlan = async (req, res) => {
 
 exports.addRatingReview = async (req, res) => {
   try {
-    const { offer_id, buyer_id, seller_id, sender_id, rating, review, buyer_status, seller_status } = req.body
+    const { offer_id, buyer_id, seller_id, sender_id, receiving_id, rating, review, buyer_status, seller_status } = req.body
     const schema = Joi.object({
       offer_id: Joi.number().required().messages({
         'any.required': 'Offer ID is required.',
@@ -1159,6 +1160,10 @@ exports.addRatingReview = async (req, res) => {
       sender_id: Joi.number().required().messages({
         'any.required': 'Sender ID is required.',
         'number.base': 'Sender ID must be a valid number.',
+      }),
+      receiving_id: Joi.number().required().messages({
+        'any.required': 'Receiving ID is required.',
+        'number.base': 'Receiving ID must be a valid number.',
       }),
       rating: Joi.string().required().messages({
         'any.required': 'Rating is required.',
@@ -1229,6 +1234,7 @@ exports.addRatingReview = async (req, res) => {
         buyer_id: buyer_id,
         seller_id: seller_id,
         sender_id: sender_id,
+        receiving_id: receiving_id,
         rating: rating,
         review: review,
         created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
@@ -1286,17 +1292,13 @@ exports.getRatingReview = async (req, res) => {
   }
 };
 
-exports.getRatingReviewByUserId = async (req, res) => {
+exports.getRatingReviewByReceivingId = async (req, res) => {
   try {
-    const { buyer_id, seller_id } = req.query;
+    const { receiving_id } = req.query;
     const schema = Joi.object({
-      buyer_id: Joi.number().required().messages({
-        'any.required': 'Buyer ID is required.',
-        'number.base': 'Buyer ID must be a valid number.',
-      }),
-      seller_id: Joi.number().required().messages({
-        'any.required': 'Seller ID is required.',
-        'number.base': 'Seller ID must be a valid number.',
+      receiving_id: Joi.number().required().allow('').messages({
+        'any.required': 'Receiving ID is required.',
+        'number.base': 'Receiving ID must be a valid number.',
       })
     })
     const result = schema.validate(req.query);
@@ -1309,7 +1311,23 @@ exports.getRatingReviewByUserId = async (req, res) => {
         status: 200,
         success: false,
       });
-    } else { }
+    } else {
+      const findRatingResult = await getRatingReviewByUserId(receiving_id);
+      if (findRatingResult.length > 0) {
+        return res.status(200).json({
+          error: false, message: 'find rating abd review', status: 200, success: true, data: {
+            count: {
+              positive_ratings_count: findRatingResult[0].positive_ratings_count,
+              neutral_ratings_count: findRatingResult[0].neutral_ratings_count,
+              negative_ratings_count: findRatingResult[0].negative_ratings_count
+            },
+            findRatingResult
+          }
+        });
+      } else {
+        return res.status(200).json({ error: true, message: 'failed rating and review', status: 200, success: false, data: [] });
+      }
+    }
   } catch (error) {
     return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false });
   }
