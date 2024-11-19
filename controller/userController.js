@@ -62,7 +62,6 @@ function betweenRandomNumber(min, max) {
 }
 
 const saltRounds = 10;
-const base_url = "localhost:4000";
 
 var transporter = nodemailer.createTransport({
   // service: 'gmail',
@@ -107,8 +106,6 @@ exports.signup = async (req, res) => {
       postal_code
     } = req.body;
     const actToken = betweenRandomNumber(10000000, 99999999);
-    var status = 1;
-    var login_status = 1;
     const schema = Joi.alternatives(
       Joi.object({
         email: Joi.string()
@@ -133,7 +130,7 @@ exports.signup = async (req, res) => {
         user_name: Joi.string().empty().required(),
         company: Joi.string().empty().required(),
         street: Joi.string().empty().required(),
-        street_number: Joi.number().empty().required(),
+        street_number: Joi.string().empty().required(),
         state: Joi.string().empty().required(),
         country: Joi.string().empty().required(),
         role_id: Joi.number().required(),
@@ -146,7 +143,6 @@ exports.signup = async (req, res) => {
       })
     );
     const result = schema.validate(req.body);
-
     if (result.error) {
       const message = result.error.details.map((i) => i.message).join(",");
       return res.json({
@@ -158,7 +154,6 @@ exports.signup = async (req, res) => {
       });
     } else {
       const result1 = await fetchUserByEmail(email);
-
       if (result1.length === 0) {
         bcrypt.genSalt(saltRounds, async function (err, salt) {
           bcrypt.hash(password, salt, async function (err, hash) {
@@ -171,8 +166,8 @@ exports.signup = async (req, res) => {
               user_name: user_name,
               company: company,
               act_token: actToken,
-              status: status,
-              login_status: login_status,
+              status: 1,
+              login_status: 1,
               street: street,
               street_number: street_number,
               state: state,
@@ -195,63 +190,58 @@ exports.signup = async (req, res) => {
                 context: {
                   href_url: `http://${process.env.BASEURL_APP}/user/verifyhomeUser/${actToken}/${result.insertId}`,
                   image_logo: `http://${process.env.FRONT_URL}/assets/img/logo.png`,
-                  msg: "Your account has been created successfully and is ready to use.",
+                  msg: "Your account has been successfully created and is ready to use.",
                 },
               };
 
               transporter.sendMail(mailOptions, async function (error, info) {
                 if (error) {
-                  return res.json({
-                    success: true,
-                    message: "Mail Not delivered",
-                    status: 200,
-                    userInfo: {},
+                  return res.status(200).json({
+                    success: false,
+                    message: "Email delivery failed. Please try again.",
+                    status: 400,
+                    userInfo: [],
+                    error: true
                   });
                 } else {
-                  if (result.insertId > 0) {
-                    await addUserNotificartion(result.insertId)
-                    const results = await fetchUserById(result.insertId);
-                    return res.json({
-                      success: true,
-                      message:
-                        "Your account has been successfully created. An email has been sent to you with detailed instructions on how to activate it.",
-                      userinfo: results[0],
-                      status: 200,
-                    });
-                  }
+                  await addUserNotificartion(result.insertId)
+                  const results = await fetchUserById(result.insertId);
+                  return res.status(200).json({
+                    success: true,
+                    message: "Your account has been successfully created. A confirmation email with activation instructions has been sent to you.",
+                    userinfo: results[0],
+                    status: 200,
+                  });
                 }
               });
             } else {
-              return res.json({
-                message: "user failed to register",
-                status: 200,
+              return res.status(200).json({
+                message: "User registration failed. Please try again.",
+                status: 400,
                 success: false,
-                userinfo: {},
+                userinfo: [],
+                error: true
               });
             }
           });
         });
       } else {
-        return res.json({
+        return res.status(200).json({
           success: false,
-          message: "Already Exists",
+          message: "Email already exists. Please use a different email address.",
           status: 200,
-          userInfo: {},
-        });
+          userInfo: [],
+          error: true
+        });;
       }
     }
   } catch (error) {
-    return res.json({
-      message: "Internal server error",
-      status: 500,
-      success: false,
-    });
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };
 
 exports.login = async (req, res) => {
   try {
-
     const { email, password, fcm_token } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
@@ -260,18 +250,35 @@ exports.login = async (req, res) => {
           .max(255)
           .email({ tlds: { allow: false } })
           .lowercase()
-          .required(),
-        password: Joi.string().min(5).max(20).required().messages({
-          "any.required": "Password is required!!",
-          "string.empty": "can't be empty!!",
-          "string.min": "minimum 5 value required",
-          "string.max": "maximum 10 values allowed",
-        }),
-        fcm_token: Joi.string().allow(null).empty(''),
+          .required()
+          .messages({
+            "string.empty": "Email can't be empty",
+            "string.min": "Email must be at least 5 characters long",
+            "string.max": "Email can't be more than 255 characters",
+            "string.email": "Please provide a valid email address",
+          }),
+
+        password: Joi.string()
+          .min(5)
+          .max(20)
+          .required()
+          .messages({
+            "any.required": "Password is required!",
+            "string.empty": "Password can't be empty!",
+            "string.min": "Password must have at least 5 characters",
+            "string.max": "Password can't exceed 20 characters",
+          }),
+
+        fcm_token: Joi.string()
+          .allow(null)
+          .empty('')
+          .optional() // If it's not required, you can make it optional
+          .messages({
+            "string.base": "FCM token must be a string",
+          })
       })
     );
     const result = schema.validate(req.body);
-    // console.log(result);
 
     if (result.error) {
       const message = result.error.details.map((i) => i.message).join(",");
@@ -284,13 +291,10 @@ exports.login = async (req, res) => {
       });
     } else {
       const result = await fetchUserByEmail(email);
-
-      // console.log(result);
-      if (result.length !== 0) {
+      if (result.length > 0) {
         const match = bcrypt.compareSync(password, result[0].password);
         if (match) {
           if (result[0].act_token !== "") {
-            console.log(result[0].act_token);
             return res.json({
               message: "Please verify your account first",
               success: false,
@@ -298,56 +302,37 @@ exports.login = async (req, res) => {
               token: "",
               userinfo: {},
             });
+          } else{
+            await updateLoginStatusByEmail(email);
+            const token = jwt.sign(
+              {
+                user_id: result[0].id,
+              },
+              "SecretKey"
+            );
+  
+            await tokenUpdate(token, fcm_token, result[0].id);
+            const result1 = await fetchUserByEmail(email);
+            delete result1[0].token;
+            delete result1[0].password;
+            return res.status(200).json({
+              error: false,
+              success: true,
+              message: "Login successful.",
+              status: 200,
+              token: token,
+              userinfo: result1[0],
+            });
           }
-
-          await updateLoginStatusByEmail(email);
-          const token = jwt.sign(
-            {
-              user_id: result[0].id,
-            },
-            "SecretKey"
-          );
-
-          await tokenUpdate(token, fcm_token, result[0].id);
-
-          const result1 = await fetchUserByEmail(email);
-
-          delete result1[0].token;
-
-          delete result1[0].password;
-
-          return res.json({
-            success: true,
-            message: "Successfully Login",
-            status: 200,
-            token: token,
-            // "userinfo": result[0]
-            userinfo: result1[0],
-          });
         } else {
-          return res.json({
-            message: "Wrong password",
-            success: false,
-            status: 200,
-            userinfo: {},
-          });
+          return res.status(200).json({ error: true, message: 'Incorrect password. Please enter a valid password.', success: false, status: 200, userinfo: {} });
         }
       } else {
-        return res.json({
-          message: "User not found",
-          status: 200,
-          success: false,
-          userinfo: {},
-        });
+        return res.status(200).json({ error: true, message: 'Invalid email address. Please enter a valid email.', success: false, status: 200, userinfo: {} });
       }
     }
   } catch (error) {
-    console.log(error, "<==error");
-    return res.json({
-      message: "Internal server error",
-      status: 500,
-      success: false,
-    });
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };
 
@@ -687,7 +672,7 @@ exports.forgetPassword = async (req, res) => {
           subject: "forget Password",
           template: "forget_template", // the name of the template file i.e email.handlebars
           context: {
-            href_url: `http://${base_url}/verifyPassword/${token}`,
+            href_url: `http://${process.env.BASEURL_APP}/verifyPassword/${token}`,
             image_logo: `http://${process.env.FRONT_URL}/assets/img/logo.png`,
             msg: `Please click below link to change password.`,
           },
@@ -1880,7 +1865,7 @@ exports.addAccountDetail = async (req, res) => {
   try {
     const userId = req.user.id;
     const { account_no, holder_name, holder_address, holder_message } = req.body;
-    
+
     // Validate input using Joi
     const schema = Joi.object({
       account_no: Joi.string().pattern(/^\d+$/).allow('').optional().messages({

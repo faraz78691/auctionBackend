@@ -47,7 +47,7 @@ module.exports = {
 
   getOffersBySeller: async (seller) => {
     return db.query(
-      `SELECT id as offer_id, offer_unique_id, start_price, title, end_date,is_bid_or_fixed, fixed_offer_price, buyto_price, images_id FROM offers_created WHERE user_id = ${seller} and offfer_buy_status = 0 ORDER BY created_at DESC`
+      `SELECT id as offer_id, offer_unique_id, start_price, title, end_date,is_bid_or_fixed, fixed_offer_price, buyto_price, images_id, offfer_buy_status FROM offers_created WHERE user_id = ${seller} and offfer_buy_status = 0 ORDER BY created_at DESC`
     );
   },
 

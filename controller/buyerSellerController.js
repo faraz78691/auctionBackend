@@ -428,7 +428,6 @@ exports.getSellingSectionForSeller = async (req, res) => {
         status: 500,
       });
     }
-
     const offersDetails = await getOffersBySeller(user_id);
     if (offersDetails.length > 0) {
       var finalOutput = [];
@@ -454,26 +453,13 @@ exports.getSellingSectionForSeller = async (req, res) => {
           tempObj.price = el.fixed_offer_price;
         }
         tempObj.name = el.title;
-        var endDate = el.end_date;
 
-        // if (bidRes.length > 0) {
-        var newEndDate = moment(endDate).tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
-        var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
-
-
-        if (currDate > newEndDate) {
-          tempObj.status = "Not Sold";
-        } else {
-          tempObj.status = "Open";
-        }
-        // }
         if (buyer_id != 0) {
           var buyerNameArr = await getUserNamebyId(buyer_id);
           if (buyerNameArr.length > 0) {
             tempObj.buyer_name = buyerNameArr[0]?.name;
           }
         }
-
         finalOutput.push(tempObj);
       }
 
@@ -486,12 +472,11 @@ exports.getSellingSectionForSeller = async (req, res) => {
     } else {
       return res.json({
         success: false,
-        message: "No Data Found",
+        message: "Offer not found",
         status: 400,
       });
     }
   } catch (err) {
-    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",

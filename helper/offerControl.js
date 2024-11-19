@@ -103,6 +103,8 @@ module.exports = {
               const paymenytFlowInsert = await insertPaymentFlowInsert(transactionDetail);
               const offerupdate = await updateOfferBuyStatus("1", offerId);
             }
+          } else{
+            console.log("Not any bid found in this offer");
           }
         }
       }

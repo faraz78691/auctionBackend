@@ -2757,6 +2757,8 @@ exports.updateOfferExpired = async (req, res) => {
               });
             }
           }
+        } else {
+          return res.status(200).json({ error: true, message: "Not found any bid in this offer", success: false, data: [] });
         }
       }
     } else {
