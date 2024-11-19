@@ -1880,28 +1880,23 @@ exports.addAccountDetail = async (req, res) => {
   try {
     const userId = req.user.id;
     const { account_no, holder_name, holder_address, holder_message } = req.body;
+    
+    // Validate input using Joi
     const schema = Joi.object({
-      account_no: Joi.string().pattern(/^\d+$/).required().messages({
+      account_no: Joi.string().pattern(/^\d+$/).allow('').optional().messages({
         'string.base': 'Account number must be a string',
-        'string.empty': 'Account number is required',
-        'any.required': 'Account number is required',
+        'string.empty': 'Account number cannot be empty',
         'string.pattern.base': 'Account number must contain only digits',
       }),
-      holder_name: Joi.string().min(3).required().messages({
+      holder_name: Joi.string().min(3).allow('').optional().messages({
         'string.base': 'Holder name must be a string',
-        'string.empty': 'Holder name is required',
-        'any.required': 'Holder name is required',
         'string.min': 'Holder name must be at least 3 characters long',
       }),
-      holder_address: Joi.string().required().messages({
+      holder_address: Joi.string().allow('').optional().messages({
         'string.base': 'Holder address must be a string',
-        'string.empty': 'Holder address is required',
-        'any.required': 'Holder address is required',
       }),
-      holder_message: Joi.string().allow('').required().messages({
+      holder_message: Joi.string().allow('').optional().messages({
         'string.base': 'Holder message must be a string',
-        'string.empty': 'Holder message is required',
-        'any.required': 'Holder message is required',
       }),
     });
 

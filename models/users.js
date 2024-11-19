@@ -161,19 +161,43 @@ module.exports = {
   },
 
   updateAccountDetails: async (userId, account_no, holder_name, holder_address, holder_message) => {
-    // If holder_message is empty, set it to null
-    const updatedHolderMessage = holder_message === '' ? null : holder_message;
+    const fieldsToUpdate = [];
+    const values = [];
 
-    // Use parameterized queries to prevent SQL injection
+    // Add fields to update dynamically
+    if (account_no !== undefined && account_no !== '') {
+      fieldsToUpdate.push('account_no = ?');
+      values.push(account_no);
+    }
+    if (holder_name !== undefined && holder_name !== '') {
+      fieldsToUpdate.push('holder_name = ?');
+      values.push(holder_name);
+    }
+    if (holder_address !== undefined && holder_address !== '') {
+      fieldsToUpdate.push('holder_address = ?');
+      values.push(holder_address);
+    }
+    if (holder_message !== undefined && holder_message !== '') {
+      fieldsToUpdate.push('holder_message = ?');
+      values.push(holder_message === '' ? null : holder_message);
+    }
+
+    // Ensure there's something to update
+    if (fieldsToUpdate.length === 0) {
+      throw new Error('No fields provided for update');
+    }
+
+    // Add user ID for the WHERE clause
+    values.push(userId);
+
     const query = `
       UPDATE users
-      SET account_no = ?, holder_name = ?, holder_address = ?, holder_message = ?
+      SET ${fieldsToUpdate.join(', ')}
       WHERE id = ?
     `;
 
-    // Return the query result with parameterized values
-    return await db.query(query, [account_no, holder_name, holder_address, updatedHolderMessage, userId]);
+    // Execute the query with parameterized values
+    return await db.query(query, values);
   }
-
 
 };
