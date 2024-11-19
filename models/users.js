@@ -158,6 +158,22 @@ module.exports = {
 
   getUserById: async (id) => {
     return await db.query('SELECT users.*, COUNT(buy_sell_transactions.seller_id) AS seller_count FROM users LEFT JOIN buy_sell_transactions ON buy_sell_transactions.seller_id = users.id WHERE users.id = ?', [id]);
+  },
+
+  updateAccountDetails: async (userId, account_no, holder_name, holder_address, holder_message) => {
+    // If holder_message is empty, set it to null
+    const updatedHolderMessage = holder_message === '' ? null : holder_message;
+
+    // Use parameterized queries to prevent SQL injection
+    const query = `
+      UPDATE users
+      SET account_no = ?, holder_name = ?, holder_address = ?, holder_message = ?
+      WHERE id = ?
+    `;
+
+    // Return the query result with parameterized values
+    return await db.query(query, [account_no, holder_name, holder_address, updatedHolderMessage, userId]);
   }
+
 
 };

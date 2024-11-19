@@ -30,7 +30,8 @@ const {
   getSearchById,
   addFollowUpByUser,
   getFollowupById,
-  getUserById
+  getUserById,
+  updateAccountDetails
 } = require("../models/users");
 const { updateData } = require("../models/common");
 const Joi = require("joi");
@@ -1867,6 +1868,58 @@ exports.getUserById = async (req, res) => {
       return res.status(200).json({ error: true, message: "User not found.", status: 200, success: false, data: [] });
     }
   } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
+
+exports.addAccountDetail = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { account_no, holder_name, holder_address, holder_message } = req.body;
+    const schema = Joi.object({
+      account_no: Joi.string().pattern(/^\d+$/).required().messages({
+        'string.base': 'Account number must be a string',
+        'string.empty': 'Account number is required',
+        'any.required': 'Account number is required',
+        'string.pattern.base': 'Account number must contain only digits',
+      }),
+      holder_name: Joi.string().min(3).required().messages({
+        'string.base': 'Holder name must be a string',
+        'string.empty': 'Holder name is required',
+        'any.required': 'Holder name is required',
+        'string.min': 'Holder name must be at least 3 characters long',
+      }),
+      holder_address: Joi.string().required().messages({
+        'string.base': 'Holder address must be a string',
+        'string.empty': 'Holder address is required',
+        'any.required': 'Holder address is required',
+      }),
+      holder_message: Joi.string().allow('').required().messages({
+        'string.base': 'Holder message must be a string',
+        'string.empty': 'Holder message is required',
+        'any.required': 'Holder message is required',
+      }),
+    });
+
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        errors: true,
+        message: error.details[0].message,
+        status: 400,
+        success: false
+      });
+    } else {
+      const updateResult = await updateAccountDetails(userId, account_no, holder_name, holder_address, holder_message);
+      if (updateResult.affectedRows > 0) {
+        return res.status(200).json({
+          error: false, message: 'Account details add successfully', success: true, status: 200
+        });
+      } else {
+        return res.status(200).json({ error: true, message: 'Failed to add account details. Please check the information provided.', success: false, status: 200 });
+      }
+    }
+  } catch (error) {    
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };

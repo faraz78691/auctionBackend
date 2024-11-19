@@ -45,12 +45,13 @@ const {
   getMainImage,
   updateOfferBuyStatus,
 } = require("../models/product");
+
 const { send_notification } = require("../helper/sendNotification");
 const {
   getData, insertData, updateData, getSelectedColumn
 } = require("../models/common");
 
-const { getUserNamebyId } = require("../models/users");
+const { getUserNamebyId, fetchUserById } = require("../models/users");
 const { findSetting } = require("../models/admin");
 
 
@@ -900,9 +901,16 @@ exports.productOfferOrderDetail = async (req, res) => {
       const result = await findOfferOrderDetailsById(offer_id, buyer_id, seller_id);
       if (result.length > 0) {
         const resultOrderSummary = await findOrderSummaryDeatils(result[0].offer_id, buyer_id, seller_id);
+        const findUser = await fetchUserById(seller_id);
         const data = {
           result: result,
-          resultOrderSummary: resultOrderSummary
+          resultOrderSummary: resultOrderSummary,
+          user: {
+            account_no: findUser[0].account_no,
+            holder_name: findUser[0].holder_name,
+            holder_addressL: findUser[0].holder_address,
+            holder_message: findUser[0].holder_message
+          }
         }
         return res.json({
           error: false,

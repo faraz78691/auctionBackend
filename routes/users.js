@@ -32,5 +32,6 @@ router.get('/get-search', auth, userController.getSearch);
 router.post('/add-followUp', auth, userController.addFollowUp);
 router.get('/get-followUp', auth, userController.getFollowUp);
 router.get('/get-userbyid', userController.getUserById);
+router.post('/add-accountdetail', auth, userController.addAccountDetail);
 
 module.exports = router;
