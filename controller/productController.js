@@ -792,37 +792,37 @@ exports.getOffers = async (req, res) => {
     }
     if (offers.length > 0) {
 
-      // // Separate the offers based on boost_plan_id
-      // const notNullOffers = offers.filter(offer => offer.boost_plan_id !== null);
-      // const nullOffers = offers.filter(offer => offer.boost_plan_id === null);
+      // Separate the offers based on boost_plan_id
+      const notNullOffers = offers.filter(offer => offer.boost_plan_id !== null);
+      const nullOffers = offers.filter(offer => offer.boost_plan_id === null);
 
-      // // Result array to store the organized offers
-      // const organizedOffers = [];
-      // let i = 0, j = 0;
+      // Result array to store the organized offers
+      const organizedOffers = [];
+      let i = 0, j = 0;
 
-      // // Alternating logic
-      // while (i < notNullOffers.length || j < nullOffers.length) {
-      //   // Add one from notNullOffers if available
-      //   if (i < notNullOffers.length) {
-      //     organizedOffers.push(notNullOffers[i]);
-      //     i++;
-      //   }
+      // Alternating logic
+      while (i < notNullOffers.length || j < nullOffers.length) {
+        // Add one from notNullOffers if available
+        if (i < notNullOffers.length) {
+          organizedOffers.push(notNullOffers[i]);
+          i++;
+        }
 
-      //   // Add up to three from nullOffers if available
-      //   let nullCount = 0;
-      //   while (j < nullOffers.length && nullCount < 3) {
-      //     organizedOffers.push(nullOffers[j]);
-      //     j++;
-      //     nullCount++;
-      //   }
-      // }
+        // Add up to three from nullOffers if available
+        let nullCount = 0;
+        while (j < nullOffers.length && nullCount < 3) {
+          organizedOffers.push(nullOffers[j]);
+          j++;
+          nullCount++;
+        }
+      }
 
       return res.json({
         success: true,
         message: "Offer Sorted by time",
-        categoryName: offers[0].category_name,
-        productName: offers[0].product_name,
-        offers: offers,
+        categoryName: organizedOffers[0].category_name,
+        productName: organizedOffers[0].product_name,
+        offers: organizedOffers,
         status: 200,
       });
     } else if (categoryRes.length > 0 || categoryNameRes.length > 0) {
