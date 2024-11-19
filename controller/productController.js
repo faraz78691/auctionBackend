@@ -44,6 +44,7 @@ const {
   updateOfferBuyStatus, // updated 26-07-2024
   insertOfferFavourites,
   getFavouriteOffersByUserId,
+  deleteFavouriteOffer,
   getSubAttributesByID,
   getSubAttributesHeadingByIDValue,
   getSubAttributesByIID,
@@ -77,6 +78,7 @@ const path = require("path");
 require("dotenv").config();
 var randomstring = require("randomstring");
 var moment = require('moment-timezone');
+const { error } = require("console");
 
 exports.getProducts = async (req, res) => {
   try {
@@ -1724,7 +1726,6 @@ exports.getFavouriteOffers = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",
@@ -1733,6 +1734,55 @@ exports.getFavouriteOffers = async (req, res) => {
     });
   }
 };
+
+exports.deleteFavouriteOffer = async (req, res) => {
+  try {
+    const user_id = req.user.id;    
+    const { offer_id } = req.body;
+    const schema = Joi.alternatives(
+      Joi.object({
+        offer_id: Joi.number().required().empty(),
+      })
+    );
+    const result = schema.validate(req.body);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      return res.json({
+        message: result.error.details[0].message,
+        error: message,
+        missingParams: result.error.details[0].message,
+        status: 200,
+        success: false,
+      });
+    } else {
+      const deleteFavouriteOfferResult = await deleteFavouriteOffer(offer_id, user_id);
+      if (deleteFavouriteOfferResult.affectedRows > 0) {
+        // Successfully unfavourited
+        return res.status(200).json({
+          error: false,
+          success: true,
+          message: "Successfully unfavourited the offer",
+          status: 200
+        });
+      } else {
+        // No rows affected, meaning the offer was not favourited
+        return res.status(200).json({
+          error: true,
+          success: false,
+          message: "Offer not found in favourites",
+          status: 200,
+        });
+      }
+    }
+  } catch (error) {    
+    return res.json({
+      success: false,
+      message: "Internal server error" + ':' + error.message,
+      error: true,
+      status: 500,
+    });
+  }
+}
 
 exports.getSubAttributes = async (req, res) => {
   try {

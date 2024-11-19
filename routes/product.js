@@ -20,6 +20,7 @@ router.post('/getOffersFilter', productController.getOffersFilter);
 router.get('/transactionHistoryUser', auth, productController.transactionHistoryUser);
 router.post('/createOfferFavourites', auth, productController.createOfferFavourites);
 router.post('/getFavouriteOffers', auth, productController.getFavouriteOffers);
+router.post('/deleteFavouriteOffer', auth, productController.deleteFavouriteOffer);
 router.post('/getSubAttributes', productController.getSubAttributes);
 router.post('/getAttributesMapping', productController.getAttributesMapping);
 router.get('/getCategories', productController.getCategories);

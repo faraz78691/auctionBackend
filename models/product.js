@@ -116,6 +116,7 @@ module.exports = {
                                   ORDER BY remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset};`);
     }
   },
+
   getOffersByUSerId: async (where, limit, offset) => {
     return db.query(`SELECT
         id,
@@ -313,6 +314,10 @@ module.exports = {
 
   getFavouriteOffersByUserId: async (user_id) => {
     return db.query(`select * from  favourites_offer where user_id  = '${user_id}'`);
+  },
+
+  deleteFavouriteOffer: async (offer_id, user_id) => {
+    return await db.query('DELETE FROM `favourites_offer` WHERE offer_id = ? AND user_id = ?', [offer_id, user_id]);
   },
 
   getSubAttributesByID: async (id) => {
