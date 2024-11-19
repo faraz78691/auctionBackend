@@ -1523,6 +1523,8 @@ exports.createCheckoutSession = async (req, res) => {
       }
       const payment_method = payment_method_types == '1' ? ['card'] : ['twint']
 
+      const amountInCents = Math.round(amount * 100);
+
       // Create Checkout session
       const session = await stripe.checkout.sessions.create({
         payment_method_types: payment_method_types == '1' ? ['card'] : ['twint'],
@@ -1533,7 +1535,7 @@ exports.createCheckoutSession = async (req, res) => {
             price_data: {
               currency: currency,
               product_data: { name: 'Order Payment' },
-              unit_amount: amount * 100 // amount in cents
+              unit_amount: amountInCents // amount in cents
             },
             quantity: 1
           }
@@ -1555,6 +1557,8 @@ exports.createCheckoutSession = async (req, res) => {
       });
     }
   } catch (error) {
+    console.log(error);
+
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };
@@ -1919,7 +1923,7 @@ exports.addAccountDetail = async (req, res) => {
         return res.status(200).json({ error: true, message: 'Failed to add account details. Please check the information provided.', success: false, status: 200 });
       }
     }
-  } catch (error) {    
+  } catch (error) {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };
