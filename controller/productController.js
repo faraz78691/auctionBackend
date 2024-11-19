@@ -1333,19 +1333,18 @@ exports.createBuyTransaction = async (req, res) => {
 
       return res.json({
         success: true,
-        message: "Bid Created",
+        message: "Item bought successfully",
         status: 200,
         insertId: resultInserted.insertId,
       });
     } else {
       return res.json({
         success: false,
-        message: "No Data Found",
+        message: "Item not bought",
         status: 400,
       });
     }
   } catch (err) {
-    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",
