@@ -29,7 +29,8 @@ const {
   addSearch,
   getSearchById,
   addFollowUpByUser,
-  getFollowupById
+  getFollowupById,
+  getUserById
 } = require("../models/users");
 const { updateData } = require("../models/common");
 const Joi = require("joi");
@@ -1855,7 +1856,7 @@ exports.getFollowUp = async (req, res) => {
 exports.getUserById = async (req, res) => {
   try {
     const { user_id } = req.query;
-    const findUser = await fetchUserById(user_id);
+    const findUser = await getUserById(user_id);
     if (findUser.length > 0) {
       delete findUser[0].password;
       delete findUser[0].token;

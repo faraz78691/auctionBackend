@@ -152,8 +152,12 @@ module.exports = {
     return await db.query('INSERT INTO `tbl_followup` SET ?', [data]);
   },
 
-  getFollowupById: async(id) => {
+  getFollowupById: async (id) => {
     return await db.query('SELECT tbl_followup.*, users.user_name FROM `tbl_followup` LEFT JOIN users ON users.id = tbl_followup.follow_user_id WHERE user_id = ? ORDER BY tbl_followup.id DESC', [id]);
+  },
+
+  getUserById: async (id) => {
+    return await db.query('SELECT users.*, COUNT(buy_sell_transactions.seller_id) AS seller_count FROM users LEFT JOIN buy_sell_transactions ON buy_sell_transactions.seller_id = users.id WHERE users.id = ?', [id]);
   }
 
 };
