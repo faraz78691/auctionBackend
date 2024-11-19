@@ -1471,9 +1471,9 @@ exports.updateSetting = async (req, res) => {
         } else {
             const resultSetting = await updateSettingById(id, commission);
             if (resultSetting.affectedRows > 0) {
-                return res.status(200).json({ error: false, message: "Seeting update successfully", success: true, status: 200, transdactionData: resultSetting });
+                return res.status(200).json({ error: false, message: "Commission update successfully", success: true, status: 200, transdactionData: resultSetting });
             } else {
-                return res.status(200).json({ error: true, message: "Setting not update", success: false, status: 404, highestBid: null });
+                return res.status(200).json({ error: true, message: "Commission not update", success: false, status: 404, highestBid: null });
             }
         }
     } catch (error) {

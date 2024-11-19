@@ -1827,7 +1827,7 @@ exports.addFollowUp = async (req, res) => {
   }
 };
 
-exports.getFollowUp = async(req, res) => {
+exports.getFollowUp = async (req, res) => {
   try {
     const userId = req.user.id;
     const findResult = await getFollowupById(userId);
@@ -1850,4 +1850,22 @@ exports.getFollowUp = async(req, res) => {
   } catch (error) {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
-}
+};
+
+exports.getUserById = async (req, res) => {
+  try {
+    const { user_id } = req.query;
+    const findUser = await fetchUserById(user_id);
+    if (findUser.length > 0) {
+      delete findUser[0].password;
+      delete findUser[0].token;
+      delete findUser[0].fcm_token;
+      delete findUser[0].stripe_customer_id;
+      return res.status(200).json({ error: false, message: "User data retrieved successfully.", status: 200, success: true, data: findUser[0] });
+    } else {
+      return res.status(200).json({ error: true, message: "User not found.", status: 200, success: false, data: [] });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
