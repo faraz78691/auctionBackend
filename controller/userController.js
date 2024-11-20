@@ -1594,9 +1594,11 @@ exports.payWithSavedCard = async (req, res) => {
       });
     }
 
+    const amountInCents = Math.round(amount * 100);
+
     // Create a PaymentIntent with the saved payment method
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100, // amount in cents
+      amount: amountInCents, // amount in cents
       currency: currency,
       customer: customerId,
       payment_method: paymentMethodId,
