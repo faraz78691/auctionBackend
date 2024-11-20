@@ -752,7 +752,7 @@ exports.getOffers = async (req, res) => {
       var hours = Number(timeArray[0]) % 24;
       time = hours.toString() + ":" + timeArray[1] + ":" + timeArray[1];
       element.remaining_time = time;
-      if (element.product_id != 0) {
+      if (element.product_id != 0) {        
         const countR = await getNoOfBids(element.id);
         //const maxBidR = await getMaxBidF(element.product_id);
         if (countR.length > 0) {
@@ -767,7 +767,7 @@ exports.getOffers = async (req, res) => {
             max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
             count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
           }
-        }
+        }        
 
         const categoryRes = await getCategoryIdByProductId(element.product_id);
         if (categoryRes.length > 0) {
@@ -785,10 +785,10 @@ exports.getOffers = async (req, res) => {
           element.main_image_link = imageR[0].main_image;
         }
       }
-      if(user_id != ''){
+      if (user_id != '') {
         var bidDetail = await getBidDetailsByID(element.id, user_id);
         if (bidDetail.length > 0) {
-          element.user_bid = bidDetail[0]?.bid;
+          element.self_user_bid = bidDetail[0]?.bid;
         }
       }
     }
@@ -851,7 +851,7 @@ exports.getOffers = async (req, res) => {
         status: 400,
       });
     }
-  } catch (err) {    
+  } catch (err) {
     return res.json({
       success: false,
       message: "Internal server error",
