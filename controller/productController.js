@@ -1137,18 +1137,21 @@ exports.getOffer = async (req, res) => {
     var offerRes = await getOfferDetailsByID(offerId);
     if (offerRes.length > 0) {
       var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
-      if (offerRes[0].offfer_buy_status != 1 && offerRes[0].is_reactivable == 1 && moment(offerRes[0].end_date).format('YYYY-MM-DD HH:mm:ss') <= currDate && offerRes[0].no_of_times_reactivated != 0) {
-        const newEndDate = moment(offerRes[0].end_date)
-          .add(Number(offerRes[0].length_oftime), 'days').format('YYYY-MM-DD HH:mm:ss'); // Add length of time (in days)
+      const endDate = moment(offerRes[0].end_date).format('YYYY-MM-DD HH:mm:ss');
+      if (moment(endDate).isSameOrBefore(currDate)) {
+        if (offerRes[0].offfer_buy_status != 1 && offerRes[0].is_reactivable == 1 && offerRes[0].no_of_times_reactivated != 0) {
+          const newEndDate = moment(offerRes[0].end_date)
+            .add(Number(offerRes[0].length_oftime), 'days').format('YYYY-MM-DD HH:mm:ss'); // Add length of time (in days)
 
-        const offerStartDate = moment(offerRes[0].offerStart)
-          .add(Number(offerRes[0].length_oftime), 'days').format('YYYY-MM-DD HH:mm:ss');
+          const offerStartDate = moment(offerRes[0].offerStart)
+            .add(Number(offerRes[0].length_oftime), 'days').format('YYYY-MM-DD HH:mm:ss');
 
-        // Update the number of times the offer has been reactivated, but ensure it doesn't go below zero
-        offerRes[0].no_of_times_reactivated = offerRes[0].no_of_times_reactivated > 0 ? offerRes[0].no_of_times_reactivated - 1 : 0;
+          // Update the number of times the offer has been reactivated, but ensure it doesn't go below zero
+          offerRes[0].no_of_times_reactivated = offerRes[0].no_of_times_reactivated > 0 ? offerRes[0].no_of_times_reactivated - 1 : 0;
 
-        // Update the offer's end date and reactivation count in the database
-        await updateOfferEndDate(offerRes[0].id, offerStartDate, newEndDate, offerRes[0].no_of_times_reactivated);
+          // Update the offer's end date and reactivation count in the database
+          await updateOfferEndDate(offerRes[0].id, offerStartDate, newEndDate, offerRes[0].no_of_times_reactivated);
+        }
       }
 
       var startDateTime = offerRes[0].start_date.toString();
@@ -1261,88 +1264,97 @@ exports.createBuyTransaction = async (req, res) => {
       });
     }
     const user_id = req.user.id;
-    var transactionId = "";
-    var doContinue = 1;
-    do {
-      transactionId = randomstring.generate({
-        length: 12,
-        charset: "alphanumeric",
-      });
-      const found = await checkTransactionID(transactionId);
-      if (found.length > 0) {
-        doContinue = 0;
-      }
-    } while (doContinue);
+    var offerRes = await getOfferDetailsByID(offer_id);
+    if (offerRes[0].offfer_buy_status != 1) {
+      var transactionId = "";
+      var doContinue = 1;
+      do {
+        transactionId = randomstring.generate({
+          length: 12,
+          charset: "alphanumeric",
+        });
+        const found = await checkTransactionID(transactionId);
+        if (found.length > 0) {
+          doContinue = 0;
+        }
+      } while (doContinue);
 
-    const transactionDetails = {
-      transaction_id: transactionId,
-      buyer_id: user_id,
-      seller_id: seller_id,
-      // product_id: product_id,
-      offer_id: offer_id,
-      amount: amount,
-      is_buy_now: is_buy_now,
-      is_max_bid: is_max_bid,
-      created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
-    };
-    const resultInserted = await insertTransaction(transactionDetails);
-    if (resultInserted.affectedRows > 0) {
-      const resultSetting = await findSetting();
-      const userFessPayDetails = {
+      const transactionDetails = {
         transaction_id: transactionId,
         buyer_id: user_id,
         seller_id: seller_id,
+        // product_id: product_id,
         offer_id: offer_id,
         amount: amount,
-        commissin_percent: resultSetting[0].commission,
-        pay_amount: (amount * resultSetting[0].commission) / 100 <= 200 ? (amount * resultSetting[0].commission) / 100 : 200,
         is_buy_now: is_buy_now,
         is_max_bid: is_max_bid,
         created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
       };
-      const addUserFeesPayDetails = await insertUserFeesPay(userFessPayDetails);
-      const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id WHERE offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name');
-      const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received');
-      if (getFCM[0].item_sold == 1) {
-        const message = {
-          notification: {
-            title: 'Your Item Has Been Sold!',
-            body: `Congratulations! Your product "${getSellerID[0].name}" has been sold. Thank you for using our platform!`
-          },
-          token: getFCM[0].fcm_token
+      const resultInserted = await insertTransaction(transactionDetails);
+      if (resultInserted.affectedRows > 0) {
+        const resultSetting = await findSetting();
+        const userFessPayDetails = {
+          transaction_id: transactionId,
+          buyer_id: user_id,
+          seller_id: seller_id,
+          offer_id: offer_id,
+          amount: amount,
+          commissin_percent: resultSetting[0].commission,
+          pay_amount: (amount * resultSetting[0].commission) / 100 <= 200 ? (amount * resultSetting[0].commission) / 100 : 200,
+          is_buy_now: is_buy_now,
+          is_max_bid: is_max_bid,
+          created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
         };
-        const data = {
-          user_id: getSellerID[0].user_id,
-          notification_type: 'Alert',
-          title: 'Your Item Has Been Sold!',
-          message: `Congratulations! Your product "${getSellerID[0].name}" has been sold. Thank you for using our platform!`
+        const addUserFeesPayDetails = await insertUserFeesPay(userFessPayDetails);
+        const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id WHERE offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name');
+        const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received');
+        if (getFCM[0].item_sold == 1) {
+          const message = {
+            notification: {
+              title: 'Your Item Has Been Sold!',
+              body: `Congratulations! Your product "${getSellerID[0].name}" has been sold. Thank you for using our platform!`
+            },
+            token: getFCM[0].fcm_token
+          };
+          const data = {
+            user_id: getSellerID[0].user_id,
+            notification_type: 'Alert',
+            title: 'Your Item Has Been Sold!',
+            message: `Congratulations! Your product "${getSellerID[0].name}" has been sold. Thank you for using our platform!`
+          }
+          await insertData('tbl_notification_messages', '', data);
+          await send_notification(message, getSellerID[0].user_id);
         }
-        await insertData('tbl_notification_messages', '', data);
-        await send_notification(message, getSellerID[0].user_id);
-      }
-      const transactionDetail = {
-        offer_id: offer_id,
-        transaction_id: transactionId,
-        buyer_id: user_id,
-        seller_id: seller_id,
-        buyer_message: 'Congratulations, you have purchased this item!',
-        seller_message: 'Congratulations, you have sold this item!',
-        buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
-        seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
-      };
-      const paymenytFlowInsert = await insertPaymentFlowInsert(transactionDetail);
-      const offerupdate = await updateOfferBuyStatus("1", offer_id);
+        const transactionDetail = {
+          offer_id: offer_id,
+          transaction_id: transactionId,
+          buyer_id: user_id,
+          seller_id: seller_id,
+          buyer_message: 'Congratulations, you have purchased this item!',
+          seller_message: 'Congratulations, you have sold this item!',
+          buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
+          seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+        };
+        const paymenytFlowInsert = await insertPaymentFlowInsert(transactionDetail);
+        const offerupdate = await updateOfferBuyStatus("1", offer_id);
 
-      return res.json({
-        success: true,
-        message: "Item bought successfully",
-        status: 200,
-        insertId: resultInserted.insertId,
-      });
+        return res.json({
+          success: true,
+          message: "Item bought successfully",
+          status: 200,
+          insertId: resultInserted.insertId,
+        });
+      } else {
+        return res.json({
+          success: false,
+          message: "Item not bought",
+          status: 400,
+        });
+      }
     } else {
       return res.json({
         success: false,
-        message: "Item not bought",
+        message: "This order already placed",
         status: 400,
       });
     }
@@ -1737,7 +1749,7 @@ exports.getFavouriteOffers = async (req, res) => {
 
 exports.deleteFavouriteOffer = async (req, res) => {
   try {
-    const user_id = req.user.id;    
+    const user_id = req.user.id;
     const { offer_id } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
@@ -1774,7 +1786,7 @@ exports.deleteFavouriteOffer = async (req, res) => {
         });
       }
     }
-  } catch (error) {    
+  } catch (error) {
     return res.json({
       success: false,
       message: "Internal server error" + ':' + error.message,

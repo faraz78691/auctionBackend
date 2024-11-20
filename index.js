@@ -49,7 +49,7 @@ app.get('/', (req, res) => {
 
 app.get('/amount_add_successfull', async (req, res) => {
   try {
-    const { user_id, totalAmount, payment_method, offer_id, session_id } = req.query;
+    const { user_id, totalAmount, payment_method, offer_id, session_id, id } = req.query;
 
     // Retrieve the session details using the session ID
     const session = await stripe.checkout.sessions.retrieve(session_id);
@@ -65,7 +65,7 @@ app.get('/amount_add_successfull', async (req, res) => {
     const paymentIntentId = session.payment_intent; // Payment ID
     const status = '1'
     const payment_date = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
-    await db.query('UPDATE `tbl_user_commissin_fees` SET `payment_type`= "' + payment_method + '", `payment_id` = "' + paymentIntentId + '", `payment_date` = "' + payment_date + '", `currency` = "' + session.currency + '", `status` = "' + status + '" WHERE offer_id = "' + offer_id + '" AND seller_id = "' + user_id + '"');
+    await db.query('UPDATE `tbl_user_commissin_fees` SET `payment_type`= "' + payment_method + '", `payment_id` = "' + paymentIntentId + '", `payment_date` = "' + payment_date + '", `currency` = "' + session.currency + '", `status` = "' + status + '" WHERE id = "' + id + '"');
     res.render(path.join(__dirname, "/view/", "amount_add_success.ejs"), {
       message,
       amount,

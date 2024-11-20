@@ -1336,12 +1336,14 @@ exports.updateProfile = async (req, res) => {
         success: false
       });
     } else {
-      if (current_password != 'undefined') {
+      if (current_password && current_password !== 'undefined' && current_password !== '') {
         var match = bcrypt.compareSync(current_password, userInfo.password);
+      } else {
+        var match = true; // Skip password check if current_password is not provided
       }
-
-      if (current_password != 'undefined' ? match : true) {
-        const userHashPassword = password !== undefined ? await hashPassword(password) : userInfo.password;
+      if (match) {
+        const userHashPassword =
+          password && password !== 'undefined' && password !== '' ? await hashPassword(password) : userInfo.password;
         let user = {
           first_name: first_name != 'undefined' ? first_name : userInfo.first_name,
           last_name: last_name != 'undefined' ? last_name : userInfo.last_name,
@@ -1489,7 +1491,7 @@ exports.sendOtp = async (req, res) => {
 
 exports.createCheckoutSession = async (req, res) => {
   const userId = req.user.id;
-  const { offer_id, amount, currency, payment_method_types } = req.body;
+  const { offer_id, amount, currency, payment_method_types, id } = req.body;
 
   try {
     // Retrieve or create a Stripe customer
@@ -1525,7 +1527,7 @@ exports.createCheckoutSession = async (req, res) => {
             quantity: 1
           }
         ],
-        success_url: `${process.env.baseUrl}amount_add_successfull?session_id={CHECKOUT_SESSION_ID}&user_id=${userId}&amount=${amount}&totalAmount=${amount}&payment_method=${payment_method}&offer_id=${offer_id}`,
+        success_url: `${process.env.baseUrl}amount_add_successfull?session_id={CHECKOUT_SESSION_ID}&user_id=${userId}&amount=${amount}&totalAmount=${amount}&payment_method=${payment_method}&offer_id=${offer_id}&id=${id}`,
         cancel_url: `${process.env.baseUrl}amount_add_cancelled?session_id={CHECKOUT_SESSION_ID}`,
         saved_payment_method_options: {
           payment_method_save: 'enabled',
@@ -1542,8 +1544,6 @@ exports.createCheckoutSession = async (req, res) => {
       });
     }
   } catch (error) {
-    console.log(error);
-
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };
@@ -1580,7 +1580,7 @@ exports.getSavedCards = async (req, res) => {
 exports.payWithSavedCard = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { paymentMethodId, amount, currency, offerId } = req.body;
+    const { paymentMethodId, amount, currency, offerId, id } = req.body;
     // Retrieve Stripe customer ID from your database
     const user = await fetchUserById(userId);
     const customerId = user[0].stripe_customer_id;
@@ -1612,7 +1612,7 @@ exports.payWithSavedCard = async (req, res) => {
       const status = '1'
       const payment_date = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
       const payment_method = 'card'
-      await updateUserCommissinFees(userId, offerId, status, payment_method, paymentMethodId, payment_date, currency)
+      await updateUserCommissinFees(userId, offerId, status, payment_method, paymentMethodId, payment_date, currency, id)
       res.json({ success: true, message: 'Payment successful' });
     } else {
       res.json({ success: false, message: 'Payment requires further action' });

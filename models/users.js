@@ -132,8 +132,8 @@ module.exports = {
     return await db.query('UPDATE `tbl_messages` SET `is_read` = "1" WHERE user_id = "' + id + '"');
   },
 
-  updateUserCommissinFees: async (userId, offerId, status, payment_method, paymentMethodId, payment_date, currency) => {
-    return await db.query('UPDATE `tbl_user_commissin_fees` SET `payment_type`= "' + payment_method + '", `payment_id` = "' + paymentMethodId + '", `payment_date` = "' + payment_date + '", `currency` = "' + currency + '", `status` = "' + status + '" WHERE offer_id = "' + offerId + '" AND seller_id = "' + userId + '"');
+  updateUserCommissinFees: async (userId, offerId, status, payment_method, paymentMethodId, payment_date, currency, id) => {
+    return await db.query('UPDATE `tbl_user_commissin_fees` SET `payment_type`= "' + payment_method + '", `payment_id` = "' + paymentMethodId + '", `payment_date` = "' + payment_date + '", `currency` = "' + currency + '", `status` = "' + status + '" WHERE id = "' + id + '"');
   },
 
   getNotificationsByUserId: async (id) => {
