@@ -30,6 +30,7 @@ const {
   getSearchById,
   addFollowUpByUser,
   getFollowupById,
+  deleteFollowupById,
   getUserById,
   updateAccountDetails
 } = require("../models/users");
@@ -1844,6 +1845,37 @@ exports.getFollowUp = async (req, res) => {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };
+
+exports.deleteFollowup = async (req, res) => {
+  try {
+    const {id} = req.query;
+    const schema = Joi.alternatives(
+      Joi.object({
+        id: Joi.number().required().empty(),
+      })
+    );
+    const result = schema.validate(req.query);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      return res.json({
+        message: result.error.details[0].message,
+        error: message,
+        missingParams: result.error.details[0].message,
+        status: 200,
+        success: false,
+      });
+    } else {
+      const deleteResult = await deleteFollowupById(id);      
+      if (deleteResult.affectedRows > 0) {
+        return res.status(200).json({ error: false, message: "Successfully unfollowed.", status: 200, success: true });
+      } else {
+        return res.status(200).json({ error: true, message: "Already unfollowed. Please follow again.", status: 200, success: false });
+      }
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+}
 
 exports.getUserById = async (req, res) => {
   try {
