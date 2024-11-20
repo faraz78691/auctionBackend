@@ -148,8 +148,8 @@ exports.dashboard = async (req, res) => {
             data: {
                 totalOffers: totalOffers[0].total_offers,
                 totalDeliveredOffers: totalDeliveredOffers[0].total_delivered,
-                totalRevenue: totalRevenue[0].total_revenue,
-                totalPaidRevenue: totalPaidRevenue[0].total_paid_revenue,
+                totalRevenue: totalRevenue[0].total_revenue == null  ? 0 : totalRevenue[0].total_revenue,
+                totalPaidRevenue: totalPaidRevenue[0].total_paid_revenue == null ? 0 : totalPaidRevenue[0].total_paid_revenue,
             },
             message: "Dashboard data retrieved successfully",
         });
