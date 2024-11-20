@@ -468,7 +468,7 @@ exports.getSellingSectionForSeller = async (req, res) => {
         if (endDate > currDate) {
           tempObj.status = 'Open';
         } else {
-          tempObj.status = 'Close';
+          tempObj.status = 'Not Sold';
         }
         finalOutput.push(tempObj);
       }
