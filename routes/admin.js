@@ -5,7 +5,7 @@ const { adminAuth } = require('../middleware/auth');
 
 router.post('/login', adminController.login);
 router.post('/logout', adminController.logout);
-
+router.get('/dashboard', adminAuth, adminController.dashboard);
 //Users
 router.get('/getAllUsers', adminAuth, adminController.getAllUsers);
 router.get('/getAllUsersOffers', adminAuth, adminController.getAllUsersOffers);

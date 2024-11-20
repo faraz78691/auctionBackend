@@ -302,7 +302,7 @@ exports.login = async (req, res) => {
               token: "",
               userinfo: {},
             });
-          } else{
+          } else {
             await updateLoginStatusByEmail(email);
             const token = jwt.sign(
               {
@@ -310,7 +310,7 @@ exports.login = async (req, res) => {
               },
               "SecretKey"
             );
-  
+
             await tokenUpdate(token, fcm_token, result[0].id);
             const result1 = await fetchUserByEmail(email);
             delete result1[0].token;
@@ -1901,6 +1901,27 @@ exports.addAccountDetail = async (req, res) => {
       } else {
         return res.status(200).json({ error: true, message: 'Failed to add account details. Please check the information provided.', success: false, status: 200 });
       }
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
+
+exports.getAccountDetail = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const accountResult = await fetchUserById(userId);
+    if (accountResult.length > 0) {
+      return res.status(200).json({
+        error: false, message: "Successfully get account details", status: 200, success: true, data: {
+          account_no: accountResult[0].account_no,
+          holder_name: accountResult[0].holder_name,
+          holder_address: accountResult[0].holder_address,
+          holder_message: accountResult[0].holder_message
+        }
+      });
+    } else {
+      return res.status(200).json({ error: true, message: "Account details not found", status: 200, success: false, data: [] });
     }
   } catch (error) {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });

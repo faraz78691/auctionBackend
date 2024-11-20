@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 var moment = require('moment-timezone');
 
-const { findEmail, tokenUpdate, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid, getTransactionByOfferId, findAllTransaction, updateMsgCount, findSetting, updateSettingById } = require("../models/admin");
+const { findEmail, tokenUpdate, getTotalOffers, getTotalDeliverdOffers, getTotalRevenue, getTotalPaidRevenue, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid, getTransactionByOfferId, findAllTransaction, updateMsgCount, findSetting, updateSettingById } = require("../models/admin");
 const { updateData, getSelectedColumn } = require("../models/common");
 
 exports.login = async (req, res) => {
@@ -77,7 +77,6 @@ exports.login = async (req, res) => {
             });
         }
     } catch (err) {
-        console.log(err);
         return res.json({
             success: false,
             message: "Internal server error",
@@ -129,7 +128,6 @@ exports.logout = async (req, res) => {
             });
         }
     } catch (err) {
-        console.log(err);
         return res.json({
             success: false,
             message: "Internal server error",
@@ -138,6 +136,32 @@ exports.logout = async (req, res) => {
         });
     }
 };
+
+exports.dashboard = async (req, res) => {
+    try {
+        const totalOffers = await getTotalOffers();
+        const totalDeliveredOffers = await getTotalDeliverdOffers();
+        const totalRevenue = await getTotalRevenue();
+        const totalPaidRevenue = await getTotalPaidRevenue();
+        return res.json({
+            success: true,
+            data: {
+                totalOffers: totalOffers[0].total_offers,
+                totalDeliveredOffers: totalDeliveredOffers[0].total_delivered,
+                totalRevenue: totalRevenue[0].total_revenue,
+                totalPaidRevenue: totalPaidRevenue[0].total_paid_revenue,
+            },
+            message: "Dashboard data retrieved successfully",
+        });
+    } catch (error) {
+        return res.json({
+            success: false,
+            message: "Internal server error",
+            error: err,
+            status: 500,
+        });
+    }
+}
 
 exports.getAllUsers = async (req, res) => {
     try {

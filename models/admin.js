@@ -8,6 +8,22 @@ module.exports = {
         return db.query(`UPDATE users SET token = ${token} WHERE id = ${id}`);
     },
 
+    getTotalOffers: async () => {
+        return await db.query('SELECT COUNT(*) AS total_offers FROM `offers_created`');
+    },
+
+    getTotalDeliverdOffers: async () => {
+        return await db.query('SELECT COUNT(*) AS total_delivered FROM `offers_created` LEFT JOIN buy_sell_transactions ON buy_sell_transactions.offer_id = offers_created.id WHERE buy_sell_transactions.buyer_status >= "3";');
+    },
+
+    getTotalRevenue: async () => {
+        return await db.query('SELECT SUM(pay_amount) AS total_revenue FROM `tbl_user_commissin_fees`;');
+    },
+
+    getTotalPaidRevenue: async () => {
+        return await db.query('SELECT SUM(pay_amount) AS total_paid_revenue FROM `tbl_user_commissin_fees` WHERE tbl_user_commissin_fees.status = "1";');
+    },
+
     fetchAllUsers: async () => {
         return db.query('SELECT id, first_name, last_name,user_name, email, phone_number, street_number, street, city, state, country, postal_code,  concat(street_number, " ", street, " ", city, " ", state, " ", country, " ", postal_code ) AS address FROM `users` WHERE role_id = 1');
     },
