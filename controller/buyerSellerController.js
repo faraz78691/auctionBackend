@@ -428,6 +428,7 @@ exports.getSellingSectionForSeller = async (req, res) => {
         status: 500,
       });
     }
+
     const offersDetails = await getOffersBySeller(user_id);
     if (offersDetails.length > 0) {
       var finalOutput = [];
@@ -460,6 +461,15 @@ exports.getSellingSectionForSeller = async (req, res) => {
             tempObj.buyer_name = buyerNameArr[0]?.name;
           }
         }
+
+        var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
+        var endDate = moment(tempObj.end_date).tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
+
+        if (endDate > currDate) {
+          tempObj.status = 'Open';
+        } else {
+          tempObj.status = 'Close';
+        }
         finalOutput.push(tempObj);
       }
 
@@ -477,6 +487,8 @@ exports.getSellingSectionForSeller = async (req, res) => {
       });
     }
   } catch (err) {
+    console.log(err);
+
     return res.json({
       success: false,
       message: "Internal server error",
@@ -971,14 +983,14 @@ exports.updateTransactionStatus = async (req, res) => {
       const offerResult = await findOfferByOfferBuyerSellerId(offer_id, buyer_id, seller_id);
       if (offerResult.length > 0) {
         if (seller_status == 'null') {
-          const updateBuuer = await updateOfferBuyerStatus(offer_id, buyer_id, seller_id, buyer_status, buyer_status == '3' ? '3' : offerResult[0].seller_status)
+          const updateBuuer = await updateOfferBuyerStatus(offer_id, buyer_id, seller_id, buyer_status, buyer_status == '3' ? (offerResult[0].seller_status < 3 ? '3' : offerResult[0].seller_status) : offerResult[0].seller_status)
           const addPaymenetFlow = {
             offer_id: offer_id,
             transaction_id: offerResult[0].transaction_id,
             buyer_id: buyer_id,
             seller_id: seller_id,
             buyer_status: buyer_status,
-            seller_status: buyer_status == '3' ? '3' : offerResult[0].seller_status,
+            seller_status: buyer_status == '3' ? (offerResult[0].seller_status < 3 ? '3' : offerResult[0].seller_status) : offerResult[0].seller_status,
             buyer_message: buyer_message,
             seller_message: seller_message,
             buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
