@@ -487,8 +487,6 @@ exports.getSellingSectionForSeller = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err);
-
     return res.json({
       success: false,
       message: "Internal server error",

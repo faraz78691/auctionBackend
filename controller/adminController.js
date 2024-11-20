@@ -534,14 +534,14 @@ exports.getProductByCategoryId = async (req, res) => {
                     success: false,
                     category: category[0],
                     message: "product failed to get",
-                    status: 400,
+                    status: 200,
                 });
             }
         } else {
             return res.json({
                 success: false,
                 message: "Category Id Wrong",
-                status: 400,
+                status: 200,
             });
         }
     } catch (err) {
@@ -589,7 +589,6 @@ exports.getProductByProductId = async (req, res) => {
             });
         }
     } catch (err) {
-        console.log(err);
         return res.json({
             success: false,
             message: "Internal server error",
@@ -865,7 +864,7 @@ exports.getTypeAttributesByProductId = async (req, res) => {
             return res.json({
                 success: false,
                 message: "Product attributes no t found",
-                status: 400,
+                status: 200,
             });
         }
     } catch (err) {
@@ -1007,7 +1006,7 @@ exports.getAttributesByAttributeTypeId = async (req, res) => {
             return res.json({
                 success: false,
                 message: "Attribute Id Wrong",
-                status: 400,
+                status: 200,
             });
         }
     } catch (err) {
@@ -1435,7 +1434,7 @@ exports.getLiveHighestBid = async (req, res) => {
         if (result.length > 0) {
             return res.status(200).json({ error: false, message: "Highest bid successfully found", success: true, status: 200, highestBid: result });
         } else {
-            return res.status(404).json({ error: true, message: "No Live Bids Found", success: false, status: 404, highestBid: null });
+            return res.status(200).json({ error: true, message: "No Live Bids Found", success: false, status: 200, highestBid: null });
         }
     } catch (error) {
         return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
