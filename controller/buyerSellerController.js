@@ -464,8 +464,10 @@ exports.getSellingSectionForSeller = async (req, res) => {
 
         var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
         var endDate = moment(tempObj.end_date).tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
-
+console.log("currDate====",currDate)
+console.log("endDate====",endDate)
         if (endDate > currDate) {
+          console.log("Opennn coming");
           tempObj.status = 'Open';
         } else {
           tempObj.status = 'Not Sold';
