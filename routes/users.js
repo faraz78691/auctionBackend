@@ -33,5 +33,6 @@ router.post('/add-followUp', auth, userController.addFollowUp);
 router.get('/get-followUp', auth, userController.getFollowUp);
 router.get('/get-userbyid', userController.getUserById);
 router.post('/add-accountdetail', auth, userController.addAccountDetail);
+router.get('/get-accountdetail', auth, userController.getAccountDetail);
 
 module.exports = router;
