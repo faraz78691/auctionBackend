@@ -1868,10 +1868,9 @@ exports.addAccountDetail = async (req, res) => {
 
     // Validate input using Joi
     const schema = Joi.object({
-      account_no: Joi.string().pattern(/^\d+$/).allow('').optional().messages({
+      account_no: Joi.string().allow('').optional().messages({
         'string.base': 'Account number must be a string',
         'string.empty': 'Account number cannot be empty',
-        'string.pattern.base': 'Account number must contain only digits',
       }),
       holder_name: Joi.string().min(3).allow('').optional().messages({
         'string.base': 'Holder name must be a string',
