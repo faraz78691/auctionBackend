@@ -66,6 +66,7 @@ const {
   getOffersByUserid,
   getOffersByUSerId
 } = require("../models/product");
+const { getBidDetailsByID } = require("../models/buyer_seller")
 const { findSetting } = require("../models/admin");
 const { send_notification } = require("../helper/sendNotification");
 const {
@@ -784,6 +785,12 @@ exports.getOffers = async (req, res) => {
           element.main_image_link = imageR[0].main_image;
         }
       }
+      if(user_id != ''){
+        var bidDetail = await getBidDetailsByID(element.id, user_id);
+        if (bidDetail.length > 0) {
+          element.user_bid = bidDetail[0]?.bid;
+        }
+      }
     }
     const categoryRes = await getCategoryIdByProductId(product_id);
     let categoryNameRes;
@@ -844,7 +851,7 @@ exports.getOffers = async (req, res) => {
         status: 400,
       });
     }
-  } catch (err) {
+  } catch (err) {    
     return res.json({
       success: false,
       message: "Internal server error",

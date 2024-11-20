@@ -187,7 +187,7 @@ END AS is_favorite FROM offers_created LEFT JOIN favourites_offer ON favourites_
   },
 
   getAllAdminCommissionFees: async () => {
-    return await db.query('SELECT tbl_user_commissin_fees.*, offers_created.offer_unique_id, offers_created.title, seller_user.user_name AS seller_name, buyer_user.user_name AS buyer_name FROM `tbl_user_commissin_fees` LEFT JOIN offers_created ON offers_created.id = tbl_user_commissin_fees.offer_id LEFT JOIN users AS buyer_user ON buyer_user.id = tbl_user_commissin_fees.buyer_id LEFT JOIN users AS seller_user ON seller_user.id = tbl_user_commissin_fees.seller_id;');
+    return await db.query('SELECT tbl_user_commissin_fees.*, offers_created.offer_unique_id, offers_created.title, seller_user.user_name AS seller_name, buyer_user.user_name AS buyer_name FROM `tbl_user_commissin_fees` LEFT JOIN offers_created ON offers_created.id = tbl_user_commissin_fees.offer_id LEFT JOIN users AS buyer_user ON buyer_user.id = tbl_user_commissin_fees.buyer_id LEFT JOIN users AS seller_user ON seller_user.id = tbl_user_commissin_fees.seller_id ORDER BY tbl_user_commissin_fees.id DESC;');
   },
 
   addRatingReview: async (data) => {

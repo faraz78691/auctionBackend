@@ -175,7 +175,7 @@ exports.getAllUsers = async (req, res) => {
             });
         } else {
             return res.json({
-                message: "Fetch all users failed",
+                message: "Users not found",
                 status: 200,
                 success: true,
             });
@@ -201,7 +201,7 @@ exports.getAllUsersOffers = async (req, res) => {
             });
         } else {
             return res.json({
-                message: "Fetch all users offers failed",
+                message: "Offers not found",
                 status: 200,
                 success: true,
             });
@@ -244,7 +244,7 @@ exports.getAllOffersByUserId = async (req, res) => {
             });
         } else {
             return res.json({
-                message: "Fetch all users offers failed",
+                message: "User offers not found",
                 status: 200,
                 success: true,
             });
@@ -321,12 +321,11 @@ exports.getAllCategory = async (req, res) => {
         } else {
             return res.json({
                 success: true,
-                message: "Fetch all categorys failed",
+                message: "Catgeory not found",
                 status: 200,
             });
         }
     } catch (err) {
-        console.log(err);
         return res.json({
             success: false,
             message: "Internal server error",
@@ -533,7 +532,7 @@ exports.getProductByCategoryId = async (req, res) => {
                 return res.json({
                     success: false,
                     category: category[0],
-                    message: "product failed to get",
+                    message: "Product not found",
                     status: 200,
                 });
             }
@@ -863,7 +862,7 @@ exports.getTypeAttributesByProductId = async (req, res) => {
         } else {
             return res.json({
                 success: false,
-                message: "Product attributes no t found",
+                message: "Attribute type not found",
                 status: 200,
             });
         }
@@ -1005,7 +1004,7 @@ exports.getAttributesByAttributeTypeId = async (req, res) => {
         } else {
             return res.json({
                 success: false,
-                message: "Attribute Id Wrong",
+                message: "Attribute not found",
                 status: 200,
             });
         }

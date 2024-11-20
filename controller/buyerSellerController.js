@@ -148,77 +148,86 @@ exports.acceptPrice = async (req, res) => {
     } while (doContinue);
 
     const length = await getOfferDetailsByID(offer_id);
-    if (length.length > 0) var product_id = length[0].product_id;
-    const transactionDetails = {
-      transaction_id: transactionId,
-      buyer_id: buyer,
-      seller_id: seller,
-      // product_id: product_id,
-      offer_id: offer_id,
-      amount: price,
-      is_buy_now: 1,
-      is_max_bid: 0,
-      created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
-    };
-    const resultInserted = await insertTransaction(transactionDetails);
-    if (resultInserted.affectedRows > 0) {
-      await updateOfferBuyStatus(offer_id, 1);
-      const resultSetting = await findSetting();
-      const userFessPayDetails = {
+
+    if (length[0].offfer_buy_status == '0') {
+      if (length.length > 0) var product_id = length[0].product_id;
+      const transactionDetails = {
         transaction_id: transactionId,
         buyer_id: buyer,
         seller_id: seller,
+        // product_id: product_id,
         offer_id: offer_id,
         amount: price,
-        commissin_percent: resultSetting[0].commission,
-        pay_amount: (price * resultSetting[0].commission) / 100 <= 200 ? (price * resultSetting[0].commission) / 100 : 200,
         is_buy_now: 1,
         is_max_bid: 0,
         created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
       };
-      const addUserFeesPayDetails = await insertUserFeesPay(userFessPayDetails);
-      const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id WHERE offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name');
-      const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received');
-      if (getFCM[0].item_sold == 1) {
-        const message = {
-          notification: {
-            title: 'Your Item Has Been Sold!',
-            body: `Congratulations! Your product "${getSellerID[0].name}" has been sold. Thank you for using our platform!`
-          },
-          token: getFCM[0].fcm_token
+      const resultInserted = await insertTransaction(transactionDetails);
+      if (resultInserted.affectedRows > 0) {
+        await updateOfferBuyStatus(offer_id, 1);
+        const resultSetting = await findSetting();
+        const userFessPayDetails = {
+          transaction_id: transactionId,
+          buyer_id: buyer,
+          seller_id: seller,
+          offer_id: offer_id,
+          amount: price,
+          commissin_percent: resultSetting[0].commission,
+          pay_amount: (price * resultSetting[0].commission) / 100 <= 200 ? (price * resultSetting[0].commission) / 100 : 200,
+          is_buy_now: 1,
+          is_max_bid: 0,
+          created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
         };
-        const data = {
-          user_id: getSellerID[0].user_id,
-          notification_type: 'Alert',
-          title: 'Your Item Has Been Sold!',
-          message: `Congratulations! Your product "${getSellerID[0].name}" has been sold. Thank you for using our platform!`
+        const addUserFeesPayDetails = await insertUserFeesPay(userFessPayDetails);
+        const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id WHERE offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name');
+        const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received');
+        if (getFCM[0].item_sold == 1) {
+          const message = {
+            notification: {
+              title: 'Your Item Has Been Sold!',
+              body: `Congratulations! Your product "${getSellerID[0].name}" has been sold. Thank you for using our platform!`
+            },
+            token: getFCM[0].fcm_token
+          };
+          const data = {
+            user_id: getSellerID[0].user_id,
+            notification_type: 'Alert',
+            title: 'Your Item Has Been Sold!',
+            message: `Congratulations! Your product "${getSellerID[0].name}" has been sold. Thank you for using our platform!`
+          }
+          await insertData('tbl_notification_messages', '', data);
+          await send_notification(message, getSellerID[0].user_id);
         }
-        await insertData('tbl_notification_messages', '', data);
-        await send_notification(message, getSellerID[0].user_id);
+        const transactionDetail = {
+          offer_id: offer_id,
+          transaction_id: transactionId,
+          buyer_id: buyer,
+          seller_id: seller,
+          buyer_message: 'Congratulations, you have purchased this item!',
+          seller_message: 'Congratulations, you have sold this item!',
+          buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
+          seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+        };
+        const paymenytFlowInsert = await insertPaymentFlowInsert(transactionDetail);
+        const updateResult = await updateStatus(offer_id, buyer, seller);
+        if (updateResult.affectedRows > 0) {
+          return res.json({
+            success: true,
+            message: "Offer accepted by Seller",
+            status: 200,
+            insertId: resultInserted.insertId,
+          });
+        }
       }
-      const transactionDetail = {
-        offer_id: offer_id,
-        transaction_id: transactionId,
-        buyer_id: buyer,
-        seller_id: seller,
-        buyer_message: 'Congratulations, you have purchased this item!',
-        seller_message: 'Congratulations, you have sold this item!',
-        buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
-        seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
-      };
-      const paymenytFlowInsert = await insertPaymentFlowInsert(transactionDetail);
-      const updateResult = await updateStatus(offer_id, buyer, seller);
-      if (updateResult.affectedRows > 0) {
-        return res.json({
-          success: true,
-          message: "Offer accepted by Seller",
-          status: 200,
-          insertId: resultInserted.insertId,
-        });
-      }
+    } else {
+      return res.json({
+        success: false,
+        message: "Offer already placed",
+        error: true,
+        status: 200,
+      });
     }
   } catch (err) {
-    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",
@@ -249,12 +258,27 @@ exports.rejectPrice = async (req, res) => {
         success: false,
       });
     }
-
-    const updateResult = await rejectStatus(offer_id, buyer, seller);
-    if (updateResult.affectedRows > 0) {
+    const length = await getOfferDetailsByID(offer_id);
+    if (length[0].offfer_buy_status == '0') {
+      const updateResult = await rejectStatus(offer_id, buyer, seller);
+      if (updateResult.affectedRows > 0) {
+        return res.json({
+          success: true,
+          message: "Offer Rejected by Seller",
+          status: 200,
+        });
+      } else {
+        return res.json({
+          success: true,
+          message: "Offer already rejected",
+          status: 200,
+        });
+      }
+    } else {
       return res.json({
-        success: true,
-        message: "Offer Rejected by Seller",
+        success: false,
+        message: "Offer already placed",
+        error: true,
         status: 200,
       });
     }
