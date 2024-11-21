@@ -164,7 +164,7 @@ exports.acceptPrice = async (req, res) => {
       };
       const resultInserted = await insertTransaction(transactionDetails);
       if (resultInserted.affectedRows > 0) {
-        await updateOfferBuyStatus(offer_id, 1);
+        await updateOfferBuyStatus("1", offer_id);
         const resultSetting = await findSetting();
         const userFessPayDetails = {
           transaction_id: transactionId,
