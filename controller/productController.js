@@ -2736,7 +2736,9 @@ exports.updateOfferExpired = async (req, res) => {
         var buyer = 0;
         var max_bid = 0;
         const result = await getMaxBidOnOffer(offerId);
+        console.log(result);
         if (result.length > 0) {
+          
           buyer = result[0].user_id;
           max_bid = result[0].bid
           do {
@@ -2826,7 +2828,7 @@ exports.updateOfferExpired = async (req, res) => {
             }
           }
         } else {
-          return res.status(200).json({ error: true, message: "Not found any bid in this offer", success: false, data: [] });
+          console.log("Not found any bid in this offer");
         }
       }
     } else {
