@@ -4,12 +4,24 @@ const cors = require('cors');
 const app = express();
 require('dotenv').config();
 const db = require("./utils/database");
-// Setup HTTP server
-const server = http.createServer(app);
+const https = require("https");
+const fs = require("fs");
+
+
+// const server = http.createServer(app);
+const server = https
+  .createServer(
+    {
+      ca: fs.readFileSync("/var/www/html/ssl/ca_bundle.crt"),
+      key: fs.readFileSync("/var/www/html/ssl/private.key"),
+      cert: fs.readFileSync("/var/www/html/ssl/certificate.crt"),
+    },
+    app
+  )
+
 const stripe = require('stripe')(process.env.STRIPE_SECRERT_KEY);
-// Import the Socket.IO configuration from the socket.js file
 const initializeSocket = require("./middleware/socket");
-const io = initializeSocket(server); // Initialize Socket.IO with the server
+const io = initializeSocket(server);
 const path = require('path');
 const user = require('./routes/users');
 const buyer_seller = require('./routes/buyer_seller');
@@ -17,6 +29,10 @@ const admin = require('./routes/admin');
 const product = require('./routes/product');
 const { updateOfferExpired } = require('./helper/offerControl');
 var moment = require('moment-timezone');
+
+
+
+
 app.use(cors());
 global.__basedir = __dirname;
 
@@ -32,7 +48,9 @@ app.use('/product', product);
 app.use('/user', user);
 app.use('/buyer', buyer_seller);
 
-// Set EJS as the template engine
+
+
+
 app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => {
@@ -101,6 +119,8 @@ app.get('/amount_add_cancelled', async (req, res) => {
 setInterval(updateOfferExpired, 600000);
 
 const PORT = process.env.PORT || 5000;
+
+
 server.listen(PORT, function () {
   console.log(`Server running on port ${PORT}`);
 });
