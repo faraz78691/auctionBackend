@@ -7,7 +7,7 @@ const { auth } = require('../middleware/auth');
 router.get('/getProducts', auth, productController.getProducts);
 router.post('/uploadOfferImages', auth, upload_files.fields([{ name: "main_image" }, { name: "bottom_eside" }, { name: "top_eside" }, { name: "tilted_eside" }, { name: "defects" }, { name: "details" }, { name: "brand" }, { name: "dimension" }, { name: "accessories" }, { name: "context" }]), productController.uploadOfferImages);
 router.post('/getProductsAttrByProductID', auth, productController.getProductsAttrByProductID);
-router.post('/getProductsAttrTypeByProductID', auth, productController.getProductsAttrTypeByProductID);
+router.post('/getProductsAttrTypeByProductID', productController.getProductsAttrTypeByProductID);
 router.post('/createOffer', auth, productController.createOffer);
 router.post('/updateOffer', auth, productController.updateOffer);
 router.post('/getOffers', productController.getOffers);
