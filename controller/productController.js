@@ -751,7 +751,7 @@ exports.getOffers = async (req, res) => {
       var hours = Number(timeArray[0]) % 24;
       time = hours.toString() + ":" + timeArray[1] + ":" + timeArray[1];
       element.remaining_time = time;
-      if (element.product_id != 0) {        
+      if (element.product_id != 0) {
         const countR = await getNoOfBids(element.id);
         //const maxBidR = await getMaxBidF(element.product_id);
         if (countR.length > 0) {
@@ -766,7 +766,7 @@ exports.getOffers = async (req, res) => {
             max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
             count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
           }
-        }        
+        }
 
         const categoryRes = await getCategoryIdByProductId(element.product_id);
         if (categoryRes.length > 0) {
@@ -1092,28 +1092,27 @@ exports.createUserBids = async (req, res) => {
       created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
     };
     const resultInserted = await insertBidByUser(bid_created);
-    const getSellerID = await getSelectedColumn(`offers_created`, `where id = ${offer_id}`, 'user_id');
-    const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${user_id}`, `users.user_name, tbl_user_notifications.bid_received`);
-    const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received');
-
-    if (getFCM[0].bid_received == 1) {
-      const message = {
-        notification: {
-          title: 'New Bid on Your Product',
-          body: `You have received a bid from ${getUserWhoBid[0].user_name} on your product.`
-        },
-        token: getFCM[0].fcm_token
-      };
-      const data = {
-        user_id: user_id,
-        notification_type: 'Alert',
-        title: 'New Bid on Your Product',
-        message: `You have received a bid from ${getUserWhoBid[0].user_name} on your product.`
-      }
-      await insertData('tbl_notification_messages', '', data);
-      await send_notification(message, getSellerID[0].user_id);
-    }
     if (resultInserted.affectedRows > 0) {
+      const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name AS product_name');      
+      const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${user_id}`, `users.user_name, tbl_user_notifications.bid_received`);
+      const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received');
+      if (getFCM[0].bid_received == 1) {
+        const message = {
+          notification: {
+            title: 'Someone Just Bid on Your Product!',
+            body: `A new bid has been placed by ${getUserWhoBid[0].user_name} on your product, ${getSellerID[0].product_name}.`
+          },
+          token: getFCM[0].fcm_token
+        };
+        const data = {
+          user_id: user_id,
+          notification_type: 'Alert',
+          title: 'Someone Just Bid on Your Product!',
+          message: `A new bid has been placed by ${getUserWhoBid[0].user_name} on your product, ${getSellerID[0].product_name}.`
+        }
+        await insertData('tbl_notification_messages', '', data);
+        await send_notification(message, getSellerID[0].user_id);
+      }
       return res.json({
         success: true,
         message: "Bid Successfully Created",
@@ -2574,26 +2573,27 @@ exports.createNewBid = async (data) => {
         created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
       };
       const resultInserted = await insertBidByUser(bid_created);
-      const getSellerID = await getSelectedColumn(`offers_created`, `where id = ${offer_id}`, 'user_id');
-      const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${user_id}`, `users.user_name, tbl_user_notifications.bid_received`);
-      const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received');
-
-      if (getFCM[0].bid_received == 1) {
-        const message = {
-          notification: {
-            title: 'New Bid on Your Product',
-            body: `You have received a bid from ${getUserWhoBid[0].user_name} on your product.`
-          },
-          token: getFCM[0].fcm_token
-        };
-        const data = {
-          user_id: user_id,
-          notification_type: 'Alert',
-          title: 'New Bid on Your Product',
-          message: `You have received a bid from ${getUserWhoBid[0].user_name} on your product.`
+      if (resultInserted.insertData > 0) {
+        const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name AS product_name');
+        const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${user_id}`, `users.user_name, tbl_user_notifications.bid_received`);
+        const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received');
+        if (getFCM[0].bid_received == 1) {
+          const message = {
+            notification: {
+              title: 'Someone Just Bid on Your Product!',
+              body: `A new bid has been placed by ${getUserWhoBid[0].user_name} on your product, ${getSellerID[0].product_name}.`
+            },
+            token: getFCM[0].fcm_token
+          };
+          const data = {
+            user_id: user_id,
+            notification_type: 'Alert',
+            title: 'Someone Just Bid on Your Product!',
+            message: `A new bid has been placed by ${getUserWhoBid[0].user_name} on your product, ${getSellerID[0].product_name}.`
+          }
+          await insertData('tbl_notification_messages', '', data);
+          await send_notification(message, getSellerID[0].user_id);
         }
-        await insertData('tbl_notification_messages', '', data);
-        await send_notification(message, getSellerID[0].user_id);
       }
     }
   } catch (err) {
@@ -2737,7 +2737,7 @@ exports.updateOfferExpired = async (req, res) => {
         const result = await getMaxBidOnOffer(offerId);
         console.log(result);
         if (result.length > 0) {
-          
+
           buyer = result[0].user_id;
           max_bid = result[0].bid
           do {
