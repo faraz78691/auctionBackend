@@ -14,6 +14,11 @@ const {
 } = require("../models/product");
 const { adminUpdateLoginStatus } = require("../controller/adminController");
 const { getAllChatUsers, getLastMessageAllUser } = require("../models/admin");
+const { send_notification } = require("../helper/sendNotification");
+const {
+  getData, getSelectedColumn, insertData
+} = require("../models/common");
+
 // socket.js
 module.exports = function (server) {
   // Create a new instance of socket.io by passing in the server
@@ -37,6 +42,29 @@ module.exports = function (server) {
       try {
         await createNewBid(data);
         const count = await getBitCountByOfferId(data);
+        if (count.length > 0) {
+          if (count[1].user_id != data.user_id) {
+            const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${count[0].offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
+            const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${count[1].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received');
+            if (getFCM[0].outbid == 1) {
+              const message = {
+                notification: {
+                  title: 'You’ve Been Outbid!',
+                  body: `Your bid on the item, ${getSellerID[0].title} has been surpassed. Place a higher bid to stay in the lead!`
+                },
+                token: getFCM[0].fcm_token
+              };
+              const data = {
+                user_id: count[1].user_id,
+                notification_type: 'Alert',
+                title: 'You’ve Been Outbid!',
+                message: `Your bid on the item, ${getSellerID[0].title} has been surpassed. Place a higher bid to stay in the lead!`
+              }
+              await insertData('tbl_notification_messages', '', data);
+              await send_notification(message, count[1].user_id);
+            }
+          }
+        }
         const user = await fetchUserById(data.user_id); // Wait for the user data to be fetched
         const bidCount = count[0].bidCount;
         data.user_name = `${user[0].first_name} ${user[0].last_name}`;

@@ -88,22 +88,22 @@ exports.suggestPrice = async (req, res) => {
     };
     const resultInserted = await insertPriceSuggestion(suggestPrice);
     if (resultInserted.affectedRows > 0) {
-      const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name AS product_name');
+      const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
       const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${buyer_id}`, `users.user_name, tbl_user_notifications.price_suggestion_from_buyer`);
       const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.price_suggestion_from_buyer');
       if (getFCM[0].price_suggestion_from_buyer == 1) {
         const message = {
           notification: {
             title: 'New Price Suggestion for Your Product!',
-            body: `${getUserWhoBid[0].user_name} has suggested a price for your product, ${getSellerID[0].product_name}. Please review their offer.`
+            body: `${getUserWhoBid[0].user_name} has suggested a price for your product, ${getSellerID[0].title}. Please review their offer.`
           },
           token: getFCM[0].fcm_token
         };
         const data = {
-          user_id: user_id,
+          user_id: getSellerID[0].user_id,
           notification_type: 'Alert',
           title: 'New Price Suggestion for Your Product!',
-          message: `${getUserWhoBid[0].user_name} has suggested a price for your product, ${getSellerID[0].product_name}. Please review their offer.`
+          message: `${getUserWhoBid[0].user_name} has suggested a price for your product, ${getSellerID[0].title}. Please review their offer.`
         }
         await insertData('tbl_notification_messages', '', data);
         await send_notification(message, getSellerID[0].user_id);
@@ -184,22 +184,22 @@ exports.acceptPrice = async (req, res) => {
       };
       const resultInserted = await insertTransaction(transactionDetails);
       if (resultInserted.affectedRows > 0) {
-        const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name AS product_name');
+        const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
         const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${buyer}`, `users.user_name, tbl_user_notifications.item_sold`);
         const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.item_sold');
         if (getFCM[0].item_sold == 1) {
           const message = {
             notification: {
-              title: 'Your Product Has Been Purchased!',
-              body: `${getUserWhoBid[0].user_name} has successfully purchased your product, ${getSellerID[0].product_name}.`
+              title: 'Congratulations! Your Item Has Been Sold!',
+              body: `${getUserWhoBid[0].user_name} has successfully purchased your item: ${getSellerID[0].title}.`
             },
             token: getFCM[0].fcm_token
           };
           const data = {
-            user_id: user_id,
+            user_id: getSellerID[0].user_id,
             notification_type: 'Alert',
-            title: 'Your Product Has Been Purchased!',
-            message: `${getUserWhoBid[0].user_name} has successfully purchased your product, ${getSellerID[0].product_name}.`
+            title: 'Congratulations! Your Item Has Been Sold!',
+            message: `${getUserWhoBid[0].user_name} has successfully purchased your item: ${getSellerID[0].title}.`
           }
           await insertData('tbl_notification_messages', '', data);
           await send_notification(message, getSellerID[0].user_id);
@@ -1041,45 +1041,45 @@ exports.updateTransactionStatus = async (req, res) => {
           }
           const insertPaymentFlow = await addPaymenetFlowStatus(addPaymenetFlow);
           if (insertPaymentFlow.affectedRows > 0) {
-            const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name AS product_name');
+            const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
             const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${buyer_id}`, `users.user_name, tbl_user_notifications.buyer_paid_for_item`);
             const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.buyer_paid_for_item');
             if (getFCM[0].buyer_paid_for_item == 1 && buyer_status == '2') {
               const message = {
                 notification: {
                   title: 'Payment Received for Your Product!',
-                  body: `${getUserWhoBid[0].user_name} has successfully paid for your product, ${getSellerID[0].product_name}.`
+                  body: `${getUserWhoBid[0].user_name} has successfully paid for your product, ${getSellerID[0].title}.`
                 },
                 token: getFCM[0].fcm_token
               };
               const data = {
-                user_id: user_id,
+                user_id: getSellerID[0].user_id,
                 notification_type: 'Alert',
                 title: 'Payment Received for Your Product!',
-                message: `${getUserWhoBid[0].user_name} has successfully paid for your product, ${getSellerID[0].product_name}.`
+                message: `${getUserWhoBid[0].user_name} has successfully paid for your product, ${getSellerID[0].title}.`
               }
               await insertData('tbl_notification_messages', '', data);
               await send_notification(message, getSellerID[0].user_id);
             }
             if (buyer_status == '3' || seller_status == '3') {
-              const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name AS product_name');
+              const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
               const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${buyer_id}`, 'users.fcm_token, tbl_user_notifications.The_seller_has_shipped_the_item');
               if (getFCM[0].The_seller_has_shipped_the_item == 1) {
                 const message = {
                   notification: {
                     title: 'Your Item Has Been Shipped!',
-                    body: `The seller has shipped your item, ${getSellerID[0].product_name}. It will be delivered to you soon.`
+                    body: `The seller has shipped your item, ${getSellerID[0].title}. It will be delivered to you soon.`
                   },
                   token: getFCM[0].fcm_token
                 };
                 const data = {
-                  user_id: user_id,
+                  user_id: buyer_id,
                   notification_type: 'Alert',
                   title: 'Your Item Has Been Shipped!',
-                  message: `The seller has shipped your item, ${getSellerID[0].product_name}. It will be delivered to you soon.`
+                  message: `The seller has shipped your item, ${getSellerID[0].title}. It will be delivered to you soon.`
                 }
                 await insertData('tbl_notification_messages', '', data);
-                await send_notification(message, getSellerID[0].user_id);
+                await send_notification(message, buyer_id);
               }
             }
             return res.status(200).json({ error: false, message: "Status update successfully", status: 200, success: true })
@@ -1102,45 +1102,45 @@ exports.updateTransactionStatus = async (req, res) => {
           }
           const insertPaymentFlow = await addPaymenetFlowStatus(addPaymenetFlow);
           if (insertPaymentFlow.affectedRows > 0) {
-            const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offerId}`, 'offers_created.user_id, product.name AS product_name');
+            const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offerId}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
             const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${buyer}`, `users.user_name, tbl_user_notifications.buyer_paid_for_item`);
             const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.buyer_paid_for_item');
             if (getFCM[0].buyer_paid_for_item == 1 && buyer_status == '2') {
               const message = {
                 notification: {
                   title: 'Payment Received for Your Product!',
-                  body: `${getUserWhoBid[0].user_name} has successfully paid for your product, ${getSellerID[0].product_name}.`
+                  body: `${getUserWhoBid[0].user_name} has successfully paid for your product, ${getSellerID[0].title}.`
                 },
                 token: getFCM[0].fcm_token
               };
               const data = {
-                user_id: user_id,
+                user_id: getSellerID[0].user_id,
                 notification_type: 'Alert',
                 title: 'Payment Received for Your Product!',
-                message: `${getUserWhoBid[0].user_name} has successfully paid for your product, ${getSellerID[0].product_name}.`
+                message: `${getUserWhoBid[0].user_name} has successfully paid for your product, ${getSellerID[0].title}.`
               }
               await insertData('tbl_notification_messages', '', data);
               await send_notification(message, getSellerID[0].user_id);
             }
             if (buyer_status == '3' || seller_status == '3') {
-              const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name AS product_name');
+              const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
               const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${buyer_id}`, 'users.fcm_token, tbl_user_notifications.The_seller_has_shipped_the_item');
               if (getFCM[0].The_seller_has_shipped_the_item == 1) {
                 const message = {
                   notification: {
                     title: 'Your Item Has Been Shipped!',
-                    body: `The seller has shipped your item, ${getSellerID[0].product_name}. It will be delivered to you soon.`
+                    body: `The seller has shipped your item, ${getSellerID[0].title}. It will be delivered to you soon.`
                   },
                   token: getFCM[0].fcm_token
                 };
                 const data = {
-                  user_id: user_id,
+                  user_id: buyer_id,
                   notification_type: 'Alert',
                   title: 'Your Item Has Been Shipped!',
-                  message: `The seller has shipped your item, ${getSellerID[0].product_name}. It will be delivered to you soon.`
+                  message: `The seller has shipped your item, ${getSellerID[0].title}. It will be delivered to you soon.`
                 }
                 await insertData('tbl_notification_messages', '', data);
-                await send_notification(message, getSellerID[0].user_id);
+                await send_notification(message, buyer_id);
               }
             }
             return res.status(200).json({ error: false, message: "Status update successfully", status: 200, success: true })

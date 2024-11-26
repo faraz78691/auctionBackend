@@ -712,21 +712,21 @@ exports.getOffers = async (req, res) => {
       // Update the offer's end date and reactivation count in the database
       const update = await updateOfferEndDate(element.id, offerStartDate, newEndDate, element.no_of_times_reactivated);
       if (update.affectedRows > 0) {
-        const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${element.id}`, 'offers_created.user_id, product.name AS product_name');
+        const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${element.id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
         const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.offer_automatically_reactivated');
         if (getFCM[0].offer_automatically_reactivated == 1) {
           const message = {
             notification: {
               title: 'Your Offer Has Been Reactivated!',
-              body: `The offer for your product, ${getSellerID[0].product_name}, has been automatically reactivated.`
+              body: `The offer for your product, ${getSellerID[0].title}, has been automatically reactivated.`
             },
             token: getFCM[0].fcm_token
           };
           const data = {
-            user_id: user_id,
+            user_id: getSellerID[0].user_id,
             notification_type: 'Alert',
             title: 'Your Offer Has Been Reactivated!',
-            message: `The offer for your product, ${getSellerID[0].product_name}, has been automatically reactivated.`
+            message: `The offer for your product, ${getSellerID[0].title}, has been automatically reactivated.`
           }
           await insertData('tbl_notification_messages', '', data);
           await send_notification(message, getSellerID[0].user_id);
@@ -1114,22 +1114,22 @@ exports.createUserBids = async (req, res) => {
     };
     const resultInserted = await insertBidByUser(bid_created);
     if (resultInserted.affectedRows > 0) {
-      const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name AS product_name');
+      const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
       const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${user_id}`, `users.user_name, tbl_user_notifications.bid_received`);
       const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received');
       if (getFCM[0].bid_received == 1) {
         const message = {
           notification: {
-            title: 'Someone Just Bid on Your Product!',
-            body: `A new bid has been placed by ${getUserWhoBid[0].user_name} on your product, ${getSellerID[0].product_name}.`
+            title: 'New Bid on Your Product!',
+            body: `${getUserWhoBid[0].user_name} has placed a new bid on your item: ${getSellerID[0].title}.`
           },
           token: getFCM[0].fcm_token
         };
         const data = {
-          user_id: user_id,
+          user_id: getSellerID[0].user_id,
           notification_type: 'Alert',
-          title: 'Someone Just Bid on Your Product!',
-          message: `A new bid has been placed by ${getUserWhoBid[0].user_name} on your product, ${getSellerID[0].product_name}.`
+          title: 'New Bid on Your Product!',
+          message: `${getUserWhoBid[0].user_name} has placed a new bid on your item: ${getSellerID[0].title}.`
         }
         await insertData('tbl_notification_messages', '', data);
         await send_notification(message, getSellerID[0].user_id);
@@ -1178,21 +1178,21 @@ exports.getOffer = async (req, res) => {
           // Update the offer's end date and reactivation count in the database
           const update = await updateOfferEndDate(offerRes[0].id, offerStartDate, newEndDate, offerRes[0].no_of_times_reactivated);
           if (update.affectedRows > 0) {
-            const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offerId}`, 'offers_created.user_id, product.name AS product_name');
+            const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offerId}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
             const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.offer_automatically_reactivated');
             if (getFCM[0].offer_automatically_reactivated == 1) {
               const message = {
                 notification: {
                   title: 'Your Offer Has Been Reactivated!',
-                  body: `The offer for your product, ${getSellerID[0].product_name}, has been automatically reactivated.`
+                  body: `The offer for your product, ${getSellerID[0].title}, has been automatically reactivated.`
                 },
                 token: getFCM[0].fcm_token
               };
               const data = {
-                user_id: user_id,
+                user_id: getSellerID[0].user_id,
                 notification_type: 'Alert',
                 title: 'Your Offer Has Been Reactivated!',
-                message: `The offer for your product, ${getSellerID[0].product_name}, has been automatically reactivated.`
+                message: `The offer for your product, ${getSellerID[0].title}, has been automatically reactivated.`
               }
               await insertData('tbl_notification_messages', '', data);
               await send_notification(message, getSellerID[0].user_id);
@@ -1339,22 +1339,22 @@ exports.createBuyTransaction = async (req, res) => {
       };
       const resultInserted = await insertTransaction(transactionDetails);
       if (resultInserted.affectedRows > 0) {
-        const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name AS product_name');
+        const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
         const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${user_id}`, `users.user_name, tbl_user_notifications.item_sold`);
         const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.item_sold');
         if (getFCM[0].item_sold == 1) {
           const message = {
             notification: {
-              title: 'Your Product Has Been Purchased!',
-              body: `${getUserWhoBid[0].user_name} has successfully purchased your product, ${getSellerID[0].product_name}.`
+              title: 'Congratulations! Your Item Has Been Sold!',
+              body: `${getUserWhoBid[0].user_name} has successfully purchased your item: ${getSellerID[0].title}.`
             },
             token: getFCM[0].fcm_token
           };
           const data = {
-            user_id: user_id,
+            user_id: getSellerID[0].user_id,
             notification_type: 'Alert',
-            title: 'Your Product Has Been Purchased!',
-            message: `${getUserWhoBid[0].user_name} has successfully purchased your product, ${getSellerID[0].product_name}.`
+            title: 'Congratulations! Your Item Has Been Sold!',
+            message: `${getUserWhoBid[0].user_name} has successfully purchased your item: ${getSellerID[0].title}.`
           }
           await insertData('tbl_notification_messages', '', data);
           await send_notification(message, getSellerID[0].user_id);
@@ -2617,22 +2617,22 @@ exports.createNewBid = async (data) => {
       };
       const resultInserted = await insertBidByUser(bid_created);
       if (resultInserted.affectedRows > 0) {
-        const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, product.name AS product_name');
+        const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
         const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${user_id}`, `users.user_name, tbl_user_notifications.bid_received`);
         const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received');
         if (getFCM[0].bid_received == 1) {
           const message = {
             notification: {
               title: 'Someone Just Bid on Your Product!',
-              body: `A new bid has been placed by ${getUserWhoBid[0].user_name} on your product, ${getSellerID[0].product_name}.`
+              body: `A new bid has been placed by ${getUserWhoBid[0].user_name} on your product, ${getSellerID[0].title}.`
             },
             token: getFCM[0].fcm_token
           };
           const data = {
-            user_id: user_id,
+            user_id: getSellerID[0].user_id,
             notification_type: 'Alert',
             title: 'Someone Just Bid on Your Product!',
-            message: `A new bid has been placed by ${getUserWhoBid[0].user_name} on your product, ${getSellerID[0].product_name}.`
+            message: `A new bid has been placed by ${getUserWhoBid[0].user_name} on your product, ${getSellerID[0].title}.`
           }
           await insertData('tbl_notification_messages', '', data);
           await send_notification(message, getSellerID[0].user_id);
@@ -2806,22 +2806,22 @@ exports.updateOfferExpired = async (req, res) => {
           };
           const resultInserted = await insertTransaction(transactionDetails);
           if (resultInserted.affectedRows > 0) {
-            const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offerId}`, 'offers_created.user_id, product.name AS product_name');
+            const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offerId}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
             const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${buyer}`, `users.user_name, tbl_user_notifications.item_sold`);
             const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.item_sold');
             if (getFCM[0].item_sold == 1) {
               const message = {
                 notification: {
-                  title: 'Your Product Has Been Purchased!',
-                  body: `${getUserWhoBid[0].user_name} has successfully purchased your product, ${getSellerID[0].product_name}.`
+                  title: 'Congratulations! Your Item Has Been Sold!',
+                  body: `${getUserWhoBid[0].user_name} has successfully purchased your item: ${getSellerID[0].title}.`
                 },
                 token: getFCM[0].fcm_token
               };
               const data = {
-                user_id: user_id,
+                user_id: getSellerID[0].user_id,
                 notification_type: 'Alert',
-                title: 'Your Product Has Been Purchased!',
-                message: `${getUserWhoBid[0].user_name} has successfully purchased your product, ${getSellerID[0].product_name}.`
+                title: 'Congratulations! Your Item Has Been Sold!',
+                message: `${getUserWhoBid[0].user_name} has successfully purchased your item: ${getSellerID[0].title}.`
               }
               await insertData('tbl_notification_messages', '', data);
               await send_notification(message, getSellerID[0].user_id);
@@ -2870,6 +2870,25 @@ exports.updateOfferExpired = async (req, res) => {
             }
           }
         } else {
+          const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offerId}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
+          const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.item_sold');
+          if (getFCM[0].item_not_sold == 1) {
+            const message = {
+              notification: {
+                title: 'Unfortunately, Your Item Was Not Sold!',
+                body: `The listing for your item, ${getSellerID[0].title}, has ended without a successful sale.`
+              },
+              token: getFCM[0].fcm_token
+            };
+            const data = {
+              user_id: getSellerID[0].user_id,
+              notification_type: 'Alert',
+              title: 'Unfortunately, Your Item Was Not Sold!',
+              message: `The listing for your item, ${getSellerID[0].title}, has ended without a successful sale.`
+            }
+            await insertData('tbl_notification_messages', '', data);
+            await send_notification(message, getSellerID[0].user_id);
+          }
           console.log("Not found any bid in this offer");
         }
       }
