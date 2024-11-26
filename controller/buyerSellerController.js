@@ -1132,8 +1132,8 @@ exports.updateTransactionStatus = async (req, res) => {
           }
           const insertPaymentFlow = await addPaymenetFlowStatus(addPaymenetFlow);
           if (insertPaymentFlow.affectedRows > 0) {
-            const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offerId}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
-            const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${buyer}`, `users.user_name, tbl_user_notifications.buyer_paid_for_item`);
+            const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
+            const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${buyer_id}`, `users.user_name, tbl_user_notifications.buyer_paid_for_item`);
             const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.buyer_paid_for_item');
             if (getFCM[0].buyer_paid_for_item == 1 && buyer_status == '2') {
               const message = {

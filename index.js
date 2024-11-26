@@ -8,16 +8,16 @@ const https = require("https");
 const fs = require("fs");
 
 
-// const server = http.createServer(app);
-const server = https
-  .createServer(
-    {
-      ca: fs.readFileSync("/var/www/html/ssl/ca_bundle.crt"),
-      key: fs.readFileSync("/var/www/html/ssl/private.key"),
-      cert: fs.readFileSync("/var/www/html/ssl/certificate.crt"),
-    },
-    app
-  )
+const server = http.createServer(app);
+// const server = https
+//   .createServer(
+//     {
+//       ca: fs.readFileSync("/var/www/html/ssl/ca_bundle.crt"),
+//       key: fs.readFileSync("/var/www/html/ssl/private.key"),
+//       cert: fs.readFileSync("/var/www/html/ssl/certificate.crt"),
+//     },
+//     app
+//   )
 
 const stripe = require('stripe')(process.env.STRIPE_SECRERT_KEY);
 const initializeSocket = require("./middleware/socket");
