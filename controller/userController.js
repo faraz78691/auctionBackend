@@ -32,7 +32,9 @@ const {
   getFollowupById,
   deleteFollowupById,
   getUserById,
-  updateAccountDetails
+  updateAccountDetails,
+  fetchNotificationMessage,
+  updateNotificationMessageByUserId
 } = require("../models/users");
 const { updateData } = require("../models/common");
 const Joi = require("joi");
@@ -1848,7 +1850,7 @@ exports.getFollowUp = async (req, res) => {
 
 exports.deleteFollowup = async (req, res) => {
   try {
-    const {id} = req.query;
+    const { id } = req.query;
     const schema = Joi.alternatives(
       Joi.object({
         id: Joi.number().required().empty(),
@@ -1865,7 +1867,7 @@ exports.deleteFollowup = async (req, res) => {
         success: false,
       });
     } else {
-      const deleteResult = await deleteFollowupById(id);      
+      const deleteResult = await deleteFollowupById(id);
       if (deleteResult.affectedRows > 0) {
         return res.status(200).json({ error: false, message: "Successfully unfollowed.", status: 200, success: true });
       } else {
@@ -1875,7 +1877,7 @@ exports.deleteFollowup = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
-}
+};
 
 exports.getUserById = async (req, res) => {
   try {
@@ -1961,3 +1963,54 @@ exports.getAccountDetail = async (req, res) => {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };
+
+exports.getNotificationMessage = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const notificationResult = await fetchNotificationMessage(userId);
+    if (notificationResult.length > 0) {
+      return res.status(200).json({ error: false, message: "Notification get successfully", status: 200, success: true, data: notificationResult });
+    } else {
+      return res.status(200).json({ error: true, message: "Notification not found", status: 200, success: false });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
+
+exports.updateNotificationMessageStatus = async (req, res) => {
+  try {
+    const { id, userId } = req.body
+
+    // Validate input using Joi
+    const schema = Joi.object({
+      id: Joi.number()
+        .required()
+        .allow('')
+        .messages({
+          'number.base': 'The ID must be a valid number.',
+          'any.required': 'The ID field is required.',
+        }),
+      userId: Joi.number()
+        .required()
+        .messages({
+          'number.base': 'The user ID must be a valid number.',
+          'any.required': 'The user ID field is required.',
+        }),
+    });
+
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        errors: true,
+        message: error.details[0].message,
+        status: 400,
+        success: false
+      });
+    } else {
+      const updateResult = await updateNotificationMessageByUserId(id, userId);
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+}

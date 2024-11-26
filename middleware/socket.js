@@ -58,7 +58,8 @@ module.exports = function (server) {
                 user_id: count[1].user_id,
                 notification_type: 'Alert',
                 title: 'You’ve Been Outbid!',
-                message: `Your bid on the item, ${getSellerID[0].title} has been surpassed. Place a higher bid to stay in the lead!`
+                message: `Your bid on the item, ${getSellerID[0].title} has been surpassed. Place a higher bid to stay in the lead!`,
+                created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
               }
               await insertData('tbl_notification_messages', '', data);
               await send_notification(message, count[1].user_id);

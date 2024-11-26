@@ -35,5 +35,7 @@ router.get('/delete-followup', auth, userController.deleteFollowup);
 router.get('/get-userbyid', userController.getUserById);
 router.post('/add-accountdetail', auth, userController.addAccountDetail);
 router.get('/get-accountdetail', auth, userController.getAccountDetail);
+router.get('/get-notificationmessage', auth, userController.getNotificationMessage);
+router.post('/update-notificationmessagestatus', userController.updateNotificationMessageStatus)
 
 module.exports = router;

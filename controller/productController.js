@@ -727,7 +727,8 @@ exports.getOffers = async (req, res) => {
             user_id: getSellerID[0].user_id,
             notification_type: 'Alert',
             title: 'Your Offer Has Been Reactivated!',
-            message: `The offer for your product, ${getSellerID[0].title}, has been automatically reactivated.`
+            message: `The offer for your product, ${getSellerID[0].title}, has been automatically reactivated.`,
+            created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
           }
           await insertData('tbl_notification_messages', '', data);
           await send_notification(message, getSellerID[0].user_id);
@@ -1130,7 +1131,8 @@ exports.createUserBids = async (req, res) => {
           user_id: getSellerID[0].user_id,
           notification_type: 'Alert',
           title: 'New Bid on Your Product!',
-          message: `${getUserWhoBid[0].user_name} has placed a new bid on your item: ${getSellerID[0].title}.`
+          message: `${getUserWhoBid[0].user_name} has placed a new bid on your item: ${getSellerID[0].title}.`,
+          created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
         }
         await insertData('tbl_notification_messages', '', data);
         await send_notification(message, getSellerID[0].user_id);
@@ -1193,7 +1195,8 @@ exports.getOffer = async (req, res) => {
                 user_id: getSellerID[0].user_id,
                 notification_type: 'Alert',
                 title: 'Your Offer Has Been Reactivated!',
-                message: `The offer for your product, ${getSellerID[0].title}, has been automatically reactivated.`
+                message: `The offer for your product, ${getSellerID[0].title}, has been automatically reactivated.`,
+                created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
               }
               await insertData('tbl_notification_messages', '', data);
               await send_notification(message, getSellerID[0].user_id);
@@ -1355,7 +1358,8 @@ exports.createBuyTransaction = async (req, res) => {
             user_id: getSellerID[0].user_id,
             notification_type: 'Alert',
             title: 'Congratulations! Your Item Has Been Sold!',
-            message: `${getUserWhoBid[0].user_name} has successfully purchased your item: ${getSellerID[0].title}.`
+            message: `${getUserWhoBid[0].user_name} has successfully purchased your item: ${getSellerID[0].title}.`,
+            created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
           }
           await insertData('tbl_notification_messages', '', data);
           await send_notification(message, getSellerID[0].user_id);
@@ -1377,7 +1381,8 @@ exports.createBuyTransaction = async (req, res) => {
                 user_id: getFCM[0].id,
                 notification_type: 'Alert',
                 title: 'Better Luck Next Time!',
-                message: `Unfortunately, you didn't win the auction for: ${getSellerID[0].title}. Stay tuned for more exciting offers!`
+                message: `Unfortunately, you didn't win the auction for: ${getSellerID[0].title}. Stay tuned for more exciting offers!`,
+                created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
               }
               await insertData('tbl_notification_messages', '', data);
               await send_notification(message, getFCM[0].id);
@@ -2657,7 +2662,8 @@ exports.createNewBid = async (data) => {
             user_id: getSellerID[0].user_id,
             notification_type: 'Alert',
             title: 'Someone Just Bid on Your Product!',
-            message: `A new bid has been placed by ${getUserWhoBid[0].user_name} on your product, ${getSellerID[0].title}.`
+            message: `A new bid has been placed by ${getUserWhoBid[0].user_name} on your product, ${getSellerID[0].title}.`,
+            created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
           }
           await insertData('tbl_notification_messages', '', data);
           await send_notification(message, getSellerID[0].user_id);
@@ -2846,7 +2852,8 @@ exports.updateOfferExpired = async (req, res) => {
                 user_id: getSellerID[0].user_id,
                 notification_type: 'Alert',
                 title: 'Congratulations! Your Item Has Been Sold!',
-                message: `${getUserWhoBid[0].user_name} has successfully purchased your item: ${getSellerID[0].title}.`
+                message: `${getUserWhoBid[0].user_name} has successfully purchased your item: ${getSellerID[0].title}.`,
+                created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
               }
               await insertData('tbl_notification_messages', '', data);
               await send_notification(message, getSellerID[0].user_id);
@@ -2868,7 +2875,8 @@ exports.updateOfferExpired = async (req, res) => {
                     user_id: getFCM[0].id,
                     notification_type: 'Alert',
                     title: 'Better Luck Next Time!',
-                    message: `Unfortunately, you didn't win the auction for: ${getSellerID[0].title}. Stay tuned for more exciting offers!`
+                    message: `Unfortunately, you didn't win the auction for: ${getSellerID[0].title}. Stay tuned for more exciting offers!`,
+                    created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
                   }
                   await insertData('tbl_notification_messages', '', data);
                   await send_notification(message, getFCM[0].id);
@@ -2933,7 +2941,8 @@ exports.updateOfferExpired = async (req, res) => {
               user_id: getSellerID[0].user_id,
               notification_type: 'Alert',
               title: 'Unfortunately, Your Item Was Not Sold!',
-              message: `The listing for your item, ${getSellerID[0].title}, has ended without a successful sale.`
+              message: `The listing for your item, ${getSellerID[0].title}, has ended without a successful sale.`,
+              created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
             }
             await insertData('tbl_notification_messages', '', data);
             await send_notification(message, getSellerID[0].user_id);

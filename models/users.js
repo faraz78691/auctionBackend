@@ -156,7 +156,7 @@ module.exports = {
     return await db.query('SELECT tbl_followup.*, users.user_name FROM `tbl_followup` LEFT JOIN users ON users.id = tbl_followup.follow_user_id WHERE user_id = ? ORDER BY tbl_followup.id DESC', [id]);
   },
 
-  deleteFollowupById: async (id) => {    
+  deleteFollowupById: async (id) => {
     return await db.query('DELETE FROM `tbl_followup` WHERE id = ?', [id]);
   },
 
@@ -202,6 +202,18 @@ module.exports = {
 
     // Execute the query with parameterized values
     return await db.query(query, values);
+  },
+
+  fetchNotificationMessage: async (user_id) => {
+    return await db.query('SELECT *, DATE_FORMAT(created_at, "%d %M %Y, %h:%i %p") AS message_date FROM `tbl_notification_messages` WHERE user_id = "' + user_id + '" AND is_read = "0" ORDER BY id DESC;');
+  },
+
+  updateNotificationMessageByUserId: async (id, userId) => {
+    if (id == '' || id == 'null') {
+      return await db.query('UPDATE `tbl_notification_messages` SET is_read = "1" WHERE user_id = "' + userId + '"');
+    } else {
+      return await db.query('UPDATE `tbl_notification_messages` SET is_read = "1" WHERE id = "' + id + '" AND user_id = "' + userId + '"');
+    }
   }
 
 };
