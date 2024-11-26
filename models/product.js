@@ -309,7 +309,7 @@ module.exports = {
   },
 
   getUserBidByOfferId: async (offer_id) => {
-    return await db.query('SELECT user_id, MAX(bid) AS max_bid FROM user_bids WHERE offer_id = ? GROUP BY user_id ORDER BY max_bid DESC 18446744073709551615 OFFSET 1', [offer_id]);
+    return await db.query('SELECT user_id, MAX(bid) AS max_bid FROM user_bids WHERE offer_id = ? GROUP BY user_id ORDER BY max_bid DESC LIMIT 18446744073709551615 OFFSET 1', [offer_id]);
   },
 
   insertOfferFavourites: async (data) => {
