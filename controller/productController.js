@@ -64,7 +64,8 @@ const {
   getLatestOffer,
   findBidCountUserId,
   getOffersByUserid,
-  getOffersByUSerId
+  getOffersByUSerId,
+  getUserBidByOfferId
 } = require("../models/product");
 const { getBidDetailsByID } = require("../models/buyer_seller")
 const { findSetting } = require("../models/admin");
@@ -1358,6 +1359,30 @@ exports.createBuyTransaction = async (req, res) => {
           }
           await insertData('tbl_notification_messages', '', data);
           await send_notification(message, getSellerID[0].user_id);
+        }
+        const userBidsResult = await getUserBidByOfferId(offer_id);
+        if (userBidsResult.length > 0) {
+          for (let elem of userBidsResult) {
+            const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
+            const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${elem.user_id}`, 'users.id, users.fcm_token, tbl_user_notifications.item_sold');
+            if (getFCM[0].auction_not_won == 1) {
+              const message = {
+                notification: {
+                  title: 'Better Luck Next Time!',
+                  body: `Unfortunately, you didn't win the auction for: ${getSellerID[0].title}. Stay tuned for more exciting offers!`
+                },
+                token: getFCM[0].fcm_token
+              };
+              const data = {
+                user_id: getFCM[0].id,
+                notification_type: 'Alert',
+                title: 'Better Luck Next Time!',
+                message: `Unfortunately, you didn't win the auction for: ${getSellerID[0].title}. Stay tuned for more exciting offers!`
+              }
+              await insertData('tbl_notification_messages', '', data);
+              await send_notification(message, getFCM[0].id);
+            }
+          }
         }
         const resultSetting = await findSetting();
         const userFessPayDetails = {
@@ -2825,6 +2850,30 @@ exports.updateOfferExpired = async (req, res) => {
               }
               await insertData('tbl_notification_messages', '', data);
               await send_notification(message, getSellerID[0].user_id);
+            }
+            const userBidsResult = await getUserBidByOfferId(offerId);
+            if (userBidsResult.length > 0) {
+              for (let elem of userBidsResult) {
+                const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offerId}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
+                const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${elem.user_id}`, 'users.id, users.fcm_token, tbl_user_notifications.item_sold');
+                if (getFCM[0].auction_not_won == 1) {
+                  const message = {
+                    notification: {
+                      title: 'Better Luck Next Time!',
+                      body: `Unfortunately, you didn't win the auction for: ${getSellerID[0].title}. Stay tuned for more exciting offers!`
+                    },
+                    token: getFCM[0].fcm_token
+                  };
+                  const data = {
+                    user_id: getFCM[0].id,
+                    notification_type: 'Alert',
+                    title: 'Better Luck Next Time!',
+                    message: `Unfortunately, you didn't win the auction for: ${getSellerID[0].title}. Stay tuned for more exciting offers!`
+                  }
+                  await insertData('tbl_notification_messages', '', data);
+                  await send_notification(message, getFCM[0].id);
+                }
+              }
             }
             const resultSetting = await findSetting();
             const userFessPayDetails = {

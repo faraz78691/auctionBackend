@@ -308,6 +308,10 @@ module.exports = {
     return db.query("update offers_created set offfer_buy_status = ? where id = ?", [offfer_buy_status, offer_id]);
   },
 
+  getUserBidByOfferId: async (offer_id) => {
+    return await db.query('SELECT user_id, MAX(bid) AS max_bid FROM user_bids WHERE offer_id = ? GROUP BY user_id ORDER BY max_bid DESC 18446744073709551615 OFFSET 1', [offer_id]);
+  },
+
   insertOfferFavourites: async (data) => {
     return db.query("insert into favourites_offer set ?", [data]);
   },
@@ -450,7 +454,7 @@ module.exports = {
   },
 
   findBidCountUserId: async (offer_id) => {
-    return db.query(`SELECT id, user_id, bid, offer_id, (SELECT SUM(count) FROM user_bids WHERE offer_id = ${offer_id}) AS bidCount FROM user_bids WHERE offer_id = ${offer_id} ORDER BY created_at DESC LIMIT 2;`);
+    return db.query(`SELECT id, user_id, bid, offer_id, (SELECT SUM(count) FROM user_bids WHERE offer_id = ${offer_id}) AS bidCount FROM user_bids WHERE offer_id = ${offer_id} ORDER BY id DESC LIMIT 2;`);
   }
 
 }                       
