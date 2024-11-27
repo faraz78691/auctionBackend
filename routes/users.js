@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controller/userController');
+const upload_files = require('../middleware/upload');
 const { auth } = require('../middleware/auth');
 
 router.post('/signup', userController.signup);
@@ -36,6 +37,7 @@ router.get('/get-userbyid', userController.getUserById);
 router.post('/add-accountdetail', auth, userController.addAccountDetail);
 router.get('/get-accountdetail', auth, userController.getAccountDetail);
 router.get('/get-notificationmessage', auth, userController.getNotificationMessage);
-router.post('/update-notificationmessagestatus', userController.updateNotificationMessageStatus)
+router.post('/update-notificationmessagestatus', userController.updateNotificationMessageStatus);
+router.post('/upload-profile', auth, upload_files.fields([{ name: "upload_profile" }]), userController.uploadProfile);
 
 module.exports = router;

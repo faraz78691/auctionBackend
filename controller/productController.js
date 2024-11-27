@@ -821,6 +821,7 @@ exports.getOffers = async (req, res) => {
     } else {
       categoryNameRes = []
     }
+
     if (offers.length > 0) {
 
       // Separate the offers based on boost_plan_id
@@ -865,8 +866,7 @@ exports.getOffers = async (req, res) => {
         offers: null,
         status: 400,
       });
-    }
-    else {
+    } else {
       return res.json({
         success: false,
         message: "No Offers Found",

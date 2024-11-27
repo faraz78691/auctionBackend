@@ -3,7 +3,9 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 var moment = require('moment-timezone');
 
-const { findEmail, tokenUpdate, getTotalOffers, getTotalDeliverdOffers, getTotalRevenue, getTotalPaidRevenue, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid, getTransactionByOfferId, findAllTransaction, updateMsgCount, findSetting, updateSettingById } = require("../models/admin");
+const { findEmail, tokenUpdate, getTotalOffers, getTotalDeliverdOffers, getTotalRevenue, getTotalPaidRevenue, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateCategoryStatusById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid, getTransactionByOfferId, findAllTransaction, updateMsgCount, findSetting, updateSettingById, getOffersByDate } = require("../models/admin");
+const { getNoOfBids, getCategoryIdByProductId, getMainImage } = require("../models/product");
+const { getBidDetailsByID } = require("../models/buyer_seller")
 const { updateData, getSelectedColumn } = require("../models/common");
 
 exports.login = async (req, res) => {
@@ -148,7 +150,7 @@ exports.dashboard = async (req, res) => {
             data: {
                 totalOffers: totalOffers[0].total_offers,
                 totalDeliveredOffers: totalDeliveredOffers[0].total_delivered,
-                totalRevenue: totalRevenue[0].total_revenue == null  ? 0 : totalRevenue[0].total_revenue,
+                totalRevenue: totalRevenue[0].total_revenue == null ? 0 : totalRevenue[0].total_revenue,
                 totalPaidRevenue: totalPaidRevenue[0].total_paid_revenue == null ? 0 : totalPaidRevenue[0].total_paid_revenue,
             },
             message: "Dashboard data retrieved successfully",
@@ -432,6 +434,51 @@ exports.updateCategoryById = async (req, res) => {
             error: err,
             status: 500,
         });
+    }
+};
+
+exports.updateCategoryStatus = async (req, res) => {
+    try {
+        const { category_id, status } = req.body;
+        const schema = Joi.alternatives(
+            Joi.object({
+                category_id: Joi.number().integer().required().messages({
+                    'number.base': 'Category ID must be a valid number.',
+                    'any.required': 'Category ID is required.',
+                }),
+                status: Joi.string()
+                    .valid('1', '0')
+                    .required()
+                    .messages({
+                        'any.only': 'Status must be either "1" or "0".',
+                        'any.required': 'Status is required.',
+                    }),
+            })
+        );
+        const result = schema.validate(req.body);
+        if (result.error) {
+            const message = result.error.details.map((i) => i.message).join(",");
+            return res.json({
+                message: result.error.details[0].message,
+                error: message,
+                missingParams: result.error.details[0].message,
+                status: 200,
+                success: true,
+            });
+        } else {
+            const results = await updateCategoryStatusById(category_id, status);
+            if (results.affectedRows > 0) {
+                if (status == '1') {
+                    return res.status(200).json({ error: false, message: "Successfully added to popular category.", status: 200, success: true });
+                } else {
+                    return res.status(200).json({ error: false, message: "Successfully removed from popular category.", status: 200, success: true });
+                }
+            } else {
+                return res.status(200).json({ error: true, message: "Failed to update popular category.", status: 400, success: false })
+            }
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
     }
 };
 
@@ -1501,7 +1548,80 @@ exports.updateSetting = async (req, res) => {
     } catch (error) {
         return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
     }
-}
+};
+
+exports.getOffers = async (req, res) => {
+    try {
+        var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
+        const offers = await getOffersByDate(currDate);
+        for (element of offers) {
+            var startDateTime = element.start_date.toString();
+            element.start_date = startDateTime;
+            var time = element.remaining_time;
+            var timeArray = time.split(":");
+            var hours = Number(timeArray[0]) % 24;
+            time = hours.toString() + ":" + timeArray[1] + ":" + timeArray[1];
+            element.remaining_time = time;
+            if (element.product_id != 0) {
+                const countR = await getNoOfBids(element.id);
+                //const maxBidR = await getMaxBidF(element.product_id);
+                if (countR.length > 0) {
+                    element.user_bid = {
+                        user_id: (countR.length > 0 && countR[0]?.user_id != null) ? countR[0]?.user_id : 0,
+                        max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
+                        count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
+                    }
+                } else {
+                    element.user_bid = {
+                        user_id: (countR.length > 0 && countR[0]?.user_id != null) ? countR[0]?.user_id : 0,
+                        max_bid: (countR.length > 0 && countR[0]?.max_bid != null) ? countR[0]?.max_bid : 0,
+                        count: (countR.length > 0 && countR[0]?.count != null) ? countR[0]?.count : 0
+                    }
+                }
+
+                const categoryRes = await getCategoryIdByProductId(element.product_id);
+                if (categoryRes.length > 0) {
+                    element.product_name = categoryRes[0].name;
+                    var categoryId = categoryRes[0].category_id;
+                    const categoryNameRes = await getCategorybyId(categoryId);
+                    if (categoryNameRes.length > 0) {
+                        element.category_name = categoryNameRes[0].cat_name;
+                    }
+                }
+            }
+            if (element.images_id > 0) {
+                const imageR = await getMainImage(element.images_id);
+                if (imageR.length > 0) {
+                    element.main_image_link = imageR[0].main_image;
+                }
+            }
+            if (user_id != '') {
+                var bidDetail = await getBidDetailsByID(element.id, user_id);
+                if (bidDetail.length > 0) {
+                    element.self_user_bid = bidDetail[0]?.bid;
+                }
+            }
+        }
+        if (offers.length > 0) {
+            return res.json({
+                success: true,
+                message: "Offer found",
+                categoryName: offers[0].category_name,
+                productName: offers[0].product_name,
+                offers: offers,
+                status: 200,
+            });
+        } else {
+            return res.json({
+                success: false,
+                message: "No Offers Found",
+                status: 400,
+            });
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
+    }
+};
 
 exports.updateMsgCount = async (req, res) => {
     try {

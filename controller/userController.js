@@ -34,7 +34,8 @@ const {
   getUserById,
   updateAccountDetails,
   fetchNotificationMessage,
-  updateNotificationMessageByUserId
+  updateNotificationMessageByUserId,
+  updateFileById
 } = require("../models/users");
 const { updateData } = require("../models/common");
 const Joi = require("joi");
@@ -2009,8 +2010,31 @@ exports.updateNotificationMessageStatus = async (req, res) => {
       });
     } else {
       const updateResult = await updateNotificationMessageByUserId(id, userId);
+      if (updateResult.affectedRows > 0) {
+        return res.status(200).json({ error: false,  message: "Notification message updated successfully.", status: 200, success: true });
+      } else {
+        return res.status(200).json({ error: true,  message: "Failed to update the notification message or no changes detected.", status: 200, success: false });
+      }
     }
   } catch (error) {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
-}
+};
+
+exports.uploadProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    if (!req.files || Object.keys(req.files).length === 0) {
+      return res.status(400).json({ error: true, message: "No files were uploaded.", status: 400, success: false });
+    } else {
+      const updatefile = await updateFileById(userId, req.files.upload_profile[0].filename);
+      if (updatefile.affectedRows > 0) {
+        return res.status(200).json({ error: false, message: "Profile upload successfully", status: 200, success: true, data: updatefile });
+      } else {
+        return res.status(200).json({ error: true, message: "Profile not upload", status: 200, success: false });
+      }
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};

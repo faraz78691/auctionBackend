@@ -6,6 +6,7 @@ const { adminAuth } = require('../middleware/auth');
 router.post('/login', adminController.login);
 router.post('/logout', adminController.logout);
 router.get('/dashboard', adminAuth, adminController.dashboard);
+
 //Users
 router.get('/getAllUsers', adminAuth, adminController.getAllUsers);
 router.get('/getAllUsersOffers', adminAuth, adminController.getAllUsersOffers);
@@ -16,6 +17,7 @@ router.post('/addCategory', adminAuth, adminController.addCategory);
 router.get('/getAllCategory', adminAuth, adminController.getAllCategory);
 router.post('/getCategoryById', adminAuth, adminController.getCategoryById)
 router.post('/updateCategoryById', adminAuth, adminController.updateCategoryById);
+router.post('/updateCategoryStatus', adminAuth, adminController.updateCategoryStatus);
 
 // Product
 router.post('/addProduct', adminAuth, adminController.addProduct);
@@ -39,5 +41,6 @@ router.get('/getLiveHighestBid', adminAuth, adminController.getLiveHighestBid);
 router.get('/getAllTransaction', adminAuth, adminController.getAllTransaction);
 router.get('/get-setting', adminAuth, adminController.getSetting);
 router.post('/update-setting', adminAuth, adminController.updateSetting);
+router.get('/get-offers', adminController.getOffers);
 
 module.exports = router;

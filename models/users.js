@@ -214,6 +214,10 @@ module.exports = {
     } else {
       return await db.query('UPDATE `tbl_notification_messages` SET is_read = "1" WHERE id = "' + id + '" AND user_id = "' + userId + '"');
     }
+  },
+
+  updateFileById: async (userId, file_name) => {
+    return await db.query('UPDATE `users` SET `profile_image`= ? WHERE id = ?', [file_name, userId])
   }
 
 };

@@ -45,7 +45,7 @@ module.exports = {
     },
 
     getAllCategory: async () => {
-        return db.query("SELECT id, cat_name FROM `category` ORDER BY id DESC;");
+        return db.query("SELECT id, cat_name, status FROM `category` ORDER BY id DESC;");
     },
 
     getCategorybyId: async (categoryId) => {
@@ -106,6 +106,10 @@ module.exports = {
 
     updateCategoryById: async (category_id, cat_name) => {
         return await db.query('UPDATE `category` SET `cat_name`= "' + cat_name + '" WHERE id = "' + category_id + '"');
+    },
+
+    updateCategoryStatusById: async (category_id, status) => {
+        return await db.query('UPDATE `category` SET `status`= "' + status + '" WHERE id = "' + category_id + '"');
     },
 
     updateProductById: async (product_id, name) => {
@@ -169,6 +173,10 @@ module.exports = {
 
     updateSettingById: async (id, commission) => {
         return await db.query('UPDATE `tbl_setting` SET `commission`= "' + commission + '" WHERE id = "' + id + '"');
+    },
+
+    getOffersByDate: async (currDate) => {
+        return await db.query(`SELECT offers_created.*, product.name AS product_name FROM offers_created LEFT JOIN product ON product.id = offers_created.product_id WHERE offfer_buy_status != '1' AND TIMESTAMP(end_date) <= '${currDate}'`);
     }
 
 };
