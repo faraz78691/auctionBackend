@@ -45,7 +45,7 @@ module.exports = function (server) {
         if (count.length > 0) {
           if (count[1].user_id != data.user_id) {
             const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${count[0].offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
-            const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${count[1].user_id}`, 'users.fcm_token, tbl_user_notifications.bid_received');
+            const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${count[1].user_id}`, 'users.fcm_token, tbl_user_notifications.outbid');
             if (getFCM[0].outbid == 1) {
               const message = {
                 notification: {
