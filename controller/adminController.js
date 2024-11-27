@@ -261,10 +261,13 @@ exports.getAllOffersByUserId = async (req, res) => {
 
 exports.addCategory = async (req, res) => {
     try {
-        const { cat_name } = req.body;
+        const { cat_name, status } = req.body;
         const schema = Joi.alternatives(
             Joi.object({
                 cat_name: Joi.string().required().empty(),
+                status: Joi.any().required().allow("").messages({
+                    "any.base": "Category status must be a valid status"
+                }),
                 cat_image: Joi.any().optional().allow(null, "").messages({
                     "any.base": "Category image must be a valid file or empty."
                 }),
@@ -281,28 +284,34 @@ exports.addCategory = async (req, res) => {
                 success: true,
             });
         } else {
-            if (!req.files || Object.keys(req.files).length === 0) {
-                return res.status(400).json({ error: true, message: "No files were uploaded.", status: 400, success: false });
-            } else {
-                let category = {
-                    cat_name: cat_name,
-                    cat_image: req.files.cat_image[0].filename
-                };
-                const resultInserted = await addCategory(category);
-                if (resultInserted.affectedRows > 0) {
-                    return res.json({
-                        success: true,
-                        message: "category Successfully add",
-                        status: 200,
-                        insertId: resultInserted.insertId,
-                    });
-                } else {
+            let category = { cat_name }; // Initialize with common fields
+
+            if (status == 1) {
+                if (!req.files || Object.keys(req.files).length === 0) {
                     return res.json({
                         success: false,
-                        message: "category failed to add",
+                        message: "Category image is missing or invalid.",
                         status: 400,
                     });
+                } else {
+                    category.cat_image = req.files.cat_image[0].filename;
                 }
+                category.status = status;
+            }
+            const resultInserted = await addCategory(category);
+            if (resultInserted.affectedRows > 0) {
+                return res.json({
+                    success: true,
+                    message: "category Successfully add",
+                    status: 200,
+                    insertId: resultInserted.insertId,
+                });
+            } else {
+                return res.json({
+                    success: false,
+                    message: "category failed to add",
+                    status: 400,
+                });
             }
         }
     } catch (err) {
