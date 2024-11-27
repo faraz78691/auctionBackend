@@ -100,7 +100,6 @@ exports.getProducts = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",
@@ -295,7 +294,6 @@ exports.uploadOfferImages = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",
@@ -885,7 +883,6 @@ exports.getOffers = async (req, res) => {
 
 exports.getOffersByUserId = async (req, res) => {
   try {
-
     const authHeader = req.headers.authorization;
     const token = authHeader != undefined ? authHeader.replace("Bearer ", "") : '';
     const decoded = jwt.decode(token);
@@ -1076,7 +1073,6 @@ exports.getOffersCountDown = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",

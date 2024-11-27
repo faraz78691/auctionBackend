@@ -5,8 +5,7 @@ var moment = require('moment-timezone');
 
 const { findEmail, tokenUpdate, getTotalOffers, getTotalDeliverdOffers, getTotalRevenue, getTotalPaidRevenue, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateCategoryStatusById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid, getTransactionByOfferId, findAllTransaction, updateMsgCount, findSetting, updateSettingById, getOffersByDate } = require("../models/admin");
 const { getNoOfBids, getCategoryIdByProductId, getMainImage } = require("../models/product");
-const { getBidDetailsByID } = require("../models/buyer_seller")
-const { updateData, getSelectedColumn } = require("../models/common");
+const { updateData } = require("../models/common");
 
 exports.login = async (req, res) => {
     try {
@@ -1467,6 +1466,7 @@ exports.getLiveHighestBid = async (req, res) => {
                     element.buyer = {
                         id: resultTransaction[0].id,
                         name: resultTransaction[0].full_name,
+                        profile_image: resultTransaction[0].user_profile_image
                     };
                 } else {
                     element.status = 'Open';
@@ -1550,7 +1550,7 @@ exports.updateSetting = async (req, res) => {
     }
 };
 
-exports.getOffers = async (req, res) => {
+exports.landingOffers = async (req, res) => {
     try {
         var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
         const offers = await getOffersByDate(currDate);
@@ -1595,19 +1595,11 @@ exports.getOffers = async (req, res) => {
                     element.main_image_link = imageR[0].main_image;
                 }
             }
-            if (user_id != '') {
-                var bidDetail = await getBidDetailsByID(element.id, user_id);
-                if (bidDetail.length > 0) {
-                    element.self_user_bid = bidDetail[0]?.bid;
-                }
-            }
         }
         if (offers.length > 0) {
             return res.json({
                 success: true,
                 message: "Offer found",
-                categoryName: offers[0].category_name,
-                productName: offers[0].product_name,
                 offers: offers,
                 status: 200,
             });

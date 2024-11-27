@@ -14,7 +14,7 @@ router.get('/getAllOffersByUserId', adminAuth, adminController.getAllOffersByUse
 
 // Category
 router.post('/addCategory', adminAuth, adminController.addCategory);
-router.get('/getAllCategory', adminAuth, adminController.getAllCategory);
+router.get('/getAllCategory', adminController.getAllCategory);
 router.post('/getCategoryById', adminAuth, adminController.getCategoryById)
 router.post('/updateCategoryById', adminAuth, adminController.updateCategoryById);
 router.post('/updateCategoryStatus', adminAuth, adminController.updateCategoryStatus);
@@ -41,6 +41,6 @@ router.get('/getLiveHighestBid', adminAuth, adminController.getLiveHighestBid);
 router.get('/getAllTransaction', adminAuth, adminController.getAllTransaction);
 router.get('/get-setting', adminAuth, adminController.getSetting);
 router.post('/update-setting', adminAuth, adminController.updateSetting);
-router.get('/get-offers', adminController.getOffers);
+router.get('/landing-offers', adminController.landingOffers);
 
 module.exports = router;

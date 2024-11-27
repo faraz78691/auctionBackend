@@ -25,15 +25,15 @@ module.exports = {
     },
 
     fetchAllUsers: async () => {
-        return db.query('SELECT id, first_name, last_name,user_name, email, phone_number, street_number, street, city, state, country, postal_code,  concat(street_number, " ", street, " ", city, " ", state, " ", country, " ", postal_code ) AS address FROM `users` WHERE role_id = 1 ORDER BY id DESC');
+        return db.query('SELECT id, first_name, last_name,user_name, email, phone_number, profile_image, street_number, street, city, state, country, postal_code,  concat(street_number, " ", street, " ", city, " ", state, " ", country, " ", postal_code ) AS address FROM `users` WHERE role_id = 1 ORDER BY id DESC');
     },
 
     fetchAllUsersOffers: async () => {
-        return db.query('SELECT category.cat_name AS category_name, product.name AS product_name, CONCAT( users.first_name, " ", users.last_name ) AS seller_name, offers_created.* FROM `offers_created` LEFT JOIN product ON product.id = offers_created.product_id LEFT JOIN category ON product.category_id = category.id LEFT JOIN users ON users.id = offers_created.user_id ORDER BY offers_created.end_date;');
+        return db.query('SELECT category.cat_name AS category_name, product.name AS product_name, CONCAT( users.first_name, " ", users.last_name ) AS seller_name, users.profile_image AS seller_profile_image, offers_created.* FROM `offers_created` LEFT JOIN product ON product.id = offers_created.product_id LEFT JOIN category ON product.category_id = category.id LEFT JOIN users ON users.id = offers_created.user_id ORDER BY offers_created.end_date;');
     },
 
     fetchAllUsersOffersByUserId: async (id) => {
-        return db.query('SELECT category.cat_name AS category_name, product.name AS product_name, CONCAT( users.first_name, " ", users.last_name ) AS seller_name, offers_created.* FROM `offers_created` LEFT JOIN product ON product.id = offers_created.product_id LEFT JOIN category ON product.category_id = category.id LEFT JOIN users ON users.id = offers_created.user_id WHERE offers_created.user_id = ? ORDER BY offers_created.end_date;', [id]);
+        return db.query('SELECT category.cat_name AS category_name, product.name AS product_name, CONCAT( users.first_name, " ", users.last_name ) AS seller_name, users.profile_image AS seller_profile_image, offers_created.* FROM `offers_created` LEFT JOIN product ON product.id = offers_created.product_id LEFT JOIN category ON product.category_id = category.id LEFT JOIN users ON users.id = offers_created.user_id WHERE offers_created.user_id = ? ORDER BY offers_created.end_date;', [id]);
     },
 
     findAdminById: async (id) => {
@@ -97,7 +97,7 @@ module.exports = {
     },
 
     getAllChatUsers: async () => {
-        return await db.query("SELECT users.id AS user_id, CONCAT( users.first_name, ' ', users.last_name ) AS user_name, users.online_status FROM `tbl_messages` LEFT JOIN users ON users.id = tbl_messages.user_id GROUP BY tbl_messages.user_id;");
+        return await db.query("SELECT users.id AS user_id, CONCAT( users.first_name, ' ', users.last_name ) AS user_name, users.profile_image AS user_profile_image, users.online_status FROM `tbl_messages` LEFT JOIN users ON users.id = tbl_messages.user_id GROUP BY tbl_messages.user_id;");
     },
 
     getLastMessageAllUser: async (id) => {
@@ -156,15 +156,15 @@ module.exports = {
     },
 
     findLiveHighestBid: async () => {
-        return await db.query("SELECT user_bids.offer_id, MAX(user_bids.bid) AS highest_bid, SUM(user_bids.count) AS total_bid, offers_created.offer_unique_id, offers_created.start_price, offers_created.title, offers_created.start_date, offers_created.end_date, user_bids.user_id, CONCAT(users.first_name, ' ', users.last_name) AS user_name FROM user_bids LEFT JOIN offers_created ON offers_created.id = user_bids.offer_id LEFT JOIN users ON users.id = user_bids.user_id GROUP BY user_bids.offer_id, offers_created.offer_unique_id, offers_created.start_price, offers_created.title, offers_created.start_date, offers_created.end_date, user_bids.user_id, users.first_name, users.last_name ORDER BY highest_bid DESC;");
+        return await db.query("SELECT user_bids.offer_id, MAX(user_bids.bid) AS highest_bid, SUM(user_bids.count) AS total_bid, offers_created.offer_unique_id, offers_created.start_price, offers_created.title, offers_created.start_date, offers_created.end_date, user_bids.user_id, CONCAT(users.first_name, ' ', users.last_name) AS user_name, users.profile_image AS user_profile_image FROM user_bids LEFT JOIN offers_created ON offers_created.id = user_bids.offer_id LEFT JOIN users ON users.id = user_bids.user_id GROUP BY user_bids.offer_id, offers_created.offer_unique_id, offers_created.start_price, offers_created.title, offers_created.start_date, offers_created.end_date, user_bids.user_id, users.first_name, users.last_name ORDER BY highest_bid DESC;");
     },
 
     getTransactionByOfferId: async (id) => {
-        return await db.query("SELECT users.id, CONCAT(users.first_name, ' ', users.last_name) AS full_name FROM `buy_sell_transactions` LEFT JOIN users ON users.id = buy_sell_transactions.buyer_id WHERE offer_id = ?", [id]);
+        return await db.query("SELECT users.id, CONCAT(users.first_name, ' ', users.last_name) AS full_name, users.profile_image AS user_profile_image FROM `buy_sell_transactions` LEFT JOIN users ON users.id = buy_sell_transactions.buyer_id WHERE offer_id = ?", [id]);
     },
 
     findAllTransaction: async () => {
-        return await db.query("SELECT buy_sell_transactions.*, CONCAT( buyer_user.first_name, ' ', buyer_user.last_name ) AS buyer_name, CONCAT( seller_user.first_name, ' ', seller_user.last_name ) AS seller_name, offers_created.id AS offer_id, offers_created.offer_unique_id, offers_created.title FROM `buy_sell_transactions` LEFT JOIN users AS buyer_user ON buyer_user.id = buy_sell_transactions.buyer_id LEFT JOIN users AS seller_user ON seller_user.id = buy_sell_transactions.seller_id LEFT JOIN offers_created ON offers_created.id = buy_sell_transactions.offer_id ORDER BY buy_sell_transactions.created_at DESC;");
+        return await db.query("SELECT buy_sell_transactions.*, CONCAT( buyer_user.first_name, ' ', buyer_user.last_name ) AS buyer_name, buyer_user.profile_image AS buyer_profile_image, CONCAT( seller_user.first_name, ' ', seller_user.last_name ) AS seller_name, seller_user.profile_image AS seller_profile_image, offers_created.id AS offer_id, offers_created.offer_unique_id, offers_created.title FROM `buy_sell_transactions` LEFT JOIN users AS buyer_user ON buyer_user.id = buy_sell_transactions.buyer_id LEFT JOIN users AS seller_user ON seller_user.id = buy_sell_transactions.seller_id LEFT JOIN offers_created ON offers_created.id = buy_sell_transactions.offer_id ORDER BY buy_sell_transactions.created_at DESC;");
     },
 
     findSetting: async () => {
@@ -176,7 +176,7 @@ module.exports = {
     },
 
     getOffersByDate: async (currDate) => {
-        return await db.query(`SELECT offers_created.*, product.name AS product_name FROM offers_created LEFT JOIN product ON product.id = offers_created.product_id WHERE offfer_buy_status != '1' AND TIMESTAMP(end_date) <= '${currDate}'`);
+        return await db.query(`SELECT id, offer_unique_id, product_id, title, product_type, images_id, offerStart,is_bid_or_fixed, start_date, length_oftime, end_date, FLOOR( HOUR(TIMEDIFF(end_date, CURRENT_TIMESTAMP)) / 24) AS remaining_days, (TIMEDIFF(end_date, CURRENT_TIMESTAMP)) AS remaining_time, start_price, increase_step, buyto_price, fixed_offer_price, duration, boost_plan_id, offfer_buy_status, user_id from offers_created WHERE offfer_buy_status != '1' AND TIMESTAMP(end_date) >= '${currDate}' ORDER BY boost_plan_id DESC;`);
     }
 
 };

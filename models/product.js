@@ -293,7 +293,7 @@ module.exports = {
 
   // updated code 26-07-2024
   getTransactionsHistoryUpdated: async (user_id) => {
-    return db.query(`select A.*,S.first_name,S.last_name,O.offer_unique_id,O.images_id,O.offerStart,O.fixed_offer_price, O.title from  buy_sell_transactions A 
+    return db.query(`select A.*,S.first_name,S.last_name,S.profile_image,O.offer_unique_id,O.images_id,O.offerStart,O.fixed_offer_price, O.title from  buy_sell_transactions A 
     LEFT JOIN offers_created O ON A.offer_id = O.id  
     LEFT JOIN users S ON A.seller_id = S.id  
     where A.buyer_id = '${user_id}'`);
@@ -329,7 +329,7 @@ module.exports = {
   },
 
   getSellerDetails: async (id) => {
-    return db.query(`SELECT users.id, users.first_name, users.last_name, CONCAT( users.street_number, " ", users.street, " ", users.city, " ", users.state, " ", users.country, " ", users.postal_code ) AS address, tbl_followup.follow_user_id FROM users LEFT JOIN tbl_followup ON tbl_followup.follow_user_id = users.id WHERE users.id = '${id}'`);
+    return db.query(`SELECT users.id, users.first_name, users.last_name, CONCAT( users.street_number, " ", users.street, " ", users.city, " ", users.state, " ", users.country, " ", users.postal_code ) AS address, users.profile_image, tbl_followup.follow_user_id FROM users LEFT JOIN tbl_followup ON tbl_followup.follow_user_id = users.id WHERE users.id = '${id}'`);
   },
 
   getSubAttributesHeadingByIDValue: async (attributeId, attributeValue) => {
@@ -437,7 +437,7 @@ module.exports = {
   getOffers: async (currDate) => {
     return db.query(`SELECT offers_created.*, product.name AS product_name FROM offers_created LEFT JOIN product ON product.id = offers_created.product_id WHERE offfer_buy_status != '1' AND is_reactivable = 1 AND TIMESTAMP(end_date) <= '${currDate}' AND no_of_times_reactivated != 0`);
   },
-  
+
   getOffersByUserid: async (userId, currDate) => {
     return db.query(`SELECT offers_created.*, product.name AS product_name FROM offers_created LEFT JOIN product ON product.id = offers_created.product_id WHERE user_id = ${userId} AND offfer_buy_status != '1' AND is_reactivable = 1 AND TIMESTAMP(end_date) <= '${currDate}' AND no_of_times_reactivated != 0`);
   },

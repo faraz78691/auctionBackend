@@ -121,11 +121,11 @@ module.exports = {
   },
 
   getUserNamebyId: async (id) => {
-    return db.query(`select concat(first_name, ' ', last_name) as name from  users where  id=${id}`);
+    return db.query(`select concat(first_name, ' ', last_name) as name, profile_image from  users where  id=${id}`);
   },
 
   getAllMessageByUserId: async (id) => {
-    return db.query(`SELECT CONCAT(users.first_name, ' ', users.last_name) AS full_name, users.online_status, tbl_messages.* FROM tbl_messages LEFT JOIN users ON users.id = tbl_messages.user_id WHERE tbl_messages.user_id = ${id} ORDER BY tbl_messages.created_at;`);
+    return db.query(`SELECT CONCAT(users.first_name, ' ', users.last_name) AS full_name, users.profile_image, users.online_status, tbl_messages.* FROM tbl_messages LEFT JOIN users ON users.id = tbl_messages.user_id WHERE tbl_messages.user_id = ${id} ORDER BY tbl_messages.created_at;`);
   },
 
   updateMessageCount: async (id) => {
@@ -153,7 +153,7 @@ module.exports = {
   },
 
   getFollowupById: async (id) => {
-    return await db.query('SELECT tbl_followup.*, users.user_name FROM `tbl_followup` LEFT JOIN users ON users.id = tbl_followup.follow_user_id WHERE user_id = ? ORDER BY tbl_followup.id DESC', [id]);
+    return await db.query('SELECT tbl_followup.*, users.user_name, users.profile_image AS user_profile_image FROM `tbl_followup` LEFT JOIN users ON users.id = tbl_followup.follow_user_id WHERE user_id = ? ORDER BY tbl_followup.id DESC', [id]);
   },
 
   deleteFollowupById: async (id) => {

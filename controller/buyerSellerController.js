@@ -393,10 +393,12 @@ exports.getPriceSuggestedBySellerStatus = async (req, res) => {
         var sellerNameArr = await getUserNamebyId(sellerId);
         if (sellerNameArr.length > 0) {
           tempObj.seller_name = sellerNameArr[0]?.name;
+          tempObj.seller_profile_image = sellerNameArr[0]?.profile_image;
         }
         var buyerNameArr = await getUserNamebyId(buyerId);
         if (buyerNameArr.length > 0) {
           tempObj.buyer_name = buyerNameArr[0]?.name;
+          tempObj.buyer_profile_image = buyerNameArr[0]?.profile_image;
         }
         finalOutput.push(tempObj);
       }
@@ -414,7 +416,6 @@ exports.getPriceSuggestedBySellerStatus = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",
@@ -459,10 +460,12 @@ exports.getPriceSuggestedForBuyer = async (req, res) => {
         var sellerNameArr = await getUserNamebyId(sellerId);
         if (sellerNameArr.length > 0) {
           tempObj.seller_name = sellerNameArr[0]?.name;
+          tempObj.seller_profile_image = sellerNameArr[0]?.profile_image;
         }
         var buyerNameArr = await getUserNamebyId(buyerId);
         if (buyerNameArr.length > 0) {
           tempObj.buyer_name = buyerNameArr[0]?.name;
+          tempObj.buyer_profile_image = buyerNameArr[0]?.profile_image;
         }
         finalOutput.push(tempObj);
       }
@@ -612,6 +615,7 @@ exports.getSoldSectionForSeller = async (req, res) => {
         var buyerNameArr = await getUserNamebyId(buyerId);
         if (buyerNameArr.length > 0) {
           tempObj.buyer_name = buyerNameArr[0]?.name;
+          tempObj.buyer_profile_image = buyerNameArr[0]?.profile_image;
         }
 
         finalOutput.push(tempObj);
@@ -711,6 +715,7 @@ exports.getOffersByBuyer = async (req, res) => {
         var buyerNameArr = await getUserNamebyId(user_id);
         if (buyerNameArr.length > 0) {
           tempObj.buyer_name = buyerNameArr[0]?.name;
+          tempObj.buyer_profile_image = buyerNameArr[0]?.profile_image;
         }
         finalOutput.push(tempObj);
       }
