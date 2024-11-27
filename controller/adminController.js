@@ -265,6 +265,9 @@ exports.addCategory = async (req, res) => {
         const schema = Joi.alternatives(
             Joi.object({
                 cat_name: Joi.string().required().empty(),
+                cat_image: Joi.any().optional().allow(null, "").messages({
+                    "any.base": "Category image must be a valid file or empty."
+                }),
             })
         );
         const result = schema.validate(req.body);
@@ -277,26 +280,30 @@ exports.addCategory = async (req, res) => {
                 status: 200,
                 success: true,
             });
-        }
-
-        let category = {
-            cat_name: cat_name
-        };
-
-        const resultInserted = await addCategory(category);
-        if (resultInserted.affectedRows > 0) {
-            return res.json({
-                success: true,
-                message: "category Successfully add",
-                status: 200,
-                insertId: resultInserted.insertId,
-            });
         } else {
-            return res.json({
-                success: false,
-                message: "category failed to add",
-                status: 400,
-            });
+            if (!req.files || Object.keys(req.files).length === 0) {
+                return res.status(400).json({ error: true, message: "No files were uploaded.", status: 400, success: false });
+            } else {
+                let category = {
+                    cat_name: cat_name,
+                    cat_image: req.files.cat_image[0].filename
+                };
+                const resultInserted = await addCategory(category);
+                if (resultInserted.affectedRows > 0) {
+                    return res.json({
+                        success: true,
+                        message: "category Successfully add",
+                        status: 200,
+                        insertId: resultInserted.insertId,
+                    });
+                } else {
+                    return res.json({
+                        success: false,
+                        message: "category failed to add",
+                        status: 400,
+                    });
+                }
+            }
         }
     } catch (err) {
         console.log(err);
@@ -388,6 +395,9 @@ exports.updateCategoryById = async (req, res) => {
             Joi.object({
                 category_id: Joi.number().required().empty(),
                 cat_name: Joi.string().required().empty(),
+                cat_image: Joi.any().optional().allow(null, "").messages({
+                    "any.base": "Category image must be a valid file or empty."
+                }),
             })
         );
         const result = schema.validate(req.body);
@@ -403,7 +413,7 @@ exports.updateCategoryById = async (req, res) => {
         }
         const results = await getCategorybyId(category_id);
         if (results.length !== 0) {
-            const updateCategory = await updateCategoryById(category_id, cat_name);
+            const updateCategory = await updateCategoryById(category_id, cat_name, (!req.files || Object.keys(req.files).length === 0) ? results[0].cat_image : req.files.cat_image[0].filename);
             if (updateCategory.affectedRows > 0) {
                 return res.json({
                     success: true,

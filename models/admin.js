@@ -45,11 +45,11 @@ module.exports = {
     },
 
     getAllCategory: async () => {
-        return db.query("SELECT id, cat_name, status FROM `category` ORDER BY id DESC;");
+        return db.query("SELECT id, cat_name, cat_image, status FROM `category` ORDER BY id DESC;");
     },
 
     getCategorybyId: async (categoryId) => {
-        return db.query("select id, cat_name from category where id = ?", [categoryId]);
+        return db.query("select id, cat_name, cat_image from category where id = ?", [categoryId]);
     },
 
     addProduct: async (product) => {
@@ -104,8 +104,8 @@ module.exports = {
         return await db.query('SELECT tbl_messages.*, (SELECT COUNT(is_read) FROM tbl_messages WHERE user_id = "' + id + '" AND is_read = "0") AS unread_count FROM tbl_messages WHERE user_id = "' + id + '" ORDER BY id DESC LIMIT 1')
     },
 
-    updateCategoryById: async (category_id, cat_name) => {
-        return await db.query('UPDATE `category` SET `cat_name`= "' + cat_name + '" WHERE id = "' + category_id + '"');
+    updateCategoryById: async (category_id, cat_name, cat_image) => {
+        return await db.query('UPDATE `category` SET `cat_name`= "' + cat_name + '", `cat_image` = "' + cat_image + '" WHERE id = "' + category_id + '"');
     },
 
     updateCategoryStatusById: async (category_id, status) => {

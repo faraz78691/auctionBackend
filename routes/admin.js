@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controller/adminController');
+const upload_files = require('../middleware/upload');
 const { adminAuth } = require('../middleware/auth');
 
 router.post('/login', adminController.login);
@@ -13,10 +14,10 @@ router.get('/getAllUsersOffers', adminAuth, adminController.getAllUsersOffers);
 router.get('/getAllOffersByUserId', adminAuth, adminController.getAllOffersByUserId);
 
 // Category
-router.post('/addCategory', adminAuth, adminController.addCategory);
+router.post('/addCategory', adminAuth, upload_files.fields([{ name: "cat_image" }]), adminController.addCategory);
 router.get('/getAllCategory', adminController.getAllCategory);
 router.post('/getCategoryById', adminAuth, adminController.getCategoryById)
-router.post('/updateCategoryById', adminAuth, adminController.updateCategoryById);
+router.post('/updateCategoryById', adminAuth, upload_files.fields([{ name: "cat_image" }]), adminController.updateCategoryById);
 router.post('/updateCategoryStatus', adminAuth, adminController.updateCategoryStatus);
 
 // Product
