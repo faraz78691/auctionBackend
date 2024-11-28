@@ -3,7 +3,6 @@ const S3 = require('aws-sdk/clients/s3')
 const hash = require('random-hash'); 
 const bucketName = 'glistener';
 const region = 'us-east-1';
-
 const path=require('path')
 
 const s3 = new S3({
@@ -26,6 +25,7 @@ function uploadFile(file) {
 
   return s3.upload(uploadParams).promise()
 }
+
 exports.uploadFile = uploadFile
 
 

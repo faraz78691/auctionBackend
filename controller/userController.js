@@ -38,6 +38,7 @@ const {
   updateFileById
 } = require("../models/users");
 const { updateData } = require("../models/common");
+const axios = require('axios');
 const Joi = require("joi");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -97,17 +98,15 @@ exports.signup = async (req, res) => {
       last_name,
       user_name,
       company,
-      street,
-      street_number,
-      state,
-      country,
       role_id,
       country_code,
       phone_number,
       company_reg_no,
       signing_authority,
-      city,
-      postal_code
+      address,
+      postal_code,
+      latitude,
+      longitude
     } = req.body;
     const actToken = betweenRandomNumber(10000000, 99999999);
     const schema = Joi.alternatives(
@@ -133,17 +132,15 @@ exports.signup = async (req, res) => {
         }),
         user_name: Joi.string().empty().required(),
         company: Joi.string().empty().required(),
-        street: Joi.string().empty().required(),
-        street_number: Joi.string().empty().required(),
-        state: Joi.string().empty().required(),
-        country: Joi.string().empty().required(),
         role_id: Joi.number().required(),
         country_code: Joi.string().empty().required(),
         phone_number: Joi.number().required(),
         company_reg_no: Joi.string().empty().required(),
         signing_authority: Joi.string().empty().required(),
-        city: Joi.string().empty().required(),
+        address: Joi.string().empty().required(),
         postal_code: Joi.string().empty().required(),
+        latitude: Joi.number().empty().required(),
+        longitude: Joi.number().empty().required(),
       })
     );
     const result = schema.validate(req.body);
@@ -172,17 +169,15 @@ exports.signup = async (req, res) => {
               act_token: actToken,
               status: 1,
               login_status: 1,
-              street: street,
-              street_number: street_number,
-              state: state,
-              country: country,
               role_id: role_id,
               country_code: country_code,
               phone_number: phone_number,
               company_reg_no: company_reg_no,
               signing_authority: signing_authority,
-              city: city,
-              postal_code: postal_code
+              address: address,
+              postal_code: postal_code,
+              latitude: latitude,
+              longitude: longitude
             };
             const result = await addUser(user);
             if (result.affectedRows > 0) {
@@ -1257,8 +1252,7 @@ exports.getChatMessage = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const userInfo = req.user;
-    const { password, current_password, first_name, last_name, user_name, phone_number, country, postal_code, street,
-      street_number, country_code, city, state } = req.body;
+    const { password, current_password, first_name, last_name, user_name, phone_number, address, postal_code, country_code, latitude, longitude } = req.body;
     const schema = Joi.object({
       first_name: Joi.string().required().allow('').messages({
         'string.base': 'First Name must be a string',
@@ -1297,36 +1291,26 @@ exports.updateProfile = async (req, res) => {
         'string.min': 'Password must be at least 6 characters long',
         'any.required': 'Password is required',
       }),
-      street: Joi.string().required().allow('').messages({
-        'string.base': 'Street must be a string',
-        'string.empty': 'Street is required',
-        'any.required': 'Street is required',
-      }),
-      street_number: Joi.string().required().allow('').messages({
-        'string.base': 'Street Number must be a string',
-        'string.empty': 'Street Number is required',
-        'any.required': 'Street Number is required',
-      }),
-      city: Joi.string().required().allow('').messages({
-        'string.base': 'City must be a string',
-        'string.empty': 'City is required',
-        'any.required': 'City is required',
+      address: Joi.string().required().allow('').messages({
+        'string.base': 'Address must be a string',
+        'string.empty': 'Address is required',
+        'any.required': 'Address is required',
       }),
       postal_code: Joi.string().required().allow('').messages({
         'string.base': 'Postal Code must be a string',
         'string.empty': 'Postal Code is required',
         'any.required': 'Postal Code is required',
       }),
-      state: Joi.string().required().allow('').messages({
-        'string.base': 'State must be a string',
-        'string.empty': 'State is required',
-        'any.required': 'State is required',
+      latitude: Joi.string().required().allow('').messages({
+        'string.base': 'Latitude must be a string',
+        'string.empty': 'Latitude is required',
+        'any.required': 'Latitude is required',
       }),
-      country: Joi.string().required().allow('').messages({
-        'string.base': 'Country must be a string',
-        'string.empty': 'Country is required',
-        'any.required': 'Country is required',
-      }),
+      longitude: Joi.string().required().allow('').messages({
+        'string.base': 'Longitude must be a string',
+        'string.empty': 'Longitude is required',
+        'any.required': 'Longitude is required',
+      })
     });
 
     const { error } = schema.validate(req.body);
@@ -1349,16 +1333,14 @@ exports.updateProfile = async (req, res) => {
         let user = {
           first_name: first_name != 'undefined' ? first_name : userInfo.first_name,
           last_name: last_name != 'undefined' ? last_name : userInfo.last_name,
-          user_name: user_name != 'user_name' ? user_name : userInfo.user_name,
+          user_name: user_name != 'undefined' ? user_name : userInfo.user_name,
           country_code: country_code != 'undefined' ? country_code : userInfo.country_code,
           phone_number: phone_number != 'undefined' ? phone_number : userInfo.phone_number,
           password: userHashPassword,
-          street: street != 'undefined' ? street : userInfo.street,
-          street_number: street_number != 'undefined' ? street_number : userInfo.street_number,
-          city: city != 'undefined' ? city : userInfo.city,
+          address: address != 'undefined' ? address : userInfo.address,
+          latitude: latitude != 'undefined' ? latitude : userInfo.latitude,
+          longitude: longitude != 'undefined' ? longitude : userInfo.longitude,
           postal_code: postal_code != 'undefined' ? postal_code : userInfo.postal_code,
-          state: state != 'undefined' ? state : userInfo.state,
-          country: country != 'undefined' ? country : userInfo.country,
         };
         const updateResult = await updateUserById(user, userInfo.id);
         if (updateResult.affectedRows > 0) {
@@ -1382,8 +1364,6 @@ exports.updateProfile = async (req, res) => {
       }
     }
   } catch (error) {
-    console.log(error);
-
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };
@@ -2009,9 +1989,9 @@ exports.updateNotificationMessageStatus = async (req, res) => {
     } else {
       const updateResult = await updateNotificationMessageByUserId(id, userId);
       if (updateResult.affectedRows > 0) {
-        return res.status(200).json({ error: false,  message: "Notification message updated successfully.", status: 200, success: true });
+        return res.status(200).json({ error: false, message: "Notification message updated successfully.", status: 200, success: true });
       } else {
-        return res.status(200).json({ error: true,  message: "Failed to update the notification message or no changes detected.", status: 200, success: false });
+        return res.status(200).json({ error: true, message: "Failed to update the notification message or no changes detected.", status: 200, success: false });
       }
     }
   } catch (error) {
@@ -2030,6 +2010,97 @@ exports.uploadProfile = async (req, res) => {
         return res.status(200).json({ error: false, message: "Profile upload successfully", status: 200, success: true, data: updatefile });
       } else {
         return res.status(200).json({ error: true, message: "Profile not upload", status: 200, success: false });
+      }
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
+
+exports.searchLocation = async (req, res) => {
+  try {
+    const { search } = req.body;
+
+    // Validate input using Joi
+    const schema = Joi.object({
+      search: Joi.string()
+        .required()
+        .messages({
+          'string.base': 'The search term must be a valid string.',
+          'string.empty': 'The search term cannot be an empty string.',
+          'any.required': 'The search field is required.',
+        })
+    });
+
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        errors: true,
+        message: error.details[0].message,
+        status: 400,
+        success: false
+      });
+    } else {
+      const response = await axios({
+        method: 'post',
+        url: `https://maps.googleapis.com/maps/api/place/autocomplete/json?key=${process.env.GGOGLE_API_KEY}&input=${search}`,
+      });
+      return res.status(200).json({
+        status: 200,
+        message: 'Explore Location Fetche',
+        success: true,
+        data: response.data.predictions
+      })
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};
+
+exports.getLatLong = async (req, res) => {
+  try {
+    const { address } = req.query;
+    // Validate input using Joi
+    const schema = Joi.object({
+      address: Joi.string()
+        .required()
+        .messages({
+          'string.base': 'The address term must be a valid string.',
+          'string.empty': 'The address term cannot be an empty string.',
+          'any.required': 'The address field is required.',
+        })
+    });
+
+    const { error } = schema.validate(req.query);
+    if (error) {
+      return res.status(400).json({
+        errors: true,
+        message: error.details[0].message,
+        status: 400,
+        success: false
+      });
+    } else {
+      // Make the request to Google Geocoding API
+      const response = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
+        params: {
+          address,
+          key: process.env.GGOGLE_API_KEY,
+        },
+      });
+      const { results } = response.data;
+      if (results && results.length > 0) {
+        const { lat, lng } = results[0].geometry.location;
+        return res.status(200).json({
+          status: 200,
+          message: 'Latitude and Longitude fetched successfully.',
+          success: true,
+          data: {
+            lat,
+            lng
+          }
+        })
+      } else {
+        res.status(404).json({ status: 404, message: 'No results found for the given address.', success: false });
       }
     }
   } catch (error) {

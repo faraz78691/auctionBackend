@@ -25,7 +25,7 @@ module.exports = {
     },
 
     fetchAllUsers: async () => {
-        return db.query('SELECT id, first_name, last_name,user_name, email, phone_number, profile_image, street_number, street, city, state, country, postal_code,  concat(street_number, " ", street, " ", city, " ", state, " ", country, " ", postal_code ) AS address FROM `users` WHERE role_id = 1 ORDER BY id DESC');
+        return db.query('SELECT id, first_name, last_name,user_name, email, phone_number, profile_image, address postal_code, latitude, longitude FROM `users` WHERE role_id = 1 ORDER BY id DESC');
     },
 
     fetchAllUsersOffers: async () => {
@@ -45,11 +45,31 @@ module.exports = {
     },
 
     getAllCategory: async () => {
-        return db.query("SELECT id, cat_name, cat_image, status FROM `category` ORDER BY id DESC;");
+        return db.query("SELECT id, cat_name FROM `category` ORDER BY id DESC;");
     },
 
     getCategorybyId: async (categoryId) => {
-        return db.query("select id, cat_name, cat_image from category where id = ?", [categoryId]);
+        return db.query("select id, cat_name from category where id = ?", [categoryId]);
+    },
+
+    addPopularCategory: async (data) => {
+        return await db.query('insert into tbl_popular_category set ?', [data]);
+    },
+
+    getAllPopularCategory: async () => {
+        return await db.query('SELECT * FROM `tbl_popular_category` ORDER BY id DESC;')
+    },
+
+    getPopularCategoryById: async (id) => {
+        return await db.query('SELECT * FROM `tbl_popular_category` WHERE id = ?', [id]);
+    },
+
+    updatePopularCategoryById: async (category_id, category_name, category_image) => {
+        return await db.query('UPDATE `tbl_popular_category` SET `category_name`= "' + category_name + '", `category_image` = "' + category_image + '" WHERE id = "' + category_id + '"');
+    },
+
+    deletePopularCategoryById: async (id) => {
+        return await db.query('DELETE FROM `tbl_popular_category` WHERE id = ?', [id]);
     },
 
     addProduct: async (product) => {
@@ -104,12 +124,8 @@ module.exports = {
         return await db.query('SELECT tbl_messages.*, (SELECT COUNT(is_read) FROM tbl_messages WHERE user_id = "' + id + '" AND is_read = "0") AS unread_count FROM tbl_messages WHERE user_id = "' + id + '" ORDER BY id DESC LIMIT 1')
     },
 
-    updateCategoryById: async (category_id, cat_name, cat_image) => {
-        return await db.query('UPDATE `category` SET `cat_name`= "' + cat_name + '", `cat_image` = "' + cat_image + '" WHERE id = "' + category_id + '"');
-    },
-
-    updateCategoryStatusById: async (category_id, status) => {
-        return await db.query('UPDATE `category` SET `status`= "' + status + '" WHERE id = "' + category_id + '"');
+    updateCategoryById: async (category_id, cat_name) => {
+        return await db.query('UPDATE `category` SET `cat_name`= "' + cat_name + '" WHERE id = "' + category_id + '"');
     },
 
     updateProductById: async (product_id, name) => {
@@ -177,6 +193,26 @@ module.exports = {
 
     getOffersByDate: async (currDate) => {
         return await db.query(`SELECT id, offer_unique_id, product_id, title, product_type, images_id, offerStart,is_bid_or_fixed, start_date, length_oftime, end_date, FLOOR( HOUR(TIMEDIFF(end_date, CURRENT_TIMESTAMP)) / 24) AS remaining_days, (TIMEDIFF(end_date, CURRENT_TIMESTAMP)) AS remaining_time, start_price, increase_step, buyto_price, fixed_offer_price, duration, boost_plan_id, offfer_buy_status, user_id from offers_created WHERE offfer_buy_status != '1' AND TIMESTAMP(end_date) >= '${currDate}' ORDER BY boost_plan_id DESC;`);
+    },
+
+    addTermCondition: async (data) => {
+        return await db.query("insert into tbl_term_condition set ? ", [data]);
+    },
+
+    getTermHeading: async () => {
+        return await db.query("SELECT id, heading FROM tbl_term_condition WHERE parent_id IS NULL ORDER BY id DESC");
+    },
+
+    getTermSubHeading: async (id) => {
+        return await db.query("SELECT id, parent_id, sub_heading, description FROM tbl_term_condition WHERE parent_id = ? ORDER BY id DESC", [id]);
+    },
+
+    deleteTermConditionById: async (id) => {
+        return await db.query("DELETE FROM `tbl_term_condition` WHERE id = ?", [id]);
+    },
+
+    updateTermCondition: async (data, condition) => {
+        return await db.query("update tbl_term_condition set ? where ?", [data, condition])
     }
 
 };

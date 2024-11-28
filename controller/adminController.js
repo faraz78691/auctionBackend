@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 var moment = require('moment-timezone');
 
-const { findEmail, tokenUpdate, getTotalOffers, getTotalDeliverdOffers, getTotalRevenue, getTotalPaidRevenue, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateCategoryStatusById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid, getTransactionByOfferId, findAllTransaction, updateMsgCount, findSetting, updateSettingById, getOffersByDate } = require("../models/admin");
+const { findEmail, tokenUpdate, getTotalOffers, getTotalDeliverdOffers, getTotalRevenue, getTotalPaidRevenue, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addPopularCategory, getAllPopularCategory, getPopularCategoryById, updatePopularCategoryById, deletePopularCategoryById, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid, getTransactionByOfferId, findAllTransaction, updateMsgCount, findSetting, updateSettingById, getOffersByDate, addTermCondition, getTermHeading, getTermSubHeading, deleteTermConditionById, updateTermCondition } = require("../models/admin");
 const { getNoOfBids, getCategoryIdByProductId, getMainImage } = require("../models/product");
 const { updateData } = require("../models/common");
 
@@ -261,16 +261,10 @@ exports.getAllOffersByUserId = async (req, res) => {
 
 exports.addCategory = async (req, res) => {
     try {
-        const { cat_name, status } = req.body;
+        const { cat_name } = req.body;
         const schema = Joi.alternatives(
             Joi.object({
-                cat_name: Joi.string().required().empty(),
-                status: Joi.any().required().allow("").messages({
-                    "any.base": "Category status must be a valid status"
-                }),
-                cat_image: Joi.any().optional().allow(null, "").messages({
-                    "any.base": "Category image must be a valid file or empty."
-                }),
+                cat_name: Joi.string().required().empty()
             })
         );
         const result = schema.validate(req.body);
@@ -286,18 +280,6 @@ exports.addCategory = async (req, res) => {
         } else {
             let category = { cat_name }; // Initialize with common fields
 
-            if (status == 1) {
-                if (!req.files || Object.keys(req.files).length === 0) {
-                    return res.json({
-                        success: false,
-                        message: "Category image is missing or invalid.",
-                        status: 400,
-                    });
-                } else {
-                    category.cat_image = req.files.cat_image[0].filename;
-                }
-                category.status = status;
-            }
             const resultInserted = await addCategory(category);
             if (resultInserted.affectedRows > 0) {
                 return res.json({
@@ -315,7 +297,6 @@ exports.addCategory = async (req, res) => {
             }
         }
     } catch (err) {
-        console.log(err);
         return res.json({
             success: false,
             message: "Internal server error",
@@ -403,10 +384,7 @@ exports.updateCategoryById = async (req, res) => {
         const schema = Joi.alternatives(
             Joi.object({
                 category_id: Joi.number().required().empty(),
-                cat_name: Joi.string().required().empty(),
-                cat_image: Joi.any().optional().allow(null, "").messages({
-                    "any.base": "Category image must be a valid file or empty."
-                }),
+                cat_name: Joi.string().required().empty()
             })
         );
         const result = schema.validate(req.body);
@@ -422,7 +400,7 @@ exports.updateCategoryById = async (req, res) => {
         }
         const results = await getCategorybyId(category_id);
         if (results.length !== 0) {
-            const updateCategory = await updateCategoryById(category_id, cat_name, (!req.files || Object.keys(req.files).length === 0) ? results[0].cat_image : req.files.cat_image[0].filename);
+            const updateCategory = await updateCategoryById(category_id, cat_name);
             if (updateCategory.affectedRows > 0) {
                 return res.json({
                     success: true,
@@ -455,22 +433,13 @@ exports.updateCategoryById = async (req, res) => {
     }
 };
 
-exports.updateCategoryStatus = async (req, res) => {
+exports.addPopularCategory = async (req, res) => {
     try {
-        const { category_id, status } = req.body;
+        const { cat_name, cat_image } = req.body;
         const schema = Joi.alternatives(
             Joi.object({
-                category_id: Joi.number().integer().required().messages({
-                    'number.base': 'Category ID must be a valid number.',
-                    'any.required': 'Category ID is required.',
-                }),
-                status: Joi.string()
-                    .valid('1', '0')
-                    .required()
-                    .messages({
-                        'any.only': 'Status must be either "1" or "0".',
-                        'any.required': 'Status is required.',
-                    }),
+                cat_name: Joi.string().required().empty(),
+                cat_image: Joi.string().allow(null, '')
             })
         );
         const result = schema.validate(req.body);
@@ -484,19 +453,218 @@ exports.updateCategoryStatus = async (req, res) => {
                 success: true,
             });
         } else {
-            const results = await updateCategoryStatusById(category_id, status);
-            if (results.affectedRows > 0) {
-                if (status == '1') {
-                    return res.status(200).json({ error: false, message: "Successfully added to popular category.", status: 200, success: true });
-                } else {
-                    return res.status(200).json({ error: false, message: "Successfully removed from popular category.", status: 200, success: true });
-                }
+            if (!req.files || Object.keys(req.files).length === 0) {
+                return res.status(400).json({ error: true, message: "No files were uploaded.", status: 400, success: false });
             } else {
-                return res.status(200).json({ error: true, message: "Failed to update popular category.", status: 400, success: false })
+                const results = await getAllPopularCategory();
+                if (results.length >= 6) {
+                    return res.json({
+                        success: false, // Indicate a restriction
+                        message: "You already have 6 popular categories. Please delete an existing category before adding a new one.",
+                        status: 400, // Use 400 for a bad request or customize as needed
+                    });
+                } else {
+                    let category = {
+                        category_name: cat_name,
+                        category_image: req.files.cat_image[0].filename
+                    }; // Initialize with common fields
+
+                    const resultInserted = await addPopularCategory(category);
+                    if (resultInserted.affectedRows > 0) {
+                        return res.json({
+                            success: true,
+                            message: "Popular category successfully add",
+                            status: 200,
+                            insertId: resultInserted.insertId,
+                        });
+                    } else {
+                        return res.json({
+                            success: false,
+                            message: "Popular category failed to add",
+                            status: 400,
+                        });
+                    }
+                }
             }
         }
-    } catch (error) {
-        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
+    } catch (err) {
+        return res.json({
+            success: false,
+            message: "Internal server error",
+            error: err,
+            status: 500,
+        });
+    }
+};
+
+exports.getAllPopularCategory = async (req, res) => {
+    try {
+        const results = await getAllPopularCategory();
+        if (results.length !== 0) {
+            return res.json({
+                success: true,
+                message: "fetch all popular categorys success",
+                status: 200,
+                insertId: results,
+            });
+        } else {
+            return res.json({
+                success: true,
+                message: "Popular catgeory not found",
+                status: 200,
+            });
+        }
+    } catch (err) {
+        return res.json({
+            success: false,
+            message: "Internal server error",
+            error: err,
+            status: 500,
+        });
+    }
+};
+
+exports.getPopularCategoryById = async (req, res) => {
+    try {
+        const { category_id } = req.body;
+        const schema = Joi.alternatives(
+            Joi.object({
+                category_id: Joi.number().required().empty(),
+            })
+        );
+        const result = schema.validate(req.body);
+        if (result.error) {
+            const message = result.error.details.map((i) => i.message).join(",");
+            return res.json({
+                message: result.error.details[0].message,
+                error: message,
+                missingParams: result.error.details[0].message,
+                status: 200,
+                success: true,
+            });
+        }
+        const results = await getPopularCategoryById(category_id);
+        if (results.length !== 0) {
+            return res.json({
+                success: true,
+                message: "Fetched popular categories by ID successfully.",
+                status: 200,
+                data: results[0], // Return the fetched data
+            });
+        } else {
+            return res.json({
+                success: false, // Indicate failure explicitly
+                message: "No popular categories found for the given ID.",
+                status: 204, // Consider using 204 for no content
+            });
+        }
+    } catch (err) {
+        return res.json({
+            success: false,
+            message: "Internal server error",
+            error: err,
+            status: 500,
+        });
+    }
+};
+
+exports.updatePopularCategoryById = async (req, res) => {
+    try {
+        const { category_id, cat_name, cat_image } = req.body;
+        const schema = Joi.alternatives(
+            Joi.object({
+                category_id: Joi.number().required().empty(),
+                cat_name: Joi.string().required().empty(),
+                cat_image: Joi.string().allow(null, '')
+            })
+        );
+        const result = schema.validate(req.body);
+        if (result.error) {
+            const message = result.error.details.map((i) => i.message).join(",");
+            return res.json({
+                message: result.error.details[0].message,
+                error: message,
+                missingParams: result.error.details[0].message,
+                status: 200,
+                success: true,
+            });
+        }
+        const results = await getPopularCategoryById(category_id);
+        if (results.length !== 0) {
+            const updateCategory = await updatePopularCategoryById(category_id, cat_name, !req.files || Object.keys(req.files).length === 0 ? results[0].category_image : req.files.cat_image[0].filename);
+            if (updateCategory.affectedRows > 0) {
+                return res.json({
+                    success: true,
+                    message: "Successfully update",
+                    status: 200,
+                    insertId: updateCategory,
+                });
+            } else {
+                return res.json({
+                    success: true,
+                    message: "Not update",
+                    status: 200,
+                });
+            }
+        } else {
+            return res.json({
+                success: true,
+                message: "Wrong popular category id",
+                status: 200,
+            });
+        }
+    } catch (err) {
+        console.log(err);
+        return res.json({
+            success: false,
+            message: "Internal server error",
+            error: err,
+            status: 500,
+        });
+    }
+};
+
+exports.deletePopularCategoryById = async (req, res) => {
+    try {
+        const { category_id } = req.body;
+        const schema = Joi.alternatives(
+            Joi.object({
+                category_id: Joi.number().required().empty(),
+            })
+        );
+        const result = schema.validate(req.body);
+        if (result.error) {
+            const message = result.error.details.map((i) => i.message).join(",");
+            return res.json({
+                message: result.error.details[0].message,
+                error: message,
+                missingParams: result.error.details[0].message,
+                status: 200,
+                success: true,
+            });
+        }
+        const results = await deletePopularCategoryById(category_id);
+        if (results.affectedRows > 0) {
+            return res.json({
+                success: true,
+                message: "Popular category deleted successfully.",
+                status: 200,
+                data: { category_id }, // Return the deleted category ID for reference
+            });
+        } else {
+            return res.json({
+                success: false,
+                message: "No popular category found for the given ID to delete.",
+                status: 404, // Use 404 for "not found"
+            });
+        }
+    } catch (err) {
+        return res.json({
+            success: false,
+            message: "Internal server error",
+            error: err,
+            status: 500,
+        });
     }
 };
 
@@ -1673,5 +1841,300 @@ exports.updateMsgCount = async (req, res) => {
         }
     } catch (error) {
         return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
+    }
+};
+
+exports.addTermCondition = async (req, res) => {
+    try {
+        const { parent_id, heading, sub_heading, description } = req.body;
+
+        const schema = Joi.object({
+            parent_id: Joi.number().optional().allow(null).messages({
+                'number.base': 'Parent ID must be a number.',
+            }),
+            heading: Joi.string().optional().allow(null).messages({
+                'string.base': 'Heading must be a string.',
+                'string.empty': 'Heading is required.',
+                'any.required': 'Heading is required.',
+            }),
+            sub_heading: Joi.string().optional().allow(null).messages({
+                'string.base': 'Sub-heading must be a string.',
+            }),
+            description: Joi.string().optional().allow(null).messages({
+                'string.base': 'Description must be a string.',
+            }),
+        })
+
+        const { error } = schema.validate(req.body);
+        if (error) {
+            return res.status(400).json({
+                error: true,
+                message: error.details[0].message,
+                status: 400,
+                success: false
+            });
+        } else {
+            // Prepare the data based on the conditions
+            let data;
+            if (parent_id && sub_heading && description) {
+                data = {
+                    parent_id,
+                    sub_heading,
+                    description
+                };
+            } else if (parent_id && sub_heading) {
+                data = {
+                    parent_id,
+                    sub_heading
+                };
+            } else if (parent_id && description) {
+                data = {
+                    parent_id,
+                    description,
+                };
+            } else {
+                data = {
+                    heading,
+                };
+            }
+            const resultInserted = await addTermCondition(data);
+            if (resultInserted.affectedRows > 0) {
+                return res.status(201).json({
+                    success: true,
+                    message: "Term or condition added successfully.",
+                    status: 201,
+                    data: resultInserted.insertId
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to add the term or condition. Please try again later.",
+                    status: 500,
+                });
+            }
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false });
+    }
+};
+
+exports.getTermHeading = async (req, res) => {
+    try {
+        const result = await getTermHeading();
+        if (result.length > 0) {
+            return res.status(200).json({
+                success: true,
+                message: 'Headings fetched successfully.',
+                status: 200,
+                data: result, // Return the fetched headings
+            });
+        } else {
+            return res.status(404).json({
+                success: false,
+                message: 'No headings found.',
+                status: 404,
+            });
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false });
+    }
+};
+
+exports.getTermSubHeading = async (req, res) => {
+    try {
+        const { heading_id } = req.query;
+        const schema = Joi.object({
+            heading_id: Joi.number().required().messages({
+                'number.base': 'Heading ID must be a valid number.',
+                'any.required': 'Heading ID is required.',
+            }),
+        })
+
+        const { error } = schema.validate(req.query);
+        if (error) {
+            return res.status(400).json({
+                error: true,
+                message: error.details[0].message,
+                status: 400,
+                success: false
+            });
+        } else {
+            const result = await getTermSubHeading(heading_id);
+            if (result.length > 0) {
+                return res.status(200).json({
+                    success: true,
+                    message: 'Sub-headings fetched successfully.',
+                    status: 200,
+                    data: result, // Return the list of sub-headings
+                });
+            } else {
+                return res.status(404).json({
+                    success: false,
+                    message: 'No sub-headings found for the provided heading ID.',
+                    status: 404,
+                });
+            }
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false });
+    }
+};
+
+exports.deleteTermCondition = async (req, res) => {
+    try {
+        const { id } = req.query;
+        const schema = Joi.object({
+            id: Joi.number().required().messages({
+                'number.base': 'ID must be a valid number.',
+                'any.required': 'ID is required.',
+            }),
+        })
+
+        const { error } = schema.validate(req.query);
+        if (error) {
+            return res.status(400).json({
+                error: true,
+                message: error.details[0].message,
+                status: 400,
+                success: false
+            });
+        } else {
+            const resultDelete = await deleteTermConditionById(id);
+            if (resultDelete.affectedRows > 0) {
+                return res.status(200).json({
+                    success: true,
+                    message: 'Term or condition deleted successfully.',
+                    status: 200,
+                });
+            } else {
+                return res.status(404).json({
+                    success: false,
+                    message: 'No term or condition found with the provided ID.',
+                    status: 404,
+                });
+            }
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false });
+    }
+};
+
+exports.updateTermCondition = async (req, res) => {
+    try {
+        const { id, heading, sub_heading, description } = req.body;
+
+        const schema = Joi.object({
+            id: Joi.number().required().messages({
+                'number.base': 'ID must be a valid number.',
+                'any.required': 'ID is required.',
+            }),
+            heading: Joi.string().optional().allow(null).messages({
+                'string.base': 'Heading must be a string.',
+                'string.empty': 'Heading is required.',
+                'any.required': 'Heading is required.',
+            }),
+            sub_heading: Joi.string().optional().allow(null).messages({
+                'string.base': 'Sub-heading must be a string.',
+            }),
+            description: Joi.string().optional().allow(null).messages({
+                'string.base': 'Description must be a string.',
+            }),
+        })
+
+        const { error } = schema.validate(req.body);
+        if (error) {
+            return res.status(400).json({
+                error: true,
+                message: error.details[0].message,
+                status: 400,
+                success: false
+            });
+        } else {
+            let data;
+            let condition = {};
+
+            // Check which fields are provided and prepare the update data
+            if (id && sub_heading && description) {
+                data = {
+                    sub_heading,
+                    description
+                };
+                condition = { id }; // Assuming `id` is the identifier for the term condition
+            } else if (id && sub_heading) {
+                data = {
+                    sub_heading
+                };
+                condition = { id }; // Assuming `id` is the identifier for the term condition
+            } else if (id && description) {
+                data = {
+                    description,
+                };
+                condition = { id }; // Assuming `id` is the identifier for the term condition
+            } else {
+                data = {
+                    heading,
+                };
+                condition = { id }; // Assuming `id` is the identifier for the term condition
+            }
+            const resultUpdated = await updateTermCondition(data, condition);
+            if (resultUpdated.affectedRows > 0) {
+                return res.status(200).json({
+                    success: true,
+                    message: 'Term or condition updated successfully.',
+                    status: 200,
+                });
+            } else {
+                return res.status(404).json({
+                    success: false,
+                    message: 'No term or condition found with the provided ID to update.',
+                    status: 404,
+                });
+            }
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false });
+    }
+};
+
+exports.getHeadingSubHeading = async (req, res) => {
+    try {
+        const result = await getTermHeading();
+        if (result.length > 0) {
+            const headingSubHeadings = [];
+
+            // Loop through each heading
+            await Promise.all(result.map(async (element) => {
+                const resultSub = await getTermSubHeading(element.id); // Fetch all sub-headings for the given heading_id
+
+                // Create an array of sub-headings and descriptions for each heading_id
+                const subHeadingsAndDescriptions = resultSub.map(subElement => ({
+                    sub_heading: subElement.sub_heading, // Sub-heading value
+                    description: subElement.description // Description value
+                }));
+
+                // Add the heading and its sub-headings/descriptions to the result
+                headingSubHeadings.push({
+                    id: element.id, // Heading id
+                    heading: element.heading, // Heading text
+                    sub_headings_and_descriptions: subHeadingsAndDescriptions // Array of sub-headings and descriptions
+                });
+            }));
+
+            // Return the updated result to the client
+            return res.status(200).json({
+                success: true,
+                message: 'Headings and sub-headings fetched successfully.',
+                status: 200,
+                data: headingSubHeadings  // Send the updated result
+            });
+        } else {
+            return res.status(404).json({
+                success: false,
+                message: 'No headings found.',
+                status: 404,
+            });
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false });
     }
 };

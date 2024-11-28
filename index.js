@@ -36,7 +36,7 @@ var moment = require('moment-timezone');
 app.use(cors());
 global.__basedir = __dirname;
 
-app.use(express.urlencoded({ limit: '50mb', extended: true, parameterLimit: 1000000 }))
+app.use(express.urlencoded({ limit: '100mb', extended: true, parameterLimit: 1000000 }))
 
 app.use(express.json());
 app.use(express.static("public"))

@@ -39,5 +39,7 @@ router.get('/get-accountdetail', auth, userController.getAccountDetail);
 router.get('/get-notificationmessage', auth, userController.getNotificationMessage);
 router.post('/update-notificationmessagestatus', userController.updateNotificationMessageStatus);
 router.post('/upload-profile', auth, upload_files.fields([{ name: "upload_profile" }]), userController.uploadProfile);
+router.post('/search-location', userController.searchLocation);
+router.get('/get-latlong', userController.getLatLong);
 
 module.exports = router;

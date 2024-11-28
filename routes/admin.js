@@ -14,11 +14,17 @@ router.get('/getAllUsersOffers', adminAuth, adminController.getAllUsersOffers);
 router.get('/getAllOffersByUserId', adminAuth, adminController.getAllOffersByUserId);
 
 // Category
-router.post('/addCategory', adminAuth, upload_files.fields([{ name: "cat_image" }]), adminController.addCategory);
-router.get('/getAllCategory', adminController.getAllCategory);
+router.post('/addCategory', adminAuth, adminController.addCategory);
+router.get('/getAllCategory', adminAuth, adminController.getAllCategory);
 router.post('/getCategoryById', adminAuth, adminController.getCategoryById)
-router.post('/updateCategoryById', adminAuth, upload_files.fields([{ name: "cat_image" }]), adminController.updateCategoryById);
-router.post('/updateCategoryStatus', adminAuth, adminController.updateCategoryStatus);
+router.post('/updateCategoryById', adminAuth, adminController.updateCategoryById);
+
+// Popular Category
+router.post('/addPopularCategory', adminAuth, upload_files.fields([{ name: "cat_image" }]), adminController.addPopularCategory);
+router.get('/getAllPopularCategory', adminController.getAllPopularCategory);
+router.post('/getPopularCategoryById', adminAuth, adminController.getPopularCategoryById);
+router.post('/updatePopularCategoryById', adminAuth, upload_files.fields([{ name: "cat_image" }]), adminController.updatePopularCategoryById);
+router.post('/deletePopularCategoryById', adminAuth, adminController.deletePopularCategoryById);
 
 // Product
 router.post('/addProduct', adminAuth, adminController.addProduct);
@@ -43,5 +49,13 @@ router.get('/getAllTransaction', adminAuth, adminController.getAllTransaction);
 router.get('/get-setting', adminAuth, adminController.getSetting);
 router.post('/update-setting', adminAuth, adminController.updateSetting);
 router.get('/landing-offers', adminController.landingOffers);
+
+// Trems & Condiition
+router.post('/add-termcondition', adminAuth, adminController.addTermCondition);
+router.get('/get-termheading', adminAuth, adminController.getTermHeading);
+router.get('/get-termsubheading', adminController.getTermSubHeading);
+router.get('/delete-termcondition', adminAuth, adminController.deleteTermCondition);
+router.post('/update-termcondition', adminAuth, adminController.updateTermCondition);
+router.get('/get-headingsubheading', adminController.getHeadingSubHeading);
 
 module.exports = router;
