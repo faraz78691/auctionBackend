@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 var moment = require('moment-timezone');
 
-const { findEmail, tokenUpdate, getTotalOffers, getTotalDeliverdOffers, getTotalRevenue, getTotalPaidRevenue, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addPopularCategory, getAllPopularCategory, getPopularCategoryById, updatePopularCategoryById, deletePopularCategoryById, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid, getTransactionByOfferId, findAllTransaction, updateMsgCount, findSetting, updateSettingById, getOffersByDate, addTermCondition, getTermHeading, getTermSubHeading, deleteTermConditionById, updateTermCondition } = require("../models/admin");
+const { findEmail, tokenUpdate, getTotalOffers, getTotalDeliverdOffers, getTotalRevenue, getTotalPaidRevenue, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addPopularCategory, getAllPopularCategory, getPopularCategoryById, updatePopularCategoryById, deletePopularCategoryById, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid, getTransactionByOfferId, findAllTransaction, updateMsgCount, findSetting, updateSettingById, getOffersByDate, addTermCondition, getTermHeading, getTermSubHeading, deleteTermConditionById, updateTermCondition, getAllFeaturedProduct, getFeaturedProductById, updateFeaturedProductById } = require("../models/admin");
 const { getNoOfBids, getCategoryIdByProductId, getMainImage } = require("../models/product");
 const { updateData } = require("../models/common");
 
@@ -2133,6 +2133,54 @@ exports.getHeadingSubHeading = async (req, res) => {
                 message: 'No headings found.',
                 status: 404,
             });
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false });
+    }
+};
+
+exports.getAllFeaturedProduct = async (req, res) => {
+    try {
+        const result = await getAllFeaturedProduct();
+        if (result.length > 0) {
+            return res.status(200).json({ error: false, message: 'Featured products retrieved successfully', status: 200, success: true, data: result });
+        } else {
+            return res.status(200).json({ error: true, message: 'No featured products found.', status: 200, success: false, data: [] });
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false });
+    }
+};
+
+exports.updateFeaturedProductById = async (req, res) => {
+    try {
+        const { id, featured_image } = req.body;
+        const schema = Joi.object({
+            id: Joi.number().required().messages({
+                'number.base': 'ID must be a valid number.',
+                'any.required': 'ID is required.',
+            }),
+            featured_image: Joi.string().allow(null, '')
+        })
+
+        const { error } = schema.validate(req.body);
+        if (error) {
+            return res.status(400).json({
+                error: true,
+                message: error.details[0].message,
+                status: 400,
+                success: false
+            });
+        } else {
+            const results = await getFeaturedProductById(id);
+            if (results.length !== 0) {
+                const updateFeatureed = await updateFeaturedProductById(id, !req.files || Object.keys(req.files).length === 0 ? results[0].featured_image : req.files.featured_image[0].filename);
+                if (updateFeatureed.affectedRows > 0) {
+                    return res.status(200).json({ error: false, message: 'Featured product updated successfully.', status: 200, success: true });
+                }
+            } else {
+                return res.status(200).json({ error: true, message: 'Featured product not found.', status: 200, success: false, data: [] });
+            }
         }
     } catch (error) {
         return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false });

@@ -230,9 +230,14 @@ module.exports = {
     return db.query("select * from product where id=?", [product_id]);
   },
 
-  getOfferDetailsByID: async (offer_id) => {
-    return db.query("SELECT offers_created.*, CASE WHEN favourites_offer.offer_id IS NOT NULL THEN 1 ELSE 0 END AS is_favorite FROM offers_created LEFT JOIN( SELECT DISTINCT offer_id FROM favourites_offer ) AS favourites_offer ON favourites_offer.offer_id = ? WHERE id = ?", [offer_id, offer_id]);
+  getOfferDetailsByID: async (offer_id, user_id) => {
+    if (user_id == '') {
+      return db.query("SELECT offers_created.* FROM offers_created WHERE id = ?", [offer_id]);
+    } else {
+      return db.query("SELECT offers_created.*, CASE WHEN favourites_offer.offer_id IS NOT NULL THEN 1 ELSE 0 END AS is_favorite FROM offers_created LEFT JOIN( SELECT DISTINCT offer_id FROM favourites_offer WHERE user_id = ?) AS favourites_offer ON favourites_offer.offer_id = offers_created.id WHERE id = ?", [user_id, offer_id]);
+    }
   },
+
   getOfferAttributesDetailsByID: async (offer_id) => {
     return db.query("select * from offer_proattr_mapping where offer_id=?", [offer_id]);
   },

@@ -1158,8 +1158,13 @@ exports.createUserBids = async (req, res) => {
 
 exports.getOffer = async (req, res) => {
   try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader != undefined ? authHeader.replace("Bearer ", "") : '';
+    const decoded = jwt.decode(token);
+    const user_id = decoded != null ? decoded["user_id"] : '';
     const { offerId } = req.query;
-    var offerRes = await getOfferDetailsByID(offerId);
+
+    var offerRes = await getOfferDetailsByID(offerId, user_id);
     if (offerRes.length > 0) {
       var currDate = moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss');
       const endDate = moment(offerRes[0].end_date).format('YYYY-MM-DD HH:mm:ss');
@@ -1311,7 +1316,7 @@ exports.createBuyTransaction = async (req, res) => {
       });
     }
     const user_id = req.user.id;
-    var offerRes = await getOfferDetailsByID(offer_id);
+    var offerRes = await getOfferDetailsByID(offer_id, user_id);
     if (offerRes[0].offfer_buy_status != 1) {
       var transactionId = "";
       var doContinue = 1;

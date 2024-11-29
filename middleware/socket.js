@@ -69,7 +69,8 @@ module.exports = function (server) {
         const user = await fetchUserById(data.user_id); // Wait for the user data to be fetched
         const bidCount = count[0].bidCount;
         data.user_name = `${user[0].first_name} ${user[0].last_name}`;
-        var offerRes = await getOfferDetailsByID(data.offer_id);
+        const user_id = ''
+        var offerRes = await getOfferDetailsByID(data.offer_id, user_id);
         const endMoment = moment(offerRes[0].end_date); // Leave as a moment object
         const currTime = moment()
           .tz("Europe/Zurich")
@@ -103,7 +104,7 @@ module.exports = function (server) {
             offerRes[0].no_of_times_reactivated
           );
           if (update.affectedRows > 0) {
-            const offerById = await getOfferDetailsByID(data.offer_id);
+            const offerById = await getOfferDetailsByID(data.offer_id, user_id);
             if (offerById.length > 0) {
               const new_offerstart_date = offerById[0].offerStart;
               const length_oftime = offerById[0].length_oftime;

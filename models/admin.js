@@ -213,6 +213,18 @@ module.exports = {
 
     updateTermCondition: async (data, condition) => {
         return await db.query("update tbl_term_condition set ? where ?", [data, condition])
+    },
+
+    getAllFeaturedProduct: async () => {
+        return await db.query('SELECT * FROM `tbl_featured_product` ORDER BY id DESC');
+    },
+
+    getFeaturedProductById: async (id) => {
+        return await db.query('SELECT * FROM `tbl_featured_product` WHERE id = ?', [id]);
+    },
+
+    updateFeaturedProductById: async (id, featured_image) => {
+        return await db.query('UPDATE `tbl_featured_product` SET `featured_image` = ? WHERE id = ?', [featured_image, id]);
     }
 
 };

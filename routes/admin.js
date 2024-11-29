@@ -58,4 +58,8 @@ router.get('/delete-termcondition', adminAuth, adminController.deleteTermConditi
 router.post('/update-termcondition', adminAuth, adminController.updateTermCondition);
 router.get('/get-headingsubheading', adminController.getHeadingSubHeading);
 
+// Featured Product
+router.get('/get-allfeaturedproduct', adminController.getAllFeaturedProduct);
+router.post('/update-featuredproductbyid', upload_files.fields([{ name: "featured_image" }]), adminController.updateFeaturedProductById);
+
 module.exports = router;

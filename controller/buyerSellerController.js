@@ -168,8 +168,8 @@ exports.acceptPrice = async (req, res) => {
         doContinue = 0;
       }
     } while (doContinue);
-
-    const length = await getOfferDetailsByID(offer_id);
+    const user_id = ''
+    const length = await getOfferDetailsByID(offer_id, user_id);
 
     if (length[0].offfer_buy_status == '0') {
       if (length.length > 0) var product_id = length[0].product_id;
@@ -307,7 +307,8 @@ exports.rejectPrice = async (req, res) => {
         success: false,
       });
     }
-    const length = await getOfferDetailsByID(offer_id);
+    const user_id = ''
+    const length = await getOfferDetailsByID(offer_id, user_id);
     if (length[0].offfer_buy_status == '0') {
       const updateResult = await rejectStatus(offer_id, buyer, seller);
       if (updateResult.affectedRows > 0) {
@@ -379,7 +380,7 @@ exports.getPriceSuggestedBySellerStatus = async (req, res) => {
         var sellerId = el.seller_id;
         var buyerId = el.buyer_id;
 
-        var offerDetails = await getOfferDetailsByID(offerId);
+        var offerDetails = await getOfferDetailsByID(offerId, user_id);
         if (offerDetails.length > 0) {
           var thumbnail = await getMainImage(offerDetails[0]?.images_id);
           tempObj.offer_unique_id = offerDetails[0]?.offer_unique_id;
@@ -446,7 +447,7 @@ exports.getPriceSuggestedForBuyer = async (req, res) => {
         var sellerId = el.seller_id;
         var buyerId = el.buyer_id;
 
-        var offerDetails = await getOfferDetailsByID(offerId);
+        var offerDetails = await getOfferDetailsByID(offerId, user_id);
         if (offerDetails.length > 0) {
           var thumbnail = await getMainImage(offerDetails[0]?.images_id);
           tempObj.offer_unique_id = offerDetails[0]?.offer_unique_id;

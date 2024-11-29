@@ -52,7 +52,7 @@ const { initializeApp } = require("firebase/app");
 const { getMessaging, getToken, isSupported } = require("firebase/messaging");
 const { hashPassword } = require('../helper/hashPassword');
 const twilio = require('twilio');
-const client = ''
+const client = new twilio('ACe774c39e2862faba9af9474ca1a29f2b', 'a21ff33278884546cb553d174bfa12e0')
 var moment = require('moment-timezone');
 const { error } = require("console");
 require('dotenv').config();
@@ -1457,7 +1457,8 @@ exports.sendOtp = async (req, res) => {
       from: '+14697891146', // e.g., +123456789
       to: formattedPhoneNumber
     });
-    return Otp; // Return OTP for further verification
+
+    return res.status(200).json({ error: false, message: "OTP sent successfully", status: 200, success: true, data: Otp });
   } catch (error) {
     if (error.code === 21608) { // Twilio error code for unverified numbers in trial mode
       return res.status(400).json({
