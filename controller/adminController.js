@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 var moment = require('moment-timezone');
 
-const { findEmail, tokenUpdate, getTotalOffers, getTotalDeliverdOffers, getTotalRevenue, getTotalPaidRevenue, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addPopularCategory, getAllPopularCategory, getPopularCategoryById, updatePopularCategoryById, deletePopularCategoryById, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid, getTransactionByOfferId, findAllTransaction, updateMsgCount, findSetting, updateSettingById, getOffersByDate, addTermCondition, getTermHeading, getTermSubHeading, deleteTermConditionById, updateTermCondition, getAllFeaturedProduct, getFeaturedProductById, updateFeaturedProductById } = require("../models/admin");
+const { findEmail, tokenUpdate, getTotalOffers, getTotalDeliverdOffers, getTotalRevenue, getTotalPaidRevenue, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addPopularCategory, getAllPopularCategory, getPopularCategoryById, updatePopularCategoryById, deletePopularCategoryById, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid, getTransactionByOfferId, findAllTransaction, updateMsgCount, findSetting, updateSettingById, getOffersByDate, getPremierSeller, addTermCondition, getTermHeading, getTermSubHeading, deleteTermConditionById, updateTermCondition, getAllFeaturedProduct, getFeaturedProductById, updateFeaturedProductById } = require("../models/admin");
 const { getNoOfBids, getCategoryIdByProductId, getMainImage } = require("../models/product");
 const { updateData } = require("../models/common");
 
@@ -570,11 +570,11 @@ exports.getPopularCategoryById = async (req, res) => {
 
 exports.updatePopularCategoryById = async (req, res) => {
     try {
-        const { category_id, cat_name, cat_image } = req.body;
+        const { id, category_id, cat_image } = req.body;
         const schema = Joi.alternatives(
             Joi.object({
+                id: Joi.number().required(),
                 category_id: Joi.number().required().empty(),
-                cat_name: Joi.string().required().empty(),
                 cat_image: Joi.string().allow(null, '')
             })
         );
@@ -589,9 +589,9 @@ exports.updatePopularCategoryById = async (req, res) => {
                 success: true,
             });
         }
-        const results = await getPopularCategoryById(category_id);
+        const results = await getPopularCategoryById(id);
         if (results.length !== 0) {
-            const updateCategory = await updatePopularCategoryById(category_id, cat_name, !req.files || Object.keys(req.files).length === 0 ? results[0].category_image : req.files.cat_image[0].filename);
+            const updateCategory = await updatePopularCategoryById(id, category_id, !req.files || Object.keys(req.files).length === 0 ? results[0].category_image : req.files.cat_image[0].filename);
             if (updateCategory.affectedRows > 0) {
                 return res.json({
                     success: true,
@@ -1795,12 +1795,30 @@ exports.landingOffers = async (req, res) => {
                 success: false,
                 message: "No Offers Found",
                 status: 400,
+                offers: []
             });
         }
     } catch (error) {
         return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
     }
 };
+
+exports.landingPremierSeller = async (req, res) => {
+    try {
+        const premierSellerResult = await getPremierSeller();
+        if (premierSellerResult.length > 0) {
+            // Logic when there are results
+            return res.status(200).json({ error: false, message: "Premier Sellers found:", success: true, data: premierSellerResult });
+            // Add your code here to process the results
+        } else {
+            // Logic when no results are found
+            return res.status(200).json({ error: true, message: "No Premier Sellers found.", success: false, data: [] });
+            // Add alternative handling here
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + error, success: false });
+    }
+}
 
 exports.updateMsgCount = async (req, res) => {
     try {

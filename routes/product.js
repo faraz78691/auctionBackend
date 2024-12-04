@@ -29,5 +29,7 @@ router.post('/getProductBySearch', productController.getProductBySearch);
 router.post('/getOffersByCategoryId', productController.getOffersByCategoryId);
 router.get('/getOffersByProductId', auth, productController.getOffersByProductId);
 router.get('/updateOfferExpired', productController.updateOfferExpired);
+router.delete('/offerDeleteById', productController.offerDeleteById);
+router.get('/getImagesByOfferId', productController.getImagesByOfferId);
 
 module.exports = router;

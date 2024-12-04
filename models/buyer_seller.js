@@ -70,7 +70,7 @@ END AS is_favorite FROM offers_created LEFT JOIN favourites_offer ON favourites_
     );
   },
 
-  getSoldOffersBySeller: async (seller) => {
+  getSoldOffersBySeller: async (seller) => {    
     return db.query(
       `SELECT offer_id,transaction_id , seller_id, buyer_id, buyer_status, seller_status, created_at, amount FROM buy_sell_transactions WHERE seller_id = ${seller} ORDER BY created_at DESC`
     );

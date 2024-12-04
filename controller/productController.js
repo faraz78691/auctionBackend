@@ -65,7 +65,8 @@ const {
   findBidCountUserId,
   getOffersByUserid,
   getOffersByUSerId,
-  getUserBidByOfferId
+  getUserBidByOfferId,
+  deleteOfferById
 } = require("../models/product");
 const { getBidDetailsByID } = require("../models/buyer_seller")
 const { findSetting } = require("../models/admin");
@@ -229,6 +230,7 @@ exports.uploadOfferImages = async (req, res) => {
       accessories,
       context,
     } = req.files;
+
     var mainImageLink = "";
     var bottomEsideLink = "";
     var topEsideLink = "";
@@ -240,50 +242,31 @@ exports.uploadOfferImages = async (req, res) => {
     var accessoriesLink = "";
     var contextLink = "";
 
-    if (req.files?.main_image) {
-      mainImageLink = main_image[0].filename;
-    }
-    if (req.files?.bottom_eside) {
-      bottomEsideLink = bottom_eside[0].filename;
-    }
-    if (req.files?.top_eside) {
-      topEsideLink = top_eside[0].filename;
-    }
-    if (req.files?.tilted_eside) {
-      tiltedEsideLink = tilted_eside[0].filename;
-    }
-    if (req.files?.defects) {
-      defectsLink = defects[0].filename;
-    }
-    if (req.files?.details) {
-      detailsLink = details[0].filename;
-    }
-    if (req.files?.brand) {
-      brandLink = brand[0].filename;
-    }
-    if (req.files?.dimension) {
-      dimensionLink = dimension[0].filename;
-    }
-    if (req.files?.accessories) {
-      accessoriesLink = accessories[0].filename;
-    }
-    if (req.files?.context) {
-      contextLink = context[0].filename;
-    }
+    mainImageLink = req.files?.main_image ? main_image[0].filename : req.body.main_image;
+    bottomEsideLink = req.files?.bottom_eside ? bottom_eside[0].filename : req.body.bottom_eside;
+    topEsideLink = req.files?.top_eside ? top_eside[0].filename : req.body.top_eside;
+    tiltedEsideLink = req.files?.tilted_eside ? tilted_eside[0].filename : req.body.tilted_eside;
+    defectsLink = req.files?.defects ? defects[0].filename : req.body.defects;
+    detailsLink = req.files?.details ? details[0].filename : req.body.details;
+    brandLink = req.files?.brand ? brand[0].filename : req.body.brand;
+    dimensionLink = req.files?.dimension ? dimension[0].filename : req.body.dimension;
+    accessoriesLink = req.files?.accessories ? accessories[0].filename : req.body.accessories;
+    contextLink = req.files?.context ? context[0].filename : req.body.context;
 
     const offer_images = {
-      main_image: mainImageLink,
-      bottom_eside: bottomEsideLink,
-      top_eside: topEsideLink,
-      tilted_eside: tiltedEsideLink,
-      defects: defectsLink,
-      details: detailsLink,
-      brand: brandLink,
-      dimension: dimensionLink,
-      accessories: accessoriesLink,
-      context: contextLink,
+      main_image: mainImageLink || '',
+      bottom_eside: bottomEsideLink || '',
+      top_eside: topEsideLink || '',  // You can keep this if specifically checking undefined
+      tilted_eside: tiltedEsideLink || '',
+      defects: defectsLink || '',
+      details: detailsLink || '',
+      brand: brandLink || '',
+      dimension: dimensionLink || '',
+      accessories: accessoriesLink || '',
+      context: contextLink || '',
       user_id: user_id,
     };
+
     const resultInserted = await insertOfferImages(offer_images);
     if (resultInserted.affectedRows > 0) {
       return res.json({
@@ -294,6 +277,8 @@ exports.uploadOfferImages = async (req, res) => {
       });
     }
   } catch (err) {
+    console.log(err);
+    
     return res.json({
       success: false,
       message: "Internal server error",
@@ -1261,7 +1246,7 @@ exports.getOffer = async (req, res) => {
       const filteredAttributes = attributes.filter(attribute => attribute !== null);
       const bidRes = await getMaxBidbyOfferID(offerId);
       const offerImages = await getOfferImages(offerRes[0].images_id);
-      const sellerDetails = await getSellerDetails(offerRes[0].user_id);
+      const sellerDetails = await getSellerDetails(offerRes[0].user_id, user_id);
       return res.json({
         success: true,
         message: "Offer Details are as followed",
@@ -1271,7 +1256,7 @@ exports.getOffer = async (req, res) => {
         attributes: filteredAttributes,
         offerImages: offerImages,
         conditions: conditions,
-        seller: sellerDetails,
+        seller: sellerDetails.seller,
         user_bid: {
           user_id: (bidRes.length > 0 && bidRes[0]?.user_id != null) ? bidRes[0]?.user_id : 0,
           max_bid: (bidRes.length > 0 && bidRes[0]?.max_bid != null) ? bidRes[0]?.max_bid : 0,
@@ -1281,7 +1266,7 @@ exports.getOffer = async (req, res) => {
       });
     }
   } catch (err) {
-    console.error(err);
+    console.error("offerById Error =>", err);
     return res.json({
       success: false,
       message: "Internal server error",
@@ -1792,9 +1777,9 @@ exports.getFavouriteOffers = async (req, res) => {
           }
         }
       }
-      const sellerDetails = await getSellerDetails(element.user_id);
-      element.sellername = sellerDetails[0].first_name + ' ' + sellerDetails[0].last_name;
-      element.sellerId = sellerDetails[0].id;
+      const sellerDetails = await getSellerDetails(element.user_id, user_id);
+      element.sellername = sellerDetails.seller[0].first_name + ' ' + sellerDetails.seller[0].last_name;
+      element.sellerId = sellerDetails.seller[0].id;
       if (element.images_id > 0) {
         const imageR = await getMainImage(element.images_id);
         if (imageR.length > 0) {
@@ -2957,6 +2942,90 @@ exports.updateOfferExpired = async (req, res) => {
         message: "Offer Already Updated",
         status: 200,
         error: false
+      });
+    }
+  } catch (error) {
+    return res.json({
+      success: false,
+      message: "Internal server error" + ':' + error.message,
+      error: true,
+      status: 500,
+    });
+  }
+};
+
+exports.offerDeleteById = async (req, res) => {
+  try {
+    const { offerId } = req.query;
+    const schema = Joi.alternatives(
+      Joi.object({
+        offerId: Joi.number().required(),
+      })
+    );
+    const result = schema.validate(req.query);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
+      return res.json({
+        message: result.error.details[0].message,
+        error: message,
+        missingParams: result.error.details[0].message,
+        status: 200,
+        success: false,
+      });
+    } else {
+      const offer = await deleteOfferById(offerId);
+      if (offer.affectedRows > 0) {
+        return res.json({
+          success: true,
+          message: "Offer deleted successfully.",
+          error: false,
+          status: 500,
+        });
+      } else {
+        return res.json({
+          success: false,
+          message: "Offer not found or could not be deleted.",
+          error: true,
+          status: 500,
+        });
+      }
+    }
+  } catch (error) {
+    return res.json({
+      success: false,
+      message: "Internal server error" + ':' + error.message,
+      error: true,
+      status: 500,
+    });
+  }
+};
+
+exports.getImagesByOfferId = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader != undefined ? authHeader.replace("Bearer ", "") : '';
+    const decoded = jwt.decode(token);
+    const user_id = decoded != null ? decoded["user_id"] : '';
+    const { offerId } = req.query;
+
+    var offerRes = await getOfferDetailsByID(offerId, user_id);
+    if (offerRes.length > 0) {
+      const offerImages = await getOfferImages(offerRes[0].images_id);
+      return res.status(200).json({
+        success: true,
+        message: "Offer details retrieved successfully.",
+        data: {
+          offer: offerRes,
+          images: offerImages,
+        },
+        status: 200,
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: "Offer not found for the provided ID.",
+        error: true,
+        status: 200,
       });
     }
   } catch (error) {

@@ -218,6 +218,10 @@ module.exports = {
 
   updateFileById: async (userId, file_name) => {
     return await db.query('UPDATE `users` SET `profile_image`= ? WHERE id = ?', [file_name, userId])
+  },
+
+  updateToeknById: async (userId, fcm_token) => {
+    return await db.query('UPDATE `users` SET `fcm_token`= ? WHERE id = ?', [fcm_token == 'null' ? null : fcm_token, userId]);
   }
 
 };

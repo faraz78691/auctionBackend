@@ -484,7 +484,6 @@ exports.getPriceSuggestedForBuyer = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",
@@ -584,9 +583,7 @@ exports.getSoldSectionForSeller = async (req, res) => {
         status: 500,
       });
     }
-
     const offersDetails = await getSoldOffersBySeller(user_id);
-
     if (offersDetails.length > 0) {
       var finalOutput = [];
       for (el of offersDetails) {
@@ -618,10 +615,8 @@ exports.getSoldSectionForSeller = async (req, res) => {
           tempObj.buyer_name = buyerNameArr[0]?.name;
           tempObj.buyer_profile_image = buyerNameArr[0]?.profile_image;
         }
-
         finalOutput.push(tempObj);
       }
-
       return res.json({
         success: true,
         message: "Offer bought by Seller",

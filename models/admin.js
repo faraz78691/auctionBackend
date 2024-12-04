@@ -57,15 +57,15 @@ module.exports = {
     },
 
     getAllPopularCategory: async () => {
-        return await db.query('SELECT * FROM `tbl_popular_category` ORDER BY id DESC;')
+        return await db.query('SELECT tbl_popular_category.*, category.cat_name AS category_name FROM `tbl_popular_category` LEFT JOIN category ON category.id = tbl_popular_category.category_id ORDER BY tbl_popular_category.id DESC;')
     },
 
     getPopularCategoryById: async (id) => {
         return await db.query('SELECT * FROM `tbl_popular_category` WHERE id = ?', [id]);
     },
 
-    updatePopularCategoryById: async (category_id, category_name, category_image) => {
-        return await db.query('UPDATE `tbl_popular_category` SET `category_name`= "' + category_name + '", `category_image` = "' + category_image + '" WHERE id = "' + category_id + '"');
+    updatePopularCategoryById: async (id, category_id, category_image) => {
+        return await db.query('UPDATE `tbl_popular_category` SET `category_id`= "' + category_id + '", `category_image` = "' + category_image + '" WHERE id = "' + id + '"');
     },
 
     deletePopularCategoryById: async (id) => {
@@ -192,7 +192,11 @@ module.exports = {
     },
 
     getOffersByDate: async (currDate) => {
-        return await db.query(`SELECT id, offer_unique_id, product_id, title, product_type, images_id, offerStart,is_bid_or_fixed, start_date, length_oftime, end_date, FLOOR( HOUR(TIMEDIFF(end_date, CURRENT_TIMESTAMP)) / 24) AS remaining_days, (TIMEDIFF(end_date, CURRENT_TIMESTAMP)) AS remaining_time, start_price, increase_step, buyto_price, fixed_offer_price, duration, boost_plan_id, offfer_buy_status, user_id from offers_created WHERE offfer_buy_status != '1' AND TIMESTAMP(end_date) >= '${currDate}' ORDER BY boost_plan_id DESC;`);
+        return await db.query(`SELECT id, offer_unique_id, product_id, title, product_type, images_id, offerStart,is_bid_or_fixed, start_date, length_oftime, end_date, FLOOR( HOUR(TIMEDIFF(end_date, CURRENT_TIMESTAMP)) / 24) AS remaining_days, (TIMEDIFF(end_date, CURRENT_TIMESTAMP)) AS remaining_time, start_price, increase_step, buyto_price, fixed_offer_price, duration, boost_plan_id, offfer_buy_status, user_id from offers_created WHERE offfer_buy_status != '1' AND boost_plan_id = '1' AND TIMESTAMP(end_date) >= '${currDate}' ORDER BY boost_plan_id DESC;`);
+    },
+
+    getPremierSeller: async () => {
+        return await db.query('SELECT offers_created.id, offers_created.offer_unique_id, users.id AS user_id, users.profile_image, users.user_name, CONCAT(users.address, " ", users.postal_code) AS address FROM offers_created LEFT JOIN users ON users.id = offers_created.user_id LEFT JOIN tbl_user_commissin_fees ON tbl_user_commissin_fees.offer_id = offers_created.id WHERE offers_created.boost_plan_id = "1" AND tbl_user_commissin_fees.fees_type = "2";');
     },
 
     addTermCondition: async (data) => {

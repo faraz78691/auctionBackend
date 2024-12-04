@@ -35,7 +35,8 @@ const {
   updateAccountDetails,
   fetchNotificationMessage,
   updateNotificationMessageByUserId,
-  updateFileById
+  updateFileById,
+  updateToeknById
 } = require("../models/users");
 const { updateData } = require("../models/common");
 const axios = require('axios');
@@ -2108,3 +2109,43 @@ exports.getLatLong = async (req, res) => {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };
+
+exports.updateToken = async (req, res) => {
+  try {
+    const userId = req.user.id;    
+    const { fcm_token } = req.body;
+
+    // Validate input using Joi
+    const schema = Joi.object({
+      fcm_token: Joi.string()
+        .allow(null) // Allows null values
+        .required() // Ensures the field is present (even if null)
+        .messages({
+          'string.base': 'The fcm token must be a valid string.',
+          'string.empty': 'The fcm token cannot be an empty string.',
+          'any.required': 'The fcm token field is required.',
+        })
+    });
+
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        errors: true,
+        message: error.details[0].message,
+        status: 400,
+        success: false
+      });
+    } else {
+      const updateToken = await updateToeknById(userId, fcm_token);
+      if(updateToken.affectedRows > 0){
+        return res.status(200).json({ error: false, message: "Token updated successfully", status: 200, success: true });
+      } else{
+        return res.status(500).json({ error: true, message: "No rows were updated. Token might not exist for the provided userId.", status: 500, success: false });
+      }
+    }
+  } catch (error) {
+    console.log(error);
+    
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+}
