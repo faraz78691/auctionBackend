@@ -1794,9 +1794,9 @@ exports.addFollowUp = async (req, res) => {
       }
       const insertResult = await addFollowUpByUser(add);
       if (insertResult.affectedRows > 0) {
-        return res.status(200).json({ error: false, message: "Successfully add", status: 200, success: true });
+        return res.status(200).json({ error: false, message: "Following", status: 200, success: true });
       } else {
-        return res.status(200).json({ error: true, message: "Not add", status: 200, success: false });
+        return res.status(200).json({ error: true, message: "Not following", status: 200, success: false });
       }
     }
   } catch (error) {
@@ -1831,10 +1831,11 @@ exports.getFollowUp = async (req, res) => {
 
 exports.deleteFollowup = async (req, res) => {
   try {
-    const { id } = req.query;
+    const { follow_user_id } = req.query;
+    const userId = req.user.id;
     const schema = Joi.alternatives(
       Joi.object({
-        id: Joi.number().required().empty(),
+        follow_user_id: Joi.number().required().label('Followup User Id'),
       })
     );
     const result = schema.validate(req.query);
@@ -1848,9 +1849,9 @@ exports.deleteFollowup = async (req, res) => {
         success: false,
       });
     } else {
-      const deleteResult = await deleteFollowupById(id);
+      const deleteResult = await deleteFollowupById(userId, follow_user_id);
       if (deleteResult.affectedRows > 0) {
-        return res.status(200).json({ error: false, message: "Successfully unfollowed.", status: 200, success: true });
+        return res.status(200).json({ error: false, message: "Unfollowed.", status: 200, success: true });
       } else {
         return res.status(200).json({ error: true, message: "Already unfollowed. Please follow again.", status: 200, success: false });
       }
@@ -1862,14 +1863,18 @@ exports.deleteFollowup = async (req, res) => {
 
 exports.getUserById = async (req, res) => {
   try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader != undefined ? authHeader.replace("Bearer ", "") : '';
+    const decoded = jwt.decode(token);
+    const follower_userId = decoded != null ? decoded["user_id"] : '';
     const { user_id } = req.query;
-    const findUser = await getUserById(user_id);
-    if (findUser.length > 0) {
-      delete findUser[0].password;
-      delete findUser[0].token;
-      delete findUser[0].fcm_token;
-      delete findUser[0].stripe_customer_id;
-      return res.status(200).json({ error: false, message: "User data retrieved successfully.", status: 200, success: true, data: findUser[0] });
+    const findUser = await getUserById(user_id, follower_userId);    
+    if (findUser.user.length > 0) {
+      delete findUser.user[0].password;
+      delete findUser.user[0].token;
+      delete findUser.user[0].fcm_token;
+      delete findUser.user[0].stripe_customer_id;
+      return res.status(200).json({ error: false, message: "User data retrieved successfully.", status: 200, success: true, data: findUser.user[0] });
     } else {
       return res.status(200).json({ error: true, message: "User not found.", status: 200, success: false, data: [] });
     }
@@ -2112,7 +2117,7 @@ exports.getLatLong = async (req, res) => {
 
 exports.updateToken = async (req, res) => {
   try {
-    const userId = req.user.id;    
+    const userId = req.user.id;
     const { fcm_token } = req.body;
 
     // Validate input using Joi
@@ -2137,15 +2142,15 @@ exports.updateToken = async (req, res) => {
       });
     } else {
       const updateToken = await updateToeknById(userId, fcm_token);
-      if(updateToken.affectedRows > 0){
+      if (updateToken.affectedRows > 0) {
         return res.status(200).json({ error: false, message: "Token updated successfully", status: 200, success: true });
-      } else{
+      } else {
         return res.status(500).json({ error: true, message: "No rows were updated. Token might not exist for the provided userId.", status: 500, success: false });
       }
     }
   } catch (error) {
     console.log(error);
-    
+
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 }

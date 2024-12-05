@@ -32,7 +32,7 @@ router.post('/add-search', auth, userController.addSearch);
 router.get('/get-search', auth, userController.getSearch);
 router.post('/add-followUp', auth, userController.addFollowUp);
 router.get('/get-followUp', auth, userController.getFollowUp);
-router.get('/delete-followup', auth, userController.deleteFollowup);
+router.delete('/delete-followup', auth, userController.deleteFollowup);
 router.get('/get-userbyid', userController.getUserById);
 router.post('/add-accountdetail', auth, userController.addAccountDetail);
 router.get('/get-accountdetail', auth, userController.getAccountDetail);

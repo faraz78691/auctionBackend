@@ -156,12 +156,19 @@ module.exports = {
     return await db.query('SELECT tbl_followup.*, users.user_name, users.profile_image AS user_profile_image FROM `tbl_followup` LEFT JOIN users ON users.id = tbl_followup.follow_user_id WHERE user_id = ? ORDER BY tbl_followup.id DESC', [id]);
   },
 
-  deleteFollowupById: async (id) => {
-    return await db.query('DELETE FROM `tbl_followup` WHERE id = ?', [id]);
+  deleteFollowupById: async (user_id, follow_user_id) => {
+    return await db.query('DELETE FROM `tbl_followup` WHERE user_id = ? AND follow_user_id = ?', [user_id, follow_user_id]);
   },
 
-  getUserById: async (id) => {
-    return await db.query('SELECT users.*, COUNT(buy_sell_transactions.seller_id) AS seller_count FROM users LEFT JOIN buy_sell_transactions ON buy_sell_transactions.seller_id = users.id WHERE users.id = ?', [id]);
+  getUserById: async (id, follower_userId) => {
+    const user = await db.query('SELECT users.*, COUNT(buy_sell_transactions.seller_id) AS seller_count FROM users LEFT JOIN buy_sell_transactions ON buy_sell_transactions.seller_id = users.id WHERE users.id = ?', [id]);
+    const follower = await db.query('SELECT * FROM `tbl_followup` WHERE user_id = ? AND follow_user_id = ?', [follower_userId, id]);
+    if (user.length > 0) {
+      user[0].follower = follower.length > 0 ? 1 : 0;
+    }
+    return {
+      user
+    };
   },
 
   updateAccountDetails: async (userId, account_no, holder_name, holder_address, holder_message) => {
