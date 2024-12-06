@@ -317,7 +317,7 @@ module.exports = {
     return await db.query('SELECT user_id, MAX(bid) AS max_bid FROM user_bids WHERE offer_id = ? GROUP BY user_id ORDER BY max_bid DESC LIMIT 18446744073709551615 OFFSET 1', [offer_id]);
   },
 
-  deleteOfferById: async(offer_id) => {    
+  deleteOfferById: async (offer_id) => {
     return await db.query('DELETE FROM offers_created WHERE id = ?', [offer_id]);
   },
 
@@ -338,7 +338,7 @@ module.exports = {
   },
 
   getSellerDetails: async (id, user_id) => {
-    const seller = await db.query(`SELECT users.id, users.first_name, users.last_name, CONCAT( users.address, " ", users.postal_code ) AS address, users.latitude, users.longitude, users.profile_image FROM users WHERE users.id = '${id}'`);
+    const seller = await db.query(`SELECT users.id, users.first_name, users.last_name, users.user_name, CONCAT( users.address, " ", users.postal_code ) AS address, users.latitude, users.longitude, users.profile_image FROM users WHERE users.id = '${id}'`);
     const follower = await db.query('SELECT * FROM `tbl_followup` WHERE user_id = ? AND follow_user_id = ?', [user_id, id]);
     if (seller.length > 0) {
       seller[0].follower = follower.length > 0 ? 1 : 0;
