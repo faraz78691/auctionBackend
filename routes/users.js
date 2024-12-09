@@ -42,5 +42,6 @@ router.post('/upload-profile', auth, upload_files.fields([{ name: "upload_profil
 router.post('/search-location', userController.searchLocation);
 router.get('/get-latlong', userController.getLatLong);
 router.post('/update-token', auth, userController.updateToken);
+router.post('/socket-imagesend', upload_files.fields([{ name: "socket_image_message" }]), userController.socketImageSend);
 
 module.exports = router;

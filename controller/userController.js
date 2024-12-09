@@ -1868,7 +1868,7 @@ exports.getUserById = async (req, res) => {
     const decoded = jwt.decode(token);
     const follower_userId = decoded != null ? decoded["user_id"] : '';
     const { user_id } = req.query;
-    const findUser = await getUserById(user_id, follower_userId);    
+    const findUser = await getUserById(user_id, follower_userId);
     if (findUser.user.length > 0) {
       delete findUser.user[0].password;
       delete findUser.user[0].token;
@@ -2153,4 +2153,22 @@ exports.updateToken = async (req, res) => {
 
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
-}
+};
+
+exports.socketImageSend = async (req, res) => {
+  try {
+    if (!req.files || Object.keys(req.files).length === 0) {
+      return res.status(400).json({ error: true, message: "No files were uploaded.", status: 400, success: false });
+    } else {
+      const socketImageMessage = req.files.socket_image_message.map((file) => file.filename).join(',');
+      return res.status(200).json({
+        error: false,
+        success: true,
+        message: 'Image(s) uploaded and record inserted successfully.',
+        data: socketImageMessage,
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+};

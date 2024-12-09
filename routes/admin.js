@@ -49,6 +49,7 @@ router.get('/getAllTransaction', adminAuth, adminController.getAllTransaction);
 router.get('/get-setting', adminAuth, adminController.getSetting);
 router.post('/update-setting', adminAuth, adminController.updateSetting);
 router.get('/landing-offers', adminController.landingOffers);
+router.get('/landing-upcommingoffers', adminController.landingUpcommingOffers);
 router.get('/landing-premierseller', adminController.landingPremierSeller);
 
 // Trems & Condiition

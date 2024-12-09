@@ -6,8 +6,6 @@ require('dotenv').config();
 const db = require("./utils/database");
 const https = require("https");
 const fs = require("fs");
-
-
 // const server = http.createServer(app);
 const server = https
   .createServer(
@@ -18,7 +16,6 @@ const server = https
     },
     app
   )
-
 const stripe = require('stripe')(process.env.STRIPE_SECRERT_KEY);
 const initializeSocket = require("./middleware/socket");
 const io = initializeSocket(server);
@@ -29,9 +26,6 @@ const admin = require('./routes/admin');
 const product = require('./routes/product');
 const { updateOfferExpired } = require('./helper/offerControl');
 var moment = require('moment-timezone');
-
-
-
 
 app.use(cors());
 global.__basedir = __dirname;
@@ -48,9 +42,6 @@ app.use('/product', product);
 app.use('/user', user);
 app.use('/buyer', buyer_seller);
 
-
-
-
 app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => {
@@ -63,7 +54,7 @@ app.get('/', (req, res) => {
   } else {
     return res.sendFile(__dirname + '/controller/view/welcome.html');
   }
-})
+});
 
 app.get('/amount_add_successfull', async (req, res) => {
   try {
@@ -92,7 +83,7 @@ app.get('/amount_add_successfull', async (req, res) => {
   } catch (error) {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
-})
+});
 
 app.get('/amount_add_cancelled', async (req, res) => {
   try {
@@ -114,12 +105,11 @@ app.get('/amount_add_cancelled', async (req, res) => {
   } catch (error) {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
-})
+});
 
 setInterval(updateOfferExpired, 600000);
 
 const PORT = process.env.PORT || 5000;
-
 
 server.listen(PORT, function () {
   console.log(`Server running on port ${PORT}`);

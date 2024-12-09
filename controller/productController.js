@@ -278,7 +278,7 @@ exports.uploadOfferImages = async (req, res) => {
     }
   } catch (err) {
     console.log(err);
-    
+
     return res.json({
       success: false,
       message: "Internal server error",
@@ -350,6 +350,7 @@ exports.createOffer = async (req, res) => {
         success: false,
       });
     }
+    console.log("req.body =>", req.body);
 
     const findProduct = await findProductById(product_id);
     if (findProduct.length > 0) {

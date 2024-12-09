@@ -34,6 +34,7 @@ module.exports = function (server) {
   const userSockets = {}; // Store userId and socket.id
   const adminSockets = {}; // Store adminId and socket.id
   let onlineUsers = new Map();
+
   // Set up a connection event listener for incoming sockets
   io.on("connection", (socket) => {
     console.log("A user connected");
@@ -173,21 +174,23 @@ module.exports = function (server) {
 
     // Listen for a new chat message
     socket.on("sendMessage", async (msg) => {
-      const { user_id, admin_id, message, sender_id } = msg;
-
+      
+      const { user_id, admin_id, message, image_path, sender_id } = msg;
       if (
         user_id != "undefined" &&
         admin_id != "undefined" &&
         message != "undefined" &&
+        image_path != "undefined" &&
         sender_id != "undefined"
       ) {
         const currTime = moment().tz("Europe/Zurich").format("YYYY-MM-DD HH:mm:ss");
         // Insert the message into the database
-        const insertMessageQuery = `INSERT INTO tbl_messages (user_id, admin_id, message, sender_id, created_at) VALUES (?, ?, ?, ?, ?)`;
+        const insertMessageQuery = `INSERT INTO tbl_messages (user_id, admin_id, message, image_path, sender_id, created_at) VALUES (?, ?, ?, ?, ?, ?)`;
         const addMessage = await db.query(insertMessageQuery, [
           user_id,
           admin_id,
-          message,
+          message == '' ? null : message,
+          image_path == '' ? null : image_path,
           sender_id,
           currTime
         ]);
@@ -237,6 +240,7 @@ module.exports = function (server) {
         for (let user of findChatUser) {
           const findLastMessage = await getLastMessageAllUser(user.user_id);
           (user.message = findLastMessage[0].message),
+            (user.image_path = findLastMessage[0].image_path),
             (user.unread_count = findLastMessage[0].unread_count);
         }
         socket.emit("getMessages", findChatUser);
@@ -250,5 +254,6 @@ module.exports = function (server) {
       console.log("User disconnected", socket.id);
     });
   });
+
   return io; // Return the io instance for use in other files if needed
 };
