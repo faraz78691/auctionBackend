@@ -66,7 +66,8 @@ const {
   getOffersByUserid,
   getOffersByUSerId,
   getUserBidByOfferId,
-  deleteOfferById
+  deleteOfferById,
+  findFollowUserId
 } = require("../models/product");
 const { getBidDetailsByID } = require("../models/buyer_seller")
 const { findSetting } = require("../models/admin");
@@ -81,7 +82,7 @@ const path = require("path");
 require("dotenv").config();
 var randomstring = require("randomstring");
 var moment = require('moment-timezone');
-const { error } = require("console");
+const { sendEmail } = require('../utils/nodemailer');
 
 exports.getProducts = async (req, res) => {
   try {
@@ -350,7 +351,6 @@ exports.createOffer = async (req, res) => {
         success: false,
       });
     }
-    console.log("req.body =>", req.body);
 
     const findProduct = await findProductById(product_id);
     if (findProduct.length > 0) {
@@ -411,6 +411,7 @@ exports.createOffer = async (req, res) => {
       var transactionId = 0;
       const resultInserted = await insertOfferCreated(offer_created);
       if (resultInserted.affectedRows > 0) {
+
         if (boost_plan_id) {
           const getBootplan = await findBootPlanById(boost_plan_id);
           do {
@@ -436,7 +437,9 @@ exports.createOffer = async (req, res) => {
           }
           await insertUserFeesPay(data);
         }
+
         offerId = resultInserted.insertId;
+
         if (itemsJson.length > 0) {
           for (element of itemsJson) {
             const attributesData = {
@@ -464,6 +467,35 @@ exports.createOffer = async (req, res) => {
             condInserted = condInserted + insertedRows.affectedRows;
           }
         }
+
+        if (user_id) {
+          const findFollowUserIdResult = await findFollowUserId(user_id);
+          if (findFollowUserIdResult.length > 0) {
+            const mailOptions = {
+              from: 'abhishek.ctinfotech@gmail.com',
+              to: findFollowUserIdResult[0].email,
+              subject: `New Offer Created: ${offer_created.title}`,
+              html: `<p>The user <strong>${findFollowUserIdResult[0].user_name}</strong> you follow has created a new offer:</p>
+                     <p><strong>${offer_created.title}</strong></p>
+                     <p>Details:</p>
+                     <ul>
+                        <li>Product Type: ${offer_created.product_type}</li>
+                        <li>Start Price: ${offer_created.start_price}</li>
+                        <li>End Date: ${offer_created.end_date}</li>
+                     </ul>
+                     <p>Thank you for staying updated with your followup users!</p>
+                     <p><a href="https://98.80.36.64/home" style="display: inline-block; padding: 10px 20px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 5px; font-weight: bold;">Bid Now</a></p>`,
+            };
+            sendEmail(mailOptions)
+              .then(info => {
+                console.log("Offer creation email sent successfully:", info.response);
+              })
+              .catch(error => {
+                console.error("Failed to send offer creation email:", error.message);
+              });
+          }
+        }
+
         return res.json({
           success: true,
           message: "Offer Created",
@@ -481,8 +513,6 @@ exports.createOffer = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err);
-
     return res.json({
       success: false,
       message: "Internal server error",

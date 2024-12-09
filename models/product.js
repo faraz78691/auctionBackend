@@ -321,6 +321,10 @@ module.exports = {
     return await db.query('DELETE FROM offers_created WHERE id = ?', [offer_id]);
   },
 
+  findFollowUserId: async (user_id) => {
+    return await db.query('SELECT follow_user.user_name, users.email FROM `tbl_followup` LEFT JOIN users AS follow_user ON follow_user.id = tbl_followup.follow_user_id LEFT JOIN users ON users.id = tbl_followup.user_id WHERE tbl_followup.follow_user_id = ?', [user_id]);
+  },
+
   insertOfferFavourites: async (data) => {
     return db.query("insert into favourites_offer set ?", [data]);
   },
