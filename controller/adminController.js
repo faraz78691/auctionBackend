@@ -3,9 +3,10 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 var moment = require('moment-timezone');
 
-const { findEmail, tokenUpdate, getTotalOffers, getTotalDeliverdOffers, getTotalRevenue, getTotalPaidRevenue, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, findAdminById, addCategory, getAllCategory, getCategorybyId, addPopularCategory, getAllPopularCategory, getPopularCategoryById, updatePopularCategoryById, deletePopularCategoryById, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid, getTransactionByOfferId, findAllTransaction, updateMsgCount, findSetting, updateSettingById, getOffersByDate, getUpcommingOffersByDate, getPremierSeller, addTermCondition, getTermHeading, getTermSubHeading, deleteTermConditionById, updateTermCondition, getAllFeaturedProduct, getFeaturedProductById, updateFeaturedProductById } = require("../models/admin");
+const { findEmail, tokenUpdate, getTotalOffers, getTotalDeliverdOffers, getTotalRevenue, getTotalPaidRevenue, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, userBlockStatusUpdateById, findAdminById, addCategory, getAllCategory, getCategorybyId, addPopularCategory, getAllPopularCategory, getPopularCategoryById, updatePopularCategoryById, deletePopularCategoryById, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid, getTransactionByOfferId, findAllTransaction, updateMsgCount, findSetting, updateSettingById, getOffersByDate, getUpcommingOffersByDate, getPremierSeller, addTermCondition, getTermHeading, getTermSubHeading, deleteTermConditionById, updateTermCondition, getAllFeaturedProduct, getFeaturedProductById, updateFeaturedProductById } = require("../models/admin");
 const { getNoOfBids, getCategoryIdByProductId, getMainImage } = require("../models/product");
 const { updateData } = require("../models/common");
+const { sendEmail } = require('../utils/nodemailer');
 
 exports.login = async (req, res) => {
     try {
@@ -256,6 +257,149 @@ exports.getAllOffersByUserId = async (req, res) => {
             message: "Internal server error",
             status: 500,
         });
+    }
+};
+
+exports.userBlockStatusUpdateById = async (req, res) => {
+    try {
+        const { user_id, status } = req.body;
+        const schema = Joi.alternatives(
+            Joi.object({
+                user_id: Joi.number()
+                    .required()
+                    .messages({
+                        "number.base": "User ID must be a valid number.",
+                        "number.empty": "User ID cannot be empty.",
+                        "any.required": "User ID is required.",
+                    }),
+
+                status: Joi.string()
+                    .valid('0', '1')  // Only '0' or '1' are valid
+                    .required()
+                    .messages({
+                        "string.base": "Status must be a valid string.",
+                        "string.empty": "Status cannot be empty.",
+                        "any.only": "Status must be either '0' or '1'.",  // Custom message for valid values
+                        "any.required": "Status is required.",
+                    }),
+            })
+        );
+        const result = schema.validate(req.body);
+        if (result.error) {
+            const message = result.error.details.map((i) => i.message).join(",");
+            return res.json({
+                message: result.error.details[0].message,
+                error: message,
+                missingParams: result.error.details[0].message,
+                status: 200,
+                success: true,
+            });
+        } else {
+            const updateResult = await userBlockStatusUpdateById(user_id, status);
+            if (updateResult.affectedRows > 0) {
+                return res.json({
+                    success: true,
+                    message: "User block status updated successfully.",
+                    status: 200,
+                });
+            } else {
+                return res.json({
+                    success: false,
+                    message: "Failed to update user block status.",
+                    status: 400,
+                });
+            }
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
+    }
+};
+
+exports.userSendQueriesByEmail = async (req, res) => {
+    try {
+        const { email, subject, html } = req.body;
+        const schema = Joi.alternatives(
+            Joi.object({
+                email: Joi.string()
+                    .email({ tlds: { allow: false } }) // Ensure email is a valid email address
+                    .required()
+                    .messages({
+                        "string.base": "Email must be a valid string.",
+                        "string.email": "Please provide a valid email address.",
+                        "any.required": "Email is required.",
+                    }),
+
+                subject: Joi.string()
+                    .min(5)
+                    .max(255)
+                    .required()
+                    .messages({
+                        "string.base": "Subject must be a valid string.",
+                        "string.empty": "Subject cannot be empty.",
+                        "string.min": "Subject must be at least 5 characters long.",
+                        "string.max": "Subject must be no more than 255 characters long.",
+                        "any.required": "Subject is required.",
+                    }),
+
+                html: Joi.string()
+                    .min(10)
+                    .required()
+                    .messages({
+                        "string.base": "HTML content must be a valid string.",
+                        "string.empty": "HTML content cannot be empty.",
+                        "string.min": "HTML content must be at least 10 characters long.",
+                        "any.required": "HTML content is required.",
+                    }),
+            })
+        );
+        const result = schema.validate(req.body);
+        if (result.error) {
+            const message = result.error.details.map((i) => i.message).join(",");
+            return res.json({
+                message: result.error.details[0].message,
+                error: message,
+                missingParams: result.error.details[0].message,
+                status: 200,
+                success: true,
+            });
+        } else {
+            const getAdmin = await findEmail(email);
+            if (getAdmin.length > 0) {
+                const mailOptions = {
+                    from: 'abhishek.ctinfotech@gmail.com',
+                    to: email,
+                    subject: subject,
+                    html: html,
+                };
+                sendEmail(mailOptions)
+                    .then(info => {
+                        return res.status(200).json({
+                            error: false,
+                            message: "Email sent successfully.",
+                            data: info,
+                            status: 200,
+                            success: true,
+                        });
+                    })
+                    .catch(error => {
+                        return res.status(500).json({
+                            error: true,
+                            message: "There was an error sending the email. Please try again later.",
+                            error: error.message,
+                            status: 500,
+                            success: false,
+                        });
+                    });
+            } else {
+                return res.json({
+                    success: false,
+                    message: "Incorrect Email",
+                    status: 400,
+                });
+            }
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
     }
 };
 

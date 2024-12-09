@@ -12,6 +12,8 @@ router.get('/dashboard', adminAuth, adminController.dashboard);
 router.get('/getAllUsers', adminAuth, adminController.getAllUsers);
 router.get('/getAllUsersOffers', adminAuth, adminController.getAllUsersOffers);
 router.get('/getAllOffersByUserId', adminAuth, adminController.getAllOffersByUserId);
+router.post('/userBlockStatusUpdateById', adminAuth, adminController.userBlockStatusUpdateById);
+router.post('/userSendQueriesByEmail', adminAuth, adminController.userSendQueriesByEmail);
 
 // Category
 router.post('/addCategory', adminAuth, adminController.addCategory);
