@@ -877,7 +877,7 @@ exports.getOffers = async (req, res) => {
         message: "Offer Sorted by time only category name and product name find",
         categoryName: categoryNameRes.length > 0 ? categoryNameRes[0].cat_name : null,
         productName: categoryRes.length > 0 ? categoryRes[0].name : null,
-        offers: null,
+        offers: [],
         status: 400,
       });
     } else {
@@ -885,6 +885,7 @@ exports.getOffers = async (req, res) => {
         success: false,
         message: "No Offers Found",
         status: 400,
+        offers: [],
       });
     }
   } catch (err) {
@@ -1297,7 +1298,6 @@ exports.getOffer = async (req, res) => {
       });
     }
   } catch (err) {
-    console.error("offerById Error =>", err);
     return res.json({
       success: false,
       message: "Internal server error",

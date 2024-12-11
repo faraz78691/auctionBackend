@@ -179,7 +179,8 @@ exports.getAllUsers = async (req, res) => {
             return res.json({
                 message: "Users not found",
                 status: 200,
-                success: true,
+                success: false,
+                data: [],
             });
         }
     } catch (error) {
@@ -205,7 +206,8 @@ exports.getAllUsersOffers = async (req, res) => {
             return res.json({
                 message: "Offers not found",
                 status: 200,
-                success: true,
+                success: false,
+                data: []
             });
         }
     } catch (error) {
@@ -248,7 +250,8 @@ exports.getAllOffersByUserId = async (req, res) => {
             return res.json({
                 message: "User offers not found",
                 status: 200,
-                success: true,
+                success: false,
+                data: []
             });
         }
     } catch (error) {
@@ -262,7 +265,7 @@ exports.getAllOffersByUserId = async (req, res) => {
 
 exports.userBlockStatusUpdateById = async (req, res) => {
     try {
-        const { user_id, status } = req.body;
+        const { user_id, status, reason } = req.body;
         const schema = Joi.alternatives(
             Joi.object({
                 user_id: Joi.number()
@@ -272,7 +275,6 @@ exports.userBlockStatusUpdateById = async (req, res) => {
                         "number.empty": "User ID cannot be empty.",
                         "any.required": "User ID is required.",
                     }),
-
                 status: Joi.string()
                     .valid('0', '1')  // Only '0' or '1' are valid
                     .required()
@@ -281,6 +283,13 @@ exports.userBlockStatusUpdateById = async (req, res) => {
                         "string.empty": "Status cannot be empty.",
                         "any.only": "Status must be either '0' or '1'.",  // Custom message for valid values
                         "any.required": "Status is required.",
+                    }),
+                reason: Joi.string()
+                    .required()
+                    .messages({
+                        "string.base": "Reason must be a valid string.",
+                        "string.empty": "Reason cannot be empty.",
+                        "any.required": "Reason is required.",
                     }),
             })
         );
@@ -295,7 +304,7 @@ exports.userBlockStatusUpdateById = async (req, res) => {
                 success: true,
             });
         } else {
-            const updateResult = await userBlockStatusUpdateById(user_id, status);
+            const updateResult = await userBlockStatusUpdateById(user_id, status, status == '0' ? null : reason);
             if (updateResult.affectedRows > 0) {
                 return res.json({
                     success: true,
@@ -437,6 +446,7 @@ exports.addCategory = async (req, res) => {
                     success: false,
                     message: "category failed to add",
                     status: 400,
+                    insertId: null
                 });
             }
         }
@@ -462,9 +472,10 @@ exports.getAllCategory = async (req, res) => {
             });
         } else {
             return res.json({
-                success: true,
+                success: false,
                 message: "Catgeory not found",
                 status: 200,
+                insertId: []
             });
         }
     } catch (err) {
@@ -506,13 +517,13 @@ exports.getCategoryById = async (req, res) => {
             });
         } else {
             return res.json({
-                success: true,
+                success: false,
                 message: "Fetch categorys by id failed",
                 status: 200,
+                insertId: []
             });
         }
     } catch (err) {
-        console.log(err);
         return res.json({
             success: false,
             message: "Internal server error",
@@ -554,20 +565,19 @@ exports.updateCategoryById = async (req, res) => {
                 });
             } else {
                 return res.json({
-                    success: true,
+                    success: false,
                     message: "Not update",
                     status: 200,
                 });
             }
         } else {
             return res.json({
-                success: true,
+                success: false,
                 message: "Wrong category id",
                 status: 200,
             });
         }
     } catch (err) {
-        console.log(err);
         return res.json({
             success: false,
             message: "Internal server error",
@@ -653,9 +663,10 @@ exports.getAllPopularCategory = async (req, res) => {
             });
         } else {
             return res.json({
-                success: true,
+                success: false,
                 message: "Popular catgeory not found",
                 status: 200,
+                insertId: []
             });
         }
     } catch (err) {
@@ -700,6 +711,7 @@ exports.getPopularCategoryById = async (req, res) => {
                 success: false, // Indicate failure explicitly
                 message: "No popular categories found for the given ID.",
                 status: 204, // Consider using 204 for no content
+                data: []
             });
         }
     } catch (err) {
@@ -961,6 +973,7 @@ exports.getProductByProductId = async (req, res) => {
                 success: false,
                 message: "Fetch product by id failed",
                 status: 200,
+                productList: []
             });
         }
     } catch (err) {

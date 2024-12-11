@@ -25,7 +25,7 @@ module.exports = {
     },
 
     fetchAllUsers: async () => {
-        return db.query('SELECT id, first_name, last_name,user_name, email, phone_number, profile_image, address postal_code, latitude, longitude, block_status FROM `users` WHERE role_id = 1 ORDER BY id DESC');
+        return db.query('SELECT id, first_name, last_name,user_name, email, phone_number, profile_image, address postal_code, latitude, longitude, block_status, block_reason FROM `users` WHERE role_id = 1 ORDER BY id DESC');
     },
 
     fetchAllUsersOffers: async () => {
@@ -36,8 +36,8 @@ module.exports = {
         return db.query('SELECT category.cat_name AS category_name, product.name AS product_name, CONCAT( users.first_name, " ", users.last_name ) AS seller_name, users.profile_image AS seller_profile_image, offers_created.* FROM `offers_created` LEFT JOIN product ON product.id = offers_created.product_id LEFT JOIN category ON product.category_id = category.id LEFT JOIN users ON users.id = offers_created.user_id WHERE offers_created.user_id = ? ORDER BY offers_created.end_date;', [id]);
     },
 
-    userBlockStatusUpdateById: async (user_id, status) => {
-        return await db.query('UPDATE `users` SET `block_status`= "' + status + '" WHERE id = "' + user_id + '"');
+    userBlockStatusUpdateById: async (user_id, status, reason) => {
+        return await db.query('UPDATE `users` SET `block_status`= "' + status + '", `block_reason` = ? WHERE id = "' + user_id + '"', [reason]);
     },
 
     findAdminById: async (id) => {
