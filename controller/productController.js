@@ -471,28 +471,31 @@ exports.createOffer = async (req, res) => {
         if (user_id) {
           const findFollowUserIdResult = await findFollowUserId(user_id);
           if (findFollowUserIdResult.length > 0) {
-            const mailOptions = {
-              from: 'abhishek.ctinfotech@gmail.com',
-              to: findFollowUserIdResult[0].email,
-              subject: `New Offer Created: ${offer_created.title}`,
-              html: `<p>The user <strong>${findFollowUserIdResult[0].user_name}</strong> you follow has created a new offer:</p>
-                     <p><strong>${offer_created.title}</strong></p>
-                     <p>Details:</p>
-                     <ul>
-                        <li>Product Type: ${offer_created.product_type}</li>
-                        <li>Start Price: ${offer_created.start_price}</li>
-                        <li>End Date: ${offer_created.end_date}</li>
-                     </ul>
-                     <p>Thank you for staying updated with your followup users!</p>
-                     <p><a href="https://98.80.36.64/home" style="display: inline-block; padding: 10px 20px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 5px; font-weight: bold;">Bid Now</a></p>`,
-            };
-            sendEmail(mailOptions)
-              .then(info => {
-                console.log("Offer creation email sent successfully:", info.response);
-              })
-              .catch(error => {
-                console.error("Failed to send offer creation email:", error.message);
-              });
+            findFollowUserIdResult.forEach(async (follower) => {
+              const mailOptions = {
+                from: 'abhishek.ctinfotech@gmail.com',
+                to: follower.email, // Send email to the follower
+                subject: `New Offer Created: ${offer_created.title}`,
+                html: `<p>The user <strong>${follower.user_name}</strong> you follow has created a new offer:</p>
+                       <p><strong>${offer_created.title}</strong></p>
+                       <p>Details:</p>
+                       <ul>
+                          <li>Product Type: ${offer_created.product_type}</li>
+                          <li>Start Price: ${offer_created.start_price}</li>
+                          <li>End Date: ${offer_created.end_date}</li>
+                       </ul>
+                       <p>Thank you for staying updated with your follow-up users!</p>
+                       <p><a href="https://98.80.36.64/home" style="display: inline-block; padding: 10px 20px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 5px; font-weight: bold;">Bid Now</a></p>`,
+              };
+              try {
+                const info = await sendEmail(mailOptions);
+                console.log(`Email sent successfully to ${follower.email}: ${info.response}`);
+              } catch (error) {
+                console.error(`Failed to send email to ${follower.email}: ${error.message}`);
+              }
+            });
+          } else {
+            console.log("No followers found for this user.");
           }
         }
 
@@ -1806,6 +1809,14 @@ exports.getFavouriteOffers = async (req, res) => {
           if (categoryNameRes.length > 0) {
             element.category_name = categoryNameRes[0].cat_name;
           }
+        }
+      }
+      const bidRes = await getMaxBidbyOfferID(element.id);
+      if (bidRes.length > 0) {
+        element.user_bid = {
+          user_id: (bidRes.length > 0 && bidRes[0]?.user_id != null) ? bidRes[0]?.user_id : 0,
+          max_bid: (bidRes.length > 0 && bidRes[0]?.max_bid != null) ? bidRes[0]?.max_bid : 0,
+          count: (bidRes.length > 0 && bidRes[0]?.count != null) ? bidRes[0]?.count : 0
         }
       }
       const sellerDetails = await getSellerDetails(element.user_id, user_id);
