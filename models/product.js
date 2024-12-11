@@ -17,7 +17,7 @@ module.exports = {
     return db.query("insert into offer_images set ?", [data]);
   },
   getOfferIdByAttributes: async (product_id, ids) => {
-    return db.query("select offer_id  from offer_proattr_mapping where product_id=? and attribute_id IN (?)", [product_id, ids]);
+    return db.query("SELECT offers_created.id AS offer_id FROM `product_attributes_mapping` LEFT JOIN offers_created ON offers_created.product_id = product_attributes_mapping.product_id WHERE product_attributes_mapping.product_id = ? AND product_attributes_mapping.id IN(?);", [product_id, ids]);
   },
 
   getOfferIdByConditions: async (product_id, ids) => {
@@ -398,7 +398,7 @@ module.exports = {
   },
 
   getOffersByIDsWhereClause: async (ids, product_id, price, limit, offset) => {
-    if (Array.isArray(price) && price.length === 0 || price == []) {
+    if (Array.isArray(price) && price.length == 0 || price == '[]') {
       return db.query(`select id,
         offer_unique_id,
         product_id,
@@ -414,7 +414,7 @@ module.exports = {
         start_price, increase_step, buyto_price,
         fixed_offer_price,duration,offfer_buy_status,
         user_id
-        from offers_created WHERE offfer_buy_status != 1 AND ${ids == undefined ? 'product_id = ?' : 'id IN (?)'} ORDER BY remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset}`, [ids == undefined ? product_id : ids]);
+        from offers_created WHERE offfer_buy_status != 1 AND ${ids.length <= 0 ? 'product_id = ?' : 'id IN (?)'} ORDER BY remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset}`, [ids.length <= 0 ? product_id : ids]);
     } else {
       return db.query(`select id,
         offer_unique_id,
@@ -431,7 +431,7 @@ module.exports = {
         start_price, increase_step, buyto_price,
         fixed_offer_price,duration,offfer_buy_status,
         user_id
-        from offers_created WHERE offfer_buy_status != 1 AND ${ids == undefined ? 'product_id = ?' : 'id IN (?)'} AND start_price BETWEEN ${price[0].start_price} AND ${price[1].end_price} ORDER BY  remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset}`, [ids == undefined ? product_id : ids]);
+        from offers_created WHERE offfer_buy_status != 1 AND ${ids.length <= 0 ? 'product_id = ?' : 'id IN (?)'} AND start_price BETWEEN ${price[0].start_price} AND ${price[1].end_price} ORDER BY  remaining_days, remaining_time ASC  LIMIT ${limit} OFFSET ${offset}`, [ids.length <= 0 ? product_id : ids]);
     }
   },
 

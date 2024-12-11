@@ -43,7 +43,7 @@ module.exports = function (server) {
       try {
         await createNewBid(data);
         const count = await getBitCountByOfferId(data);
-        if (count.length > 0) {
+        if (count.length > 1) {
           if (count[1].user_id != data.user_id) {
             const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${count[0].offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
             const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${count[1].user_id}`, 'users.fcm_token, tbl_user_notifications.outbid');
@@ -174,7 +174,7 @@ module.exports = function (server) {
 
     // Listen for a new chat message
     socket.on("sendMessage", async (msg) => {
-      
+
       const { user_id, admin_id, message, image_path, sender_id } = msg;
       if (
         user_id != "undefined" &&

@@ -891,7 +891,9 @@ exports.getOffers = async (req, res) => {
         offers: [],
       });
     }
-  } catch (err) {
+  } catch (err) {    
+    console.log(err);
+    
     return res.json({
       success: false,
       message: "Internal server error",
@@ -2389,7 +2391,7 @@ exports.getOfferAdvancedFilter = async (req, res) => {
     // }
 
     // Find the intersection of all non-null offer ID arrays
-    const commonOfferIds = allOfferIds.reduce((acc, curr) => acc.filter(id => curr.includes(id)), allOfferIds[0]);
+    const commonOfferIds = allOfferIds.reduce((acc, curr) => acc.filter(id => curr.includes(id)), allOfferIds[0]);    
 
     const offset = (parseInt(page) - 1) * parseInt(page_size);
     var offers = await getOffersByIDsWhereClause(
