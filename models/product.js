@@ -107,7 +107,7 @@ module.exports = {
         offers_created.duration,
         offers_created.boost_plan_id,
         offers_created.offfer_buy_status,
-        offers_created.user_id,  
+        offers_created.user_id,
         CASE 
             WHEN favourites_offer.offer_id IS NOT NULL THEN 1
             ELSE 0
@@ -234,7 +234,7 @@ module.exports = {
     if (user_id == '') {
       return db.query("SELECT offers_created.* FROM offers_created WHERE id = ?", [offer_id]);
     } else {
-      return db.query("SELECT offers_created.*, CASE WHEN favourites_offer.offer_id IS NOT NULL THEN 1 ELSE 0 END AS is_favorite FROM offers_created LEFT JOIN( SELECT DISTINCT offer_id FROM favourites_offer WHERE user_id = ?) AS favourites_offer ON favourites_offer.offer_id = offers_created.id WHERE id = ?", [user_id, offer_id]);
+      return db.query("SELECT offers_created.*, CASE WHEN favourites_offer.offer_id IS NOT NULL THEN 1 ELSE 0 END AS is_favorite FROM offers_created LEFT JOIN( SELECT DISTINCT offer_id FROM favourites_offer WHERE user_id = ?) AS favourites_offer ON favourites_offer.offer_id = offers_created.id WHERE offers_created.id = ?", [user_id, offer_id]);
     }
   },
 

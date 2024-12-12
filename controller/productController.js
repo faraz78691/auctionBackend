@@ -75,6 +75,7 @@ const { send_notification } = require("../helper/sendNotification");
 const {
   getData, getSelectedColumn, insertData
 } = require("../models/common");
+const { fetchUserById } = require('../models/users');
 const db = require("../utils/database");
 const Joi = require("joi");
 const jwt = require("jsonwebtoken");
@@ -838,7 +839,9 @@ exports.getOffers = async (req, res) => {
     } else {
       categoryNameRes = []
     }
-
+    if (user_id != '') {
+      var userResult = await fetchUserById(user_id);
+    }
     if (offers.length > 0) {
 
       // Separate the offers based on boost_plan_id
@@ -871,6 +874,10 @@ exports.getOffers = async (req, res) => {
         message: "Offer Sorted by time",
         categoryName: organizedOffers[0].category_name,
         productName: organizedOffers[0].product_name,
+        userDetails: {
+          block_status: userResult[0].block_status,
+          block_reason: userResult[0].block_reason
+        },
         offers: organizedOffers,
         status: 200,
       });
@@ -880,6 +887,10 @@ exports.getOffers = async (req, res) => {
         message: "Offer Sorted by time only category name and product name find",
         categoryName: categoryNameRes.length > 0 ? categoryNameRes[0].cat_name : null,
         productName: categoryRes.length > 0 ? categoryRes[0].name : null,
+        userDetails: {
+          block_status: userResult[0].block_status,
+          block_reason: userResult[0].block_reason
+        },
         offers: [],
         status: 400,
       });
@@ -891,9 +902,9 @@ exports.getOffers = async (req, res) => {
         offers: [],
       });
     }
-  } catch (err) {    
+  } catch (err) {
     console.log(err);
-    
+
     return res.json({
       success: false,
       message: "Internal server error",
@@ -1284,11 +1295,18 @@ exports.getOffer = async (req, res) => {
       const bidRes = await getMaxBidbyOfferID(offerId);
       const offerImages = await getOfferImages(offerRes[0].images_id);
       const sellerDetails = await getSellerDetails(offerRes[0].user_id, user_id);
+      if (user_id != '') {
+        var userResult = await fetchUserById(user_id);
+      }
       return res.json({
         success: true,
         message: "Offer Details are as followed",
         offerRes: offerRes,
         productDetails: productDetails,
+        userDetails: {
+          block_status: userResult[0].block_status,
+          block_reason: userResult[0].block_reason
+        },
         categoryDetails: categoryDetails,
         attributes: filteredAttributes,
         offerImages: offerImages,
@@ -2391,7 +2409,7 @@ exports.getOfferAdvancedFilter = async (req, res) => {
     // }
 
     // Find the intersection of all non-null offer ID arrays
-    const commonOfferIds = allOfferIds.reduce((acc, curr) => acc.filter(id => curr.includes(id)), allOfferIds[0]);    
+    const commonOfferIds = allOfferIds.reduce((acc, curr) => acc.filter(id => curr.includes(id)), allOfferIds[0]);
 
     const offset = (parseInt(page) - 1) * parseInt(page_size);
     var offers = await getOffersByIDsWhereClause(
