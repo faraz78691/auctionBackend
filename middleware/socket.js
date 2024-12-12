@@ -41,95 +41,109 @@ module.exports = function (server) {
 
     socket.on("newBid", async (data) => {
       try {
-        await createNewBid(data);
-        const count = await getBitCountByOfferId(data);
-        if (count.length > 1) {
-          if (count[1].user_id != data.user_id) {
-            const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${count[0].offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
-            const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${count[1].user_id}`, 'users.fcm_token, tbl_user_notifications.outbid');
-            if (getFCM[0].outbid == 1) {
-              const message = {
-                notification: {
-                  title: 'You’ve Been Outbid!',
-                  body: `Your bid on the item, ${getSellerID[0].title} has been surpassed. Place a higher bid to stay in the lead!`
-                },
-                token: getFCM[0].fcm_token
-              };
-              const data = {
-                user_id: count[1].user_id,
-                notification_type: 'Alert',
-                title: 'You’ve Been Outbid!',
-                message: `Your bid on the item, ${getSellerID[0].title} has been surpassed. Place a higher bid to stay in the lead!`,
-                created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
-              }
-              await insertData('tbl_notification_messages', '', data);
-              await send_notification(message, count[1].user_id);
-            }
-          }
-        }
-        const user = await fetchUserById(data.user_id); // Wait for the user data to be fetched
-        const bidCount = count[0].bidCount;
-        data.user_name = `${user[0].first_name} ${user[0].last_name}`;
-        const user_id = ''
-        var offerRes = await getOfferDetailsByID(data.offer_id, user_id);
-        const endMoment = moment(offerRes[0].end_date); // Leave as a moment object
-        const currTime = moment()
-          .tz("Europe/Zurich")
-          .format("YYYY-MM-DD HH:mm:ss");
-        const currMoment = moment(currTime);
-        const differenceInMilliseconds = endMoment.diff(currMoment);
-        if (
-          offerRes[0].offfer_buy_status != 1 &&
-          differenceInMilliseconds <= 180000 &&
-          (offerRes[0].is_reactivable == 0 ||
-            (offerRes[0].is_reactivable == 1 &&
-              offerRes[0].no_of_times_reactivated == 0))
-        ) {
-          const time = 180000 - differenceInMilliseconds;
-          const differenceInMinutes = moment.duration(time).asMinutes();
-          const newEndDate = moment(offerRes[0].end_date)
-            .add(differenceInMinutes, "minutes")
-            .format("YYYY-MM-DD HH:mm:ss"); // Add length of time (in days)
-          const offerStartDate = moment(offerRes[0].offerStart)
-            .add(differenceInMinutes, "minutes")
-            .format("YYYY-MM-DD HH:mm:ss");
-
-          // Update the number of times the offer has been reactivated, but ensure it doesn't go below zero
-          offerRes[0].no_of_times_reactivated = "";
-
-          // Update the offer's end date and reactivation count in the database
-          const update = await updateOfferEndDate(
-            offerRes[0].id,
-            offerStartDate,
-            newEndDate,
-            offerRes[0].no_of_times_reactivated
-          );
-          if (update.affectedRows > 0) {
-            const offerById = await getOfferDetailsByID(data.offer_id, user_id);
-            if (offerById.length > 0) {
-              const new_offerstart_date = offerById[0].offerStart;
-              const length_oftime = offerById[0].length_oftime;
-              const new_end_date = offerById[0].end_date
-              io.emit("updateBid", {
-                ...data,
-                bidCount,
-                new_offerstart_date,
-                length_oftime,
-                new_end_date
-              });
-            }
-          }
-        } else {
-          const new_offerstart_date = null;
-          const new_end_date = null
-          const length_oftime = offerRes[0].length_oftime;
+        const userResult = await fetchUserById(data.user_id);
+        if (userResult[0].block_status == '1') {
           io.emit("updateBid", {
-            ...data,
-            bidCount,
-            new_offerstart_date,
-            length_oftime,
-            new_end_date
+            success: false,
+            message: userResult[0].block_reason,
+            userDetails: {
+              block_status: userResult[0].block_status,
+              block_reason: userResult[0].block_reason
+            },
+            error: true,
+            status: 200,
           });
+        } else {
+          await createNewBid(data);
+          const count = await getBitCountByOfferId(data);
+          if (count.length > 1) {
+            if (count[1].user_id != data.user_id) {
+              const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${count[0].offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
+              const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${count[1].user_id}`, 'users.fcm_token, tbl_user_notifications.outbid');
+              if (getFCM[0].outbid == 1) {
+                const message = {
+                  notification: {
+                    title: 'You’ve Been Outbid!',
+                    body: `Your bid on the item, ${getSellerID[0].title} has been surpassed. Place a higher bid to stay in the lead!`
+                  },
+                  token: getFCM[0].fcm_token
+                };
+                const data = {
+                  user_id: count[1].user_id,
+                  notification_type: 'Alert',
+                  title: 'You’ve Been Outbid!',
+                  message: `Your bid on the item, ${getSellerID[0].title} has been surpassed. Place a higher bid to stay in the lead!`,
+                  created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+                }
+                await insertData('tbl_notification_messages', '', data);
+                await send_notification(message, count[1].user_id);
+              }
+            }
+          }
+          const user = await fetchUserById(data.user_id); // Wait for the user data to be fetched
+          const bidCount = count[0].bidCount;
+          data.user_name = `${user[0].first_name} ${user[0].last_name}`;
+          const user_id = ''
+          var offerRes = await getOfferDetailsByID(data.offer_id, user_id);
+          const endMoment = moment(offerRes[0].end_date); // Leave as a moment object
+          const currTime = moment()
+            .tz("Europe/Zurich")
+            .format("YYYY-MM-DD HH:mm:ss");
+          const currMoment = moment(currTime);
+          const differenceInMilliseconds = endMoment.diff(currMoment);
+          if (
+            offerRes[0].offfer_buy_status != 1 &&
+            differenceInMilliseconds <= 180000 &&
+            (offerRes[0].is_reactivable == 0 ||
+              (offerRes[0].is_reactivable == 1 &&
+                offerRes[0].no_of_times_reactivated == 0))
+          ) {
+            const time = 180000 - differenceInMilliseconds;
+            const differenceInMinutes = moment.duration(time).asMinutes();
+            const newEndDate = moment(offerRes[0].end_date)
+              .add(differenceInMinutes, "minutes")
+              .format("YYYY-MM-DD HH:mm:ss"); // Add length of time (in days)
+            const offerStartDate = moment(offerRes[0].offerStart)
+              .add(differenceInMinutes, "minutes")
+              .format("YYYY-MM-DD HH:mm:ss");
+
+            // Update the number of times the offer has been reactivated, but ensure it doesn't go below zero
+            offerRes[0].no_of_times_reactivated = "";
+
+            // Update the offer's end date and reactivation count in the database
+            const update = await updateOfferEndDate(
+              offerRes[0].id,
+              offerStartDate,
+              newEndDate,
+              offerRes[0].no_of_times_reactivated
+            );
+            if (update.affectedRows > 0) {
+              const offerById = await getOfferDetailsByID(data.offer_id, user_id);
+              if (offerById.length > 0) {
+                const new_offerstart_date = offerById[0].offerStart;
+                const length_oftime = offerById[0].length_oftime;
+                const new_end_date = offerById[0].end_date
+                io.emit("updateBid", {
+                  ...data,
+                  bidCount,
+                  new_offerstart_date,
+                  length_oftime,
+                  new_end_date
+                });
+              }
+            }
+          } else {
+            const new_offerstart_date = null;
+            const new_end_date = null
+            const length_oftime = offerRes[0].length_oftime;
+            io.emit("updateBid", {
+              ...data,
+              bidCount,
+              new_offerstart_date,
+              length_oftime,
+              new_end_date
+            });
+          }
         }
       } catch (error) {
         console.error("Error handling new bid:", error);

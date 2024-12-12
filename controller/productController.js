@@ -220,67 +220,79 @@ exports.getProductsAttrTypeByProductID = async (req, res) => {
 exports.uploadOfferImages = async (req, res) => {
   try {
     const user_id = req.user.id;
-    const {
-      main_image,
-      bottom_eside,
-      top_eside,
-      tilted_eside,
-      defects,
-      details,
-      brand,
-      dimension,
-      accessories,
-      context,
-    } = req.files;
-
-    var mainImageLink = "";
-    var bottomEsideLink = "";
-    var topEsideLink = "";
-    var tiltedEsideLink = "";
-    var defectsLink = "";
-    var detailsLink = "";
-    var brandLink = "";
-    var dimensionLink = "";
-    var accessoriesLink = "";
-    var contextLink = "";
-
-    mainImageLink = req.files?.main_image ? main_image[0].filename : req.body.main_image;
-    bottomEsideLink = req.files?.bottom_eside ? bottom_eside[0].filename : req.body.bottom_eside;
-    topEsideLink = req.files?.top_eside ? top_eside[0].filename : req.body.top_eside;
-    tiltedEsideLink = req.files?.tilted_eside ? tilted_eside[0].filename : req.body.tilted_eside;
-    defectsLink = req.files?.defects ? defects[0].filename : req.body.defects;
-    detailsLink = req.files?.details ? details[0].filename : req.body.details;
-    brandLink = req.files?.brand ? brand[0].filename : req.body.brand;
-    dimensionLink = req.files?.dimension ? dimension[0].filename : req.body.dimension;
-    accessoriesLink = req.files?.accessories ? accessories[0].filename : req.body.accessories;
-    contextLink = req.files?.context ? context[0].filename : req.body.context;
-
-    const offer_images = {
-      main_image: mainImageLink || '',
-      bottom_eside: bottomEsideLink || '',
-      top_eside: topEsideLink || '',  // You can keep this if specifically checking undefined
-      tilted_eside: tiltedEsideLink || '',
-      defects: defectsLink || '',
-      details: detailsLink || '',
-      brand: brandLink || '',
-      dimension: dimensionLink || '',
-      accessories: accessoriesLink || '',
-      context: contextLink || '',
-      user_id: user_id,
-    };
-
-    const resultInserted = await insertOfferImages(offer_images);
-    if (resultInserted.affectedRows > 0) {
+    const userResult = await fetchUserById(user_id);
+    if (userResult[0].block_status == '1') {
       return res.json({
-        success: true,
-        message: "Offer Images Uploaded",
+        success: false,
+        message: userResult[0].block_reason,
+        userDetails: {
+          block_status: userResult[0].block_status,
+          block_reason: userResult[0].block_reason
+        },
+        error: true,
         status: 200,
-        insertId: resultInserted.insertId,
       });
+    } else {
+      const {
+        main_image,
+        bottom_eside,
+        top_eside,
+        tilted_eside,
+        defects,
+        details,
+        brand,
+        dimension,
+        accessories,
+        context,
+      } = req.files;
+
+      var mainImageLink = "";
+      var bottomEsideLink = "";
+      var topEsideLink = "";
+      var tiltedEsideLink = "";
+      var defectsLink = "";
+      var detailsLink = "";
+      var brandLink = "";
+      var dimensionLink = "";
+      var accessoriesLink = "";
+      var contextLink = "";
+
+      mainImageLink = req.files?.main_image ? main_image[0].filename : req.body.main_image;
+      bottomEsideLink = req.files?.bottom_eside ? bottom_eside[0].filename : req.body.bottom_eside;
+      topEsideLink = req.files?.top_eside ? top_eside[0].filename : req.body.top_eside;
+      tiltedEsideLink = req.files?.tilted_eside ? tilted_eside[0].filename : req.body.tilted_eside;
+      defectsLink = req.files?.defects ? defects[0].filename : req.body.defects;
+      detailsLink = req.files?.details ? details[0].filename : req.body.details;
+      brandLink = req.files?.brand ? brand[0].filename : req.body.brand;
+      dimensionLink = req.files?.dimension ? dimension[0].filename : req.body.dimension;
+      accessoriesLink = req.files?.accessories ? accessories[0].filename : req.body.accessories;
+      contextLink = req.files?.context ? context[0].filename : req.body.context;
+
+      const offer_images = {
+        main_image: mainImageLink || '',
+        bottom_eside: bottomEsideLink || '',
+        top_eside: topEsideLink || '',  // You can keep this if specifically checking undefined
+        tilted_eside: tiltedEsideLink || '',
+        defects: defectsLink || '',
+        details: detailsLink || '',
+        brand: brandLink || '',
+        dimension: dimensionLink || '',
+        accessories: accessoriesLink || '',
+        context: contextLink || '',
+        user_id: user_id,
+      };
+
+      const resultInserted = await insertOfferImages(offer_images);
+      if (resultInserted.affectedRows > 0) {
+        return res.json({
+          success: true,
+          message: "Offer Images Uploaded",
+          status: 200,
+          insertId: resultInserted.insertId,
+        });
+      }
     }
   } catch (err) {
-    console.log(err);
-
     return res.json({
       success: false,
       message: "Internal server error",
@@ -351,133 +363,145 @@ exports.createOffer = async (req, res) => {
         status: 200,
         success: false,
       });
-    }
+    } else {
+      const userResult = await fetchUserById(user_id);
+      if (userResult[0].block_status == '1') {
+        return res.json({
+          success: false,
+          message: userResult[0].block_reason,
+          userDetails: {
+            block_status: userResult[0].block_status,
+            block_reason: userResult[0].block_reason
+          },
+          error: true,
+          status: 200,
+        });
+      } else {
+        const findProduct = await findProductById(product_id);
+        if (findProduct.length > 0) {
+          const itemsJson = JSON.parse(attributes);
+          const condJson = JSON.parse(conditions);
+          const startDate = new Date(start_date); //date -- YYYY-MM-DD
+          const endDate = new Date(
+            startDate.getFullYear(),
+            startDate.getMonth(),
+            startDate.getDate() + Number(length_oftime),
+            startDate.getHours(),
+            startDate.getMinutes(),
+            startDate.getSeconds(),
+            startDate.getMilliseconds()
+          );
 
-    const findProduct = await findProductById(product_id);
-    if (findProduct.length > 0) {
-      const itemsJson = JSON.parse(attributes);
-      const condJson = JSON.parse(conditions);
-      const startDate = new Date(start_date); //date -- YYYY-MM-DD
-      const endDate = new Date(
-        startDate.getFullYear(),
-        startDate.getMonth(),
-        startDate.getDate() + Number(length_oftime),
-        startDate.getHours(),
-        startDate.getMinutes(),
-        startDate.getSeconds(),
-        startDate.getMilliseconds()
-      );
+          let unique_id;
+          let isUnique = false;
 
-      let unique_id;
-      let isUnique = false;
+          // Loop to generate a unique offer ID
+          while (!isUnique) {
+            unique_id = Math.floor(100000 + Math.random() * 900000); // Generate a 6-digit unique ID
 
-      // Loop to generate a unique offer ID
-      while (!isUnique) {
-        unique_id = Math.floor(100000 + Math.random() * 900000); // Generate a 6-digit unique ID
-
-        // Check if the unique_id exists in the database
-        const [rows] = await db.query('SELECT COUNT(*) AS count FROM offers_created WHERE offer_unique_id = ?', [unique_id]);
-        if (rows.count === 0) {
-          isUnique = true; // If no existing offer has this unique_id, we can use it
-        }
-      }
-
-      const offer_created = {
-        offer_unique_id: unique_id,
-        product_id: product_id,
-        title: title,
-        product_type: product_type,
-        condition_desc: condition_desc,
-        reference_no: reference_no,
-        is_bid_or_fixed: is_bid_or_fixed,
-        start_price: start_price,
-        increase_step: increase_step,
-        buyto_price: buyto_price,
-        fixed_offer_price: fixed_offer_price,
-        duration: duration,
-        length_oftime: length_oftime,
-        images_id: images_id,
-        offerStart: offerStart,
-        boost_plan_id: boost_plan_id == null || boost_plan_id == '' ? null : boost_plan_id,
-        start_date: startDate,
-        end_date: endDate,
-        user_id: user_id,
-        is_reactivable: is_reactivable,
-        is_psuggestion_enable: is_psuggestion_enable
-      };
-
-      var offerId = 0;
-      var attributesInserted = 0;
-      var condInserted = 0;
-      var transactionId = 0;
-      const resultInserted = await insertOfferCreated(offer_created);
-      if (resultInserted.affectedRows > 0) {
-
-        if (boost_plan_id) {
-          const getBootplan = await findBootPlanById(boost_plan_id);
-          do {
-            transactionId = randomstring.generate({
-              length: 12,
-              charset: "alphanumeric",
-            });
-            const found = await checkTransactionID(transactionId);
-            if (found.length > 0) {
-              doContinue = 0;
+            // Check if the unique_id exists in the database
+            const [rows] = await db.query('SELECT COUNT(*) AS count FROM offers_created WHERE offer_unique_id = ?', [unique_id]);
+            if (rows.count === 0) {
+              isUnique = true; // If no existing offer has this unique_id, we can use it
             }
-          } while (doContinue);
-          const data = {
-            fees_type: '2',
-            transaction_id: transactionId,
-            seller_id: user_id,
-            offer_id: resultInserted.insertId,
-            amount: getBootplan[0].price,
-            pay_amount: getBootplan[0].price,
-            is_buy_now: 0,
-            is_max_bid: 0,
-            created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
           }
-          await insertUserFeesPay(data);
-        }
 
-        offerId = resultInserted.insertId;
+          const offer_created = {
+            offer_unique_id: unique_id,
+            product_id: product_id,
+            title: title,
+            product_type: product_type,
+            condition_desc: condition_desc,
+            reference_no: reference_no,
+            is_bid_or_fixed: is_bid_or_fixed,
+            start_price: start_price,
+            increase_step: increase_step,
+            buyto_price: buyto_price,
+            fixed_offer_price: fixed_offer_price,
+            duration: duration,
+            length_oftime: length_oftime,
+            images_id: images_id,
+            offerStart: offerStart,
+            boost_plan_id: boost_plan_id == null || boost_plan_id == '' ? null : boost_plan_id,
+            start_date: startDate,
+            end_date: endDate,
+            user_id: user_id,
+            is_reactivable: is_reactivable,
+            is_psuggestion_enable: is_psuggestion_enable
+          };
 
-        if (itemsJson.length > 0) {
-          for (element of itemsJson) {
-            const attributesData = {
-              offer_id: offerId,
-              product_id: product_id,
-              attribute_id: element.attribute_id,
-              attribute_value: element.attribute_value,
-              subattribute_id: element.subattribute_id,
-            };
+          var offerId = 0;
+          var attributesInserted = 0;
+          var condInserted = 0;
+          var transactionId = 0;
+          const resultInserted = await insertOfferCreated(offer_created);
+          if (resultInserted.affectedRows > 0) {
 
-            const insertedRows = await insertAttributOffers(attributesData);
-            attributesInserted = attributesInserted + insertedRows.affectedRows;
-          }
-        }
+            if (boost_plan_id) {
+              const getBootplan = await findBootPlanById(boost_plan_id);
+              do {
+                transactionId = randomstring.generate({
+                  length: 12,
+                  charset: "alphanumeric",
+                });
+                const found = await checkTransactionID(transactionId);
+                if (found.length > 0) {
+                  doContinue = 0;
+                }
+              } while (doContinue);
+              const data = {
+                fees_type: '2',
+                transaction_id: transactionId,
+                seller_id: user_id,
+                offer_id: resultInserted.insertId,
+                amount: getBootplan[0].price,
+                pay_amount: getBootplan[0].price,
+                is_buy_now: 0,
+                is_max_bid: 0,
+                created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+              }
+              await insertUserFeesPay(data);
+            }
 
-        if (condJson.length > 0) {
-          for (element of condJson) {
-            const condData = {
-              offer_id: offerId,
-              product_id: product_id,
-              condition_id: element.condition_id,
-              condition_value: element.condition_value,
-            };
-            const insertedRows = await insertConditionOffers(condData);
-            condInserted = condInserted + insertedRows.affectedRows;
-          }
-        }
+            offerId = resultInserted.insertId;
 
-        if (user_id) {
-          const findFollowUserIdResult = await findFollowUserId(user_id);
-          if (findFollowUserIdResult.length > 0) {
-            findFollowUserIdResult.forEach(async (follower) => {
-              const mailOptions = {
-                from: 'abhishek.ctinfotech@gmail.com',
-                to: follower.email, // Send email to the follower
-                subject: `New Offer Created: ${offer_created.title}`,
-                html: `<p>The user <strong>${follower.user_name}</strong> you follow has created a new offer:</p>
+            if (itemsJson.length > 0) {
+              for (element of itemsJson) {
+                const attributesData = {
+                  offer_id: offerId,
+                  product_id: product_id,
+                  attribute_id: element.attribute_id,
+                  attribute_value: element.attribute_value,
+                  subattribute_id: element.subattribute_id,
+                };
+
+                const insertedRows = await insertAttributOffers(attributesData);
+                attributesInserted = attributesInserted + insertedRows.affectedRows;
+              }
+            }
+
+            if (condJson.length > 0) {
+              for (element of condJson) {
+                const condData = {
+                  offer_id: offerId,
+                  product_id: product_id,
+                  condition_id: element.condition_id,
+                  condition_value: element.condition_value,
+                };
+                const insertedRows = await insertConditionOffers(condData);
+                condInserted = condInserted + insertedRows.affectedRows;
+              }
+            }
+
+            if (user_id) {
+              const findFollowUserIdResult = await findFollowUserId(user_id);
+              if (findFollowUserIdResult.length > 0) {
+                findFollowUserIdResult.forEach(async (follower) => {
+                  const mailOptions = {
+                    from: 'abhishek.ctinfotech@gmail.com',
+                    to: follower.email, // Send email to the follower
+                    subject: `New Offer Created: ${offer_created.title}`,
+                    html: `<p>The user <strong>${follower.user_name}</strong> you follow has created a new offer:</p>
                        <p><strong>${offer_created.title}</strong></p>
                        <p>Details:</p>
                        <ul>
@@ -487,34 +511,36 @@ exports.createOffer = async (req, res) => {
                        </ul>
                        <p>Thank you for staying updated with your follow-up users!</p>
                        <p><a href="https://98.80.36.64/home" style="display: inline-block; padding: 10px 20px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 5px; font-weight: bold;">Bid Now</a></p>`,
-              };
-              try {
-                const info = await sendEmail(mailOptions);
-                console.log(`Email sent successfully to ${follower.email}: ${info.response}`);
-              } catch (error) {
-                console.error(`Failed to send email to ${follower.email}: ${error.message}`);
+                  };
+                  try {
+                    const info = await sendEmail(mailOptions);
+                    console.log(`Email sent successfully to ${follower.email}: ${info.response}`);
+                  } catch (error) {
+                    console.error(`Failed to send email to ${follower.email}: ${error.message}`);
+                  }
+                });
+              } else {
+                console.log("No followers found for this user.");
               }
-            });
-          } else {
-            console.log("No followers found for this user.");
-          }
-        }
+            }
 
-        return res.json({
-          success: true,
-          message: "Offer Created",
-          status: 200,
-          insertId: offerId,
-          attributesInserted: attributesInserted,
-          conditionsInserted: condInserted,
-        });
+            return res.json({
+              success: true,
+              message: "Offer Created",
+              status: 200,
+              insertId: offerId,
+              attributesInserted: attributesInserted,
+              conditionsInserted: condInserted,
+            });
+          }
+        } else {
+          return res.json({
+            success: false,
+            message: "Product id is wrong",
+            status: 400,
+          });
+        }
       }
-    } else {
-      return res.json({
-        success: false,
-        message: "Product id is wrong",
-        status: 400,
-      });
     }
   } catch (err) {
     return res.json({
@@ -1355,126 +1381,140 @@ exports.createBuyTransaction = async (req, res) => {
       });
     }
     const user_id = req.user.id;
-    var offerRes = await getOfferDetailsByID(offer_id, user_id);
-    if (offerRes[0].offfer_buy_status != 1) {
-      var transactionId = "";
-      var doContinue = 1;
-      do {
-        transactionId = randomstring.generate({
-          length: 12,
-          charset: "alphanumeric",
-        });
-        const found = await checkTransactionID(transactionId);
-        if (found.length > 0) {
-          doContinue = 0;
-        }
-      } while (doContinue);
+    const userResult = await fetchUserById(user_id);
+    if (userResult[0].block_status == '1') {
+      return res.json({
+        success: false,
+        message: userResult[0].block_reason,
+        userDetails: {
+          block_status: userResult[0].block_status,
+          block_reason: userResult[0].block_reason
+        },
+        error: true,
+        status: 200,
+      });
+    } else {
+      var offerRes = await getOfferDetailsByID(offer_id, user_id);
+      if (offerRes[0].offfer_buy_status != 1) {
+        var transactionId = "";
+        var doContinue = 1;
+        do {
+          transactionId = randomstring.generate({
+            length: 12,
+            charset: "alphanumeric",
+          });
+          const found = await checkTransactionID(transactionId);
+          if (found.length > 0) {
+            doContinue = 0;
+          }
+        } while (doContinue);
 
-      const transactionDetails = {
-        transaction_id: transactionId,
-        buyer_id: user_id,
-        seller_id: seller_id,
-        // product_id: product_id,
-        offer_id: offer_id,
-        amount: amount,
-        is_buy_now: is_buy_now,
-        is_max_bid: is_max_bid,
-        created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
-      };
-      const resultInserted = await insertTransaction(transactionDetails);
-      if (resultInserted.affectedRows > 0) {
-        const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
-        const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${user_id}`, `users.user_name, tbl_user_notifications.item_sold`);
-        const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.item_sold');
-        if (getFCM[0].item_sold == 1) {
-          const message = {
-            notification: {
-              title: 'Congratulations! Your Item Has Been Sold!',
-              body: `${getUserWhoBid[0].user_name} has successfully purchased your item: ${getSellerID[0].title}.`
-            },
-            token: getFCM[0].fcm_token
-          };
-          const data = {
-            user_id: getSellerID[0].user_id,
-            notification_type: 'Alert',
-            title: 'Congratulations! Your Item Has Been Sold!',
-            message: `${getUserWhoBid[0].user_name} has successfully purchased your item: ${getSellerID[0].title}.`,
-            created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
-          }
-          await insertData('tbl_notification_messages', '', data);
-          await send_notification(message, getSellerID[0].user_id);
-        }
-        const userBidsResult = await getUserBidByOfferId(offer_id);
-        if (userBidsResult.length > 0) {
-          for (let elem of userBidsResult) {
-            const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
-            const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${elem.user_id}`, 'users.id, users.fcm_token, tbl_user_notifications.item_sold');
-            if (getFCM[0].auction_not_won == 1) {
-              const message = {
-                notification: {
-                  title: 'Better Luck Next Time!',
-                  body: `Unfortunately, you didn't win the auction for: ${getSellerID[0].title}. Stay tuned for more exciting offers!`
-                },
-                token: getFCM[0].fcm_token
-              };
-              const data = {
-                user_id: getFCM[0].id,
-                notification_type: 'Alert',
-                title: 'Better Luck Next Time!',
-                message: `Unfortunately, you didn't win the auction for: ${getSellerID[0].title}. Stay tuned for more exciting offers!`,
-                created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
-              }
-              await insertData('tbl_notification_messages', '', data);
-              await send_notification(message, getFCM[0].id);
-            }
-          }
-        }
-        const resultSetting = await findSetting();
-        const userFessPayDetails = {
+        const transactionDetails = {
           transaction_id: transactionId,
           buyer_id: user_id,
           seller_id: seller_id,
+          // product_id: product_id,
           offer_id: offer_id,
           amount: amount,
-          commissin_percent: resultSetting[0].commission,
-          pay_amount: (amount * resultSetting[0].commission) / 100 <= 200 ? (amount * resultSetting[0].commission) / 100 : 200,
           is_buy_now: is_buy_now,
           is_max_bid: is_max_bid,
           created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
         };
-        const addUserFeesPayDetails = await insertUserFeesPay(userFessPayDetails);
-        const transactionDetail = {
-          offer_id: offer_id,
-          transaction_id: transactionId,
-          buyer_id: user_id,
-          seller_id: seller_id,
-          buyer_message: 'Congratulations, you have purchased this item!',
-          seller_message: 'Congratulations, you have sold this item!',
-          buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
-          seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
-        };
-        const paymenytFlowInsert = await insertPaymentFlowInsert(transactionDetail);
-        const offerupdate = await updateOfferBuyStatus("1", offer_id);
+        const resultInserted = await insertTransaction(transactionDetails);
+        if (resultInserted.affectedRows > 0) {
+          const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
+          const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${user_id}`, `users.user_name, tbl_user_notifications.item_sold`);
+          const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.item_sold');
+          if (getFCM[0].item_sold == 1) {
+            const message = {
+              notification: {
+                title: 'Congratulations! Your Item Has Been Sold!',
+                body: `${getUserWhoBid[0].user_name} has successfully purchased your item: ${getSellerID[0].title}.`
+              },
+              token: getFCM[0].fcm_token
+            };
+            const data = {
+              user_id: getSellerID[0].user_id,
+              notification_type: 'Alert',
+              title: 'Congratulations! Your Item Has Been Sold!',
+              message: `${getUserWhoBid[0].user_name} has successfully purchased your item: ${getSellerID[0].title}.`,
+              created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+            }
+            await insertData('tbl_notification_messages', '', data);
+            await send_notification(message, getSellerID[0].user_id);
+          }
+          const userBidsResult = await getUserBidByOfferId(offer_id);
+          if (userBidsResult.length > 0) {
+            for (let elem of userBidsResult) {
+              const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
+              const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${elem.user_id}`, 'users.id, users.fcm_token, tbl_user_notifications.item_sold');
+              if (getFCM[0].auction_not_won == 1) {
+                const message = {
+                  notification: {
+                    title: 'Better Luck Next Time!',
+                    body: `Unfortunately, you didn't win the auction for: ${getSellerID[0].title}. Stay tuned for more exciting offers!`
+                  },
+                  token: getFCM[0].fcm_token
+                };
+                const data = {
+                  user_id: getFCM[0].id,
+                  notification_type: 'Alert',
+                  title: 'Better Luck Next Time!',
+                  message: `Unfortunately, you didn't win the auction for: ${getSellerID[0].title}. Stay tuned for more exciting offers!`,
+                  created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+                }
+                await insertData('tbl_notification_messages', '', data);
+                await send_notification(message, getFCM[0].id);
+              }
+            }
+          }
+          const resultSetting = await findSetting();
+          const userFessPayDetails = {
+            transaction_id: transactionId,
+            buyer_id: user_id,
+            seller_id: seller_id,
+            offer_id: offer_id,
+            amount: amount,
+            commissin_percent: resultSetting[0].commission,
+            pay_amount: (amount * resultSetting[0].commission) / 100 <= 200 ? (amount * resultSetting[0].commission) / 100 : 200,
+            is_buy_now: is_buy_now,
+            is_max_bid: is_max_bid,
+            created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+          };
+          const addUserFeesPayDetails = await insertUserFeesPay(userFessPayDetails);
+          const transactionDetail = {
+            offer_id: offer_id,
+            transaction_id: transactionId,
+            buyer_id: user_id,
+            seller_id: seller_id,
+            buyer_message: 'Congratulations, you have purchased this item!',
+            seller_message: 'Congratulations, you have sold this item!',
+            buyer_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss'),
+            seller_created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+          };
+          const paymenytFlowInsert = await insertPaymentFlowInsert(transactionDetail);
+          const offerupdate = await updateOfferBuyStatus("1", offer_id);
 
-        return res.json({
-          success: true,
-          message: "Item bought successfully",
-          status: 200,
-          insertId: resultInserted.insertId,
-        });
+          return res.json({
+            success: true,
+            message: "Item bought successfully",
+            status: 200,
+            insertId: resultInserted.insertId,
+          });
+        } else {
+          return res.json({
+            success: false,
+            message: "Item not bought",
+            status: 400,
+          });
+        }
       } else {
         return res.json({
           success: false,
-          message: "Item not bought",
+          message: "This order already placed",
           status: 400,
         });
       }
-    } else {
-      return res.json({
-        success: false,
-        message: "This order already placed",
-        status: 400,
-      });
     }
   } catch (err) {
     return res.json({

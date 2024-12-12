@@ -78,50 +78,64 @@ exports.suggestPrice = async (req, res) => {
         status: 200,
         success: true,
       });
-    }
-
-    const suggestPrice = {
-      buyer_id: buyer_id,
-      seller_id: seller_id,
-      offer_id: offer_id,
-      status: status,
-      price: price,
-    };
-    const resultInserted = await insertPriceSuggestion(suggestPrice);
-    if (resultInserted.affectedRows > 0) {
-      const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
-      const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${buyer_id}`, `users.user_name, tbl_user_notifications.price_suggestion_from_buyer`);
-      const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.price_suggestion_from_buyer');
-      if (getFCM[0].price_suggestion_from_buyer == 1) {
-        const message = {
-          notification: {
-            title: 'New Price Suggestion for Your Product!',
-            body: `${getUserWhoBid[0].user_name} has suggested a price for your product, ${getSellerID[0].title}. Please review their offer.`
-          },
-          token: getFCM[0].fcm_token
-        };
-        const data = {
-          user_id: getSellerID[0].user_id,
-          notification_type: 'Alert',
-          title: 'New Price Suggestion for Your Product!',
-          message: `${getUserWhoBid[0].user_name} has suggested a price for your product, ${getSellerID[0].title}. Please review their offer.`,
-          created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
-        }
-        await insertData('tbl_notification_messages', '', data);
-        await send_notification(message, getSellerID[0].user_id);
-      }
-      return res.json({
-        success: true,
-        message: "Price Suggested to Seller",
-        status: 200,
-        insertId: resultInserted.insertId,
-      });
     } else {
-      return res.json({
-        success: false,
-        message: "Some problem ocurred in Database while suggesting price",
-        status: 400,
-      });
+      const userResult = await fetchUserById(buyer_id);
+      if (userResult[0].block_status == '1') {
+        return res.json({
+          success: false,
+          message: userResult[0].block_reason,
+          userDetails: {
+            block_status: userResult[0].block_status,
+            block_reason: userResult[0].block_reason
+          },
+          error: true,
+          status: 200,
+        });
+      } else {
+        const suggestPrice = {
+          buyer_id: buyer_id,
+          seller_id: seller_id,
+          offer_id: offer_id,
+          status: status,
+          price: price,
+        };
+        const resultInserted = await insertPriceSuggestion(suggestPrice);
+        if (resultInserted.affectedRows > 0) {
+          const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
+          const getUserWhoBid = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${buyer_id}`, `users.user_name, tbl_user_notifications.price_suggestion_from_buyer`);
+          const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${getSellerID[0].user_id}`, 'users.fcm_token, tbl_user_notifications.price_suggestion_from_buyer');
+          if (getFCM[0].price_suggestion_from_buyer == 1) {
+            const message = {
+              notification: {
+                title: 'New Price Suggestion for Your Product!',
+                body: `${getUserWhoBid[0].user_name} has suggested a price for your product, ${getSellerID[0].title}. Please review their offer.`
+              },
+              token: getFCM[0].fcm_token
+            };
+            const data = {
+              user_id: getSellerID[0].user_id,
+              notification_type: 'Alert',
+              title: 'New Price Suggestion for Your Product!',
+              message: `${getUserWhoBid[0].user_name} has suggested a price for your product, ${getSellerID[0].title}. Please review their offer.`,
+              created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+            }
+            await insertData('tbl_notification_messages', '', data);
+            await send_notification(message, getSellerID[0].user_id);
+          }
+          return res.json({
+            success: true,
+            message: "Price Suggested to Seller",
+            status: 200,
+            insertId: resultInserted.insertId,
+          });
+        } else {
+          return res.json({
+            success: false,
+            message: "Some problem ocurred in Database while suggesting price",
+            status: 400,
+          });
+        }
+      }
     }
   } catch (err) {
     console.log(err);
