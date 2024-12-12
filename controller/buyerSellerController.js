@@ -80,13 +80,13 @@ exports.suggestPrice = async (req, res) => {
       });
     } else {
       const userResult = await fetchUserById(buyer_id);
-      if (userResult[0].block_status == '1') {
+      if (userResult.length > 0 && userResult[0].block_status == '1') {
         return res.json({
           success: false,
           message: userResult[0].block_reason,
           userDetails: {
-            block_status: userResult[0].block_status,
-            block_reason: userResult[0].block_reason
+            block_status: userResult.length > 0 ? userResult[0].block_status : null,
+            block_reason: userResult.length > 0 ? userResult[0].block_reason : null
           },
           error: true,
           status: 200,

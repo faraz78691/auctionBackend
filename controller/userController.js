@@ -36,7 +36,8 @@ const {
   fetchNotificationMessage,
   updateNotificationMessageByUserId,
   updateFileById,
-  updateToeknById
+  updateToeknById,
+  addResport
 } = require("../models/users");
 const { updateData } = require("../models/common");
 const axios = require('axios');
@@ -2172,3 +2173,65 @@ exports.socketImageSend = async (req, res) => {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
 };
+
+exports.addResport = async (req, res) => {
+  try {
+    const { user_id, offer_id, report_title, report_description } = req.body;
+    const schema = Joi.object({
+      user_id: Joi.number()
+        .required()
+        .messages({
+          'number.base': 'The user_id must be a valid number.',
+          'number.empty': 'The user_id cannot be an empty number.',
+          'any.required': 'The user_id field is required.',
+        }),
+      offer_id: Joi.number()
+        .required()
+        .messages({
+          'number.base': 'The offer_id must be a valid number.',
+          'number.empty': 'The offer_id cannot be an empty number.',
+          'any.required': 'The offer_id field is required.',
+        }),
+      report_title: Joi.string()
+        .required()
+        .messages({
+          'string.base': 'The report_title must be a valid string.',
+          'string.empty': 'The report_title cannot be an empty string.',
+          'any.required': 'The report_title field is required.',
+        }),
+      report_description: Joi.string()
+        .required().allow('')
+        .messages({
+          'string.base': 'The report_description must be a valid string.',
+          'string.empty': 'The report_description cannot be an empty string.',
+          'any.required': 'The report_description field is required.',
+        }),
+    });
+
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        errors: true,
+        message: error.details[0].message,
+        status: 400,
+        success: false
+      });
+    } else {
+      const data = {
+        user_id: user_id,
+        offer_id: offer_id,
+        report_title: report_title,
+        report_description: report_description == '' ? null : report_description,
+        created_at: moment().tz('Europe/Zurich').format('YYYY-MM-DD HH:mm:ss')
+      }
+      const insertResult = await addResport(data);
+      if (insertResult.insertId > 0) {
+        return res.status(200).json({ error: false, message: "Report add successfully", status: 200, success: true });
+      } else {
+        return res.status(200).json({ error: true, message: "Failed report add", status: 200, success: false });
+      }
+    }
+  } catch (error) {
+    return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
+  }
+}

@@ -43,5 +43,6 @@ router.post('/search-location', userController.searchLocation);
 router.get('/get-latlong', userController.getLatLong);
 router.post('/update-token', auth, userController.updateToken);
 router.post('/socket-imagesend', upload_files.fields([{ name: "socket_image_message" }]), userController.socketImageSend);
+router.post('/add-report', userController.addResport);
 
 module.exports = router;

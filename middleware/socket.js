@@ -42,13 +42,13 @@ module.exports = function (server) {
     socket.on("newBid", async (data) => {
       try {
         const userResult = await fetchUserById(data.user_id);
-        if (userResult[0].block_status == '1') {
+        if (userResult.length > 0 && userResult[0].block_status == '1') {
           io.emit("updateBid", {
             success: false,
-            message: userResult[0].block_reason,
+            message: userResult.length > 0 ? userResult[0].block_reason : null,
             userDetails: {
-              block_status: userResult[0].block_status,
-              block_reason: userResult[0].block_reason
+              block_status: userResult.length > 0 ? userResult[0].block_status : null,
+              block_reason: userResult.length > 0 ? userResult[0].block_reason : null
             },
             error: true,
             status: 200,

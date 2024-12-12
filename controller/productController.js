@@ -221,13 +221,13 @@ exports.uploadOfferImages = async (req, res) => {
   try {
     const user_id = req.user.id;
     const userResult = await fetchUserById(user_id);
-    if (userResult[0].block_status == '1') {
+    if (userResult.length > 0 && userResult[0].block_status == '1') {
       return res.json({
         success: false,
         message: userResult[0].block_reason,
         userDetails: {
-          block_status: userResult[0].block_status,
-          block_reason: userResult[0].block_reason
+          block_status: userResult.length > 0 ? userResult[0].block_status : null,
+          block_reason: userResult.length > 0 ? userResult[0].block_reason : null
         },
         error: true,
         status: 200,
@@ -365,13 +365,13 @@ exports.createOffer = async (req, res) => {
       });
     } else {
       const userResult = await fetchUserById(user_id);
-      if (userResult[0].block_status == '1') {
+      if (userResult.length > 0 && userResult[0].block_status == '1') {
         return res.json({
           success: false,
           message: userResult[0].block_reason,
           userDetails: {
-            block_status: userResult[0].block_status,
-            block_reason: userResult[0].block_reason
+            block_status: userResult.length > 0 ? userResult[0].block_status : null,
+            block_reason: userResult.length > 0 ? userResult[0].block_reason : null
           },
           error: true,
           status: 200,
@@ -865,8 +865,11 @@ exports.getOffers = async (req, res) => {
     } else {
       categoryNameRes = []
     }
+    let userResult;
     if (user_id != '') {
-      var userResult = await fetchUserById(user_id);
+      userResult = await fetchUserById(user_id);
+    } else {
+      userResult = []
     }
     if (offers.length > 0) {
 
@@ -894,15 +897,14 @@ exports.getOffers = async (req, res) => {
           nullCount++;
         }
       }
-
       return res.json({
         success: true,
         message: "Offer Sorted by time",
         categoryName: organizedOffers[0].category_name,
         productName: organizedOffers[0].product_name,
         userDetails: {
-          block_status: userResult[0].block_status,
-          block_reason: userResult[0].block_reason
+          block_status: userResult.length > 0 ? userResult[0].block_status : null,
+          block_reason: userResult.length > 0 ? userResult[0].block_reason : null
         },
         offers: organizedOffers,
         status: 200,
@@ -914,8 +916,8 @@ exports.getOffers = async (req, res) => {
         categoryName: categoryNameRes.length > 0 ? categoryNameRes[0].cat_name : null,
         productName: categoryRes.length > 0 ? categoryRes[0].name : null,
         userDetails: {
-          block_status: userResult[0].block_status,
-          block_reason: userResult[0].block_reason
+          block_status: userResult.length > 0 ? userResult[0].block_status : null,
+          block_reason: userResult.length > 0 ? userResult[0].block_reason : null
         },
         offers: [],
         status: 400,
@@ -1321,8 +1323,11 @@ exports.getOffer = async (req, res) => {
       const bidRes = await getMaxBidbyOfferID(offerId);
       const offerImages = await getOfferImages(offerRes[0].images_id);
       const sellerDetails = await getSellerDetails(offerRes[0].user_id, user_id);
+      let userResult;
       if (user_id != '') {
-        var userResult = await fetchUserById(user_id);
+        userResult = await fetchUserById(user_id);
+      } else {
+        userResult = []
       }
       return res.json({
         success: true,
@@ -1330,8 +1335,8 @@ exports.getOffer = async (req, res) => {
         offerRes: offerRes,
         productDetails: productDetails,
         userDetails: {
-          block_status: userResult[0].block_status,
-          block_reason: userResult[0].block_reason
+          block_status: userResult.length > 0 ? userResult[0].block_status : null,
+          block_reason: userResult.length > 0 ? userResult[0].block_reason : null
         },
         categoryDetails: categoryDetails,
         attributes: filteredAttributes,
@@ -1382,13 +1387,13 @@ exports.createBuyTransaction = async (req, res) => {
     }
     const user_id = req.user.id;
     const userResult = await fetchUserById(user_id);
-    if (userResult[0].block_status == '1') {
+    if (userResult.length > 0 && userResult[0].block_status == '1') {
       return res.json({
         success: false,
         message: userResult[0].block_reason,
         userDetails: {
-          block_status: userResult[0].block_status,
-          block_reason: userResult[0].block_reason
+          block_status: userResult.length > 0 ? userResult[0].block_status : null,
+          block_reason: userResult.length > 0 ? userResult[0].block_reason : null
         },
         error: true,
         status: 200,
@@ -1517,6 +1522,8 @@ exports.createBuyTransaction = async (req, res) => {
       }
     }
   } catch (err) {
+    console.log(err);
+
     return res.json({
       success: false,
       message: "Internal server error",

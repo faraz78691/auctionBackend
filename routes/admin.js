@@ -53,6 +53,7 @@ router.post('/update-setting', adminAuth, adminController.updateSetting);
 router.get('/landing-offers', adminController.landingOffers);
 router.get('/landing-upcommingoffers', adminController.landingUpcommingOffers);
 router.get('/landing-premierseller', adminController.landingPremierSeller);
+router.get('/getAllOfferImagesById', adminController.getAllOfferImagesById);
 
 // Trems & Condiition
 router.post('/add-termcondition', adminAuth, adminController.addTermCondition);
@@ -65,5 +66,8 @@ router.get('/get-headingsubheading', adminController.getHeadingSubHeading);
 // Featured Product
 router.get('/get-allfeaturedproduct', adminController.getAllFeaturedProduct);
 router.post('/update-featuredproductbyid', upload_files.fields([{ name: "featured_image" }]), adminController.updateFeaturedProductById);
+
+// Report
+router.get('/get-allreports', adminController.getAllReports);
 
 module.exports = router;

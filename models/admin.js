@@ -207,6 +207,10 @@ module.exports = {
         return await db.query('SELECT offers_created.id, offers_created.offer_unique_id, users.id AS user_id, users.profile_image, users.user_name, CONCAT(users.address, " ", users.postal_code) AS address FROM offers_created LEFT JOIN users ON users.id = offers_created.user_id LEFT JOIN tbl_user_commissin_fees ON tbl_user_commissin_fees.offer_id = offers_created.id WHERE offers_created.boost_plan_id = "3" AND tbl_user_commissin_fees.fees_type = "2";');
     },
 
+    getAllOfferImagesById: async (id) => {
+        return await db.query('SELECT * FROM `offer_images` WHERE id = ?', [id]);
+    },
+
     addTermCondition: async (data) => {
         return await db.query("insert into tbl_term_condition set ? ", [data]);
     },
@@ -237,6 +241,10 @@ module.exports = {
 
     updateFeaturedProductById: async (id, featured_image) => {
         return await db.query('UPDATE `tbl_featured_product` SET `featured_image` = ? WHERE id = ?', [featured_image, id]);
+    },
+
+    getAllReports: async () => {
+        return await db.query('SELECT users.id AS reporter_id, users.user_name AS reporter_name, seller.id AS seller_id, seller.user_name AS seller_name, offers_created.offer_unique_id, offers_created.title AS offer_title, tbl_report.report_title, tbl_report.report_description, DATE_FORMAT( tbl_report.created_at, "%d %M %Y" ) AS report_date FROM tbl_report LEFT JOIN users ON users.id = tbl_report.user_id LEFT JOIN offers_created ON offers_created.id = tbl_report.offer_id LEFT JOIN users AS seller ON seller.id = offers_created.user_id WHERE tbl_report.report_title IS NOT NULL AND seller.id IS NOT NULL;');
     }
 
 };

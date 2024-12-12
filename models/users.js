@@ -229,6 +229,10 @@ module.exports = {
 
   updateToeknById: async (userId, fcm_token) => {
     return await db.query('UPDATE `users` SET `fcm_token`= ? WHERE id = ?', [fcm_token == 'null' ? null : fcm_token, userId]);
+  },
+
+  addResport: async (data) => {
+    return await db.query('INSERT INTO `tbl_report` SET ?', [data]);
   }
 
 };

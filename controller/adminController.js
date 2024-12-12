@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 var moment = require('moment-timezone');
 
-const { findEmail, tokenUpdate, getTotalOffers, getTotalDeliverdOffers, getTotalRevenue, getTotalPaidRevenue, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, userBlockStatusUpdateById, findAdminById, addCategory, getAllCategory, getCategorybyId, addPopularCategory, getAllPopularCategory, getPopularCategoryById, updatePopularCategoryById, deletePopularCategoryById, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid, getTransactionByOfferId, findAllTransaction, updateMsgCount, findSetting, updateSettingById, getOffersByDate, getUpcommingOffersByDate, getPremierSeller, addTermCondition, getTermHeading, getTermSubHeading, deleteTermConditionById, updateTermCondition, getAllFeaturedProduct, getFeaturedProductById, updateFeaturedProductById } = require("../models/admin");
+const { findEmail, tokenUpdate, getTotalOffers, getTotalDeliverdOffers, getTotalRevenue, getTotalPaidRevenue, fetchAllUsers, fetchAllUsersOffers, fetchAllUsersOffersByUserId, userBlockStatusUpdateById, findAdminById, addCategory, getAllCategory, getCategorybyId, addPopularCategory, getAllPopularCategory, getPopularCategoryById, updatePopularCategoryById, deletePopularCategoryById, addProduct, findCategoryId, findProductByCategoryId, findProductAndCategoryById, addProductAttributeType, findTypeAttributesByProductId, findProductById, findTypeAttributesByIdAndProductId, addProductAttribute, findTypeAttributeById, findAttributesByAttributesTypeId, getAllChatUsers, getLastMessageAllUser, updateCategoryById, updateProductById, productTypeDeleteById, productAttributeMappingDeleteById, productAttributeMappingUpdateById, updateProductMappingById, subAttributeMappingAdd, getSubAttributesByProductAttributesMappingId, getProductAttributeMappingById, updateSubAttributeMappingById, deleteSubAttributesById, findLiveHighestBid, getTransactionByOfferId, findAllTransaction, updateMsgCount, findSetting, updateSettingById, getOffersByDate, getUpcommingOffersByDate, getPremierSeller, getAllOfferImagesById, addTermCondition, getTermHeading, getTermSubHeading, deleteTermConditionById, updateTermCondition, getAllFeaturedProduct, getFeaturedProductById, updateFeaturedProductById, getAllReports } = require("../models/admin");
 const { getNoOfBids, getCategoryIdByProductId, getMainImage } = require("../models/product");
 const { updateData } = require("../models/common");
 const { sendEmail } = require('../utils/nodemailer');
@@ -2041,7 +2041,39 @@ exports.landingPremierSeller = async (req, res) => {
     } catch (error) {
         return res.status(500).json({ error: true, message: 'Internal Server Error' + error, success: false });
     }
-}
+};
+
+exports.getAllOfferImagesById = async (req, res) => {
+    try {
+        const { id } = req.query;
+        const schema = Joi.object({
+            id: Joi.number().required().messages({
+                'number.base': 'Id must be a number',
+                'number.empty': 'Id is required',
+                'any.required': 'Id is required',
+            })
+        })
+
+        const { error } = schema.validate(req.query);
+        if (error) {
+            return res.status(400).json({
+                error: true,
+                message: error.details[0].message,
+                status: 400,
+                success: false
+            });
+        } else {
+            const imagesResult = await getAllOfferImagesById(id);
+            if (imagesResult.length > 0) {
+                return res.status(200).json({ error: false, message: 'Internal Server Error' + ' ' + error, status: 200, success: true, data: imagesResult[0] })
+            } else {
+                return res.status(200).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 200, success: false, data: [] })
+            }
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false })
+    }
+};
 
 exports.updateMsgCount = async (req, res) => {
     try {
@@ -2427,3 +2459,16 @@ exports.updateFeaturedProductById = async (req, res) => {
         return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false });
     }
 };
+
+exports.getAllReports = async (req, res) => {
+    try {
+        const reportsResult = await getAllReports();
+        if (reportsResult.length > 0) {
+            return res.status(200).json({ error: false, message: "Reports found sucessfully", status: 200, success: true, data: reportsResult });
+        } else {
+            return res.status(200).json({ error: true, message: "Reports not found", status: 200, success: false, data: [] });
+        }
+    } catch (error) {
+        return res.status(500).json({ error: true, message: 'Internal Server Error' + ' ' + error, status: 500, success: false });
+    }
+}
