@@ -17,7 +17,7 @@ module.exports = {
     return db.query("insert into offer_images set ?", [data]);
   },
   getOfferIdByAttributes: async (product_id, ids) => {
-    return db.query("SELECT offers_created.id AS offer_id FROM `product_attributes_mapping` LEFT JOIN offers_created ON offers_created.product_id = product_attributes_mapping.product_id WHERE product_attributes_mapping.product_id = ? AND product_attributes_mapping.id IN(?);", [product_id, ids]);
+    return db.query("SELECT offers_created.id AS offer_id FROM `offer_proattr_mapping` LEFT JOIN offers_created ON offers_created.id = offer_proattr_mapping.offer_id WHERE offer_proattr_mapping.product_id = ? AND offer_proattr_mapping.attribute_id IN (?);", [product_id, ids]);
   },
 
   getOfferIdByConditions: async (product_id, ids) => {
