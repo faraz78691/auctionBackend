@@ -38,15 +38,17 @@ module.exports = function (server) {
   // Set up a connection event listener for incoming sockets
   io.on("connection", (socket) => {
     console.log("A user connected");
+
     socket.on("newBid", async (data) => {
       try {
         const userResult = await fetchUserById(data.user_id);
         if (userResult.length > 0 && userResult[0].block_status == '1') {
-          const userSocketId = userSockets[data.user_id];          
-          if (userSocketId) {            
+          const userSocketId = userSockets[data.user_id];
+          if (userSocketId) {
             io.to(userSocketId).emit("updateBid", {
               success: false,
               message: userResult.length > 0 ? userResult[0].block_reason : null,
+              userId: data.user_id,
               userDetails: {
                 block_status: userResult.length > 0 ? userResult[0].block_status : null,
                 block_reason: userResult.length > 0 ? userResult[0].block_reason : null
@@ -54,18 +56,7 @@ module.exports = function (server) {
               error: true,
               status: 200,
             });
-            console.log(`updateBid event sent to user: ${userSocketId}`);
           }
-          // io.emit("updateBid", {
-          //   success: false,
-          //   message: userResult.length > 0 ? userResult[0].block_reason : null,
-          //   userDetails: {
-          //     block_status: userResult.length > 0 ? userResult[0].block_status : null,
-          //     block_reason: userResult.length > 0 ? userResult[0].block_reason : null
-          //   },
-          //   error: true,
-          //   status: 200,
-          // });
         } else {
           await createNewBid(data);
           const count = await getBitCountByOfferId(data);
@@ -139,6 +130,7 @@ module.exports = function (server) {
                 io.emit("updateBid", {
                   ...data,
                   bidCount,
+                  userId: data.user_id,
                   new_offerstart_date,
                   length_oftime,
                   new_end_date
@@ -152,6 +144,7 @@ module.exports = function (server) {
             io.emit("updateBid", {
               ...data,
               bidCount,
+              userId: data.user_id,
               new_offerstart_date,
               length_oftime,
               new_end_date
@@ -165,16 +158,19 @@ module.exports = function (server) {
 
     socket.on("user_connected", (userId) => {
       const user_id = userId
-      if (user_id) {
-        userSockets[user_id] = socket.id; // Add user socket
+      if (userSockets[user_id]) {
+        console.log(`User ${user_id} is already connected. Preventing multiple connections.`);
+        return; // Prevent adding the same user again
       }
+      userSockets[user_id] = socket.id; // Add user socket
       onlineUsers.set(userId, socket.id);
       io.emit("update_online_status", Array.from(onlineUsers.keys()));
     });
 
     socket.on("admin_connected", (adminId) => {
       const admin_id = adminId;
-      if (admin_id) {
+      const adminSocketId = adminSockets[admin_id];
+      if (admin_id && !adminSocketId) {
         adminSockets[admin_id] = socket.id; // Add user socket
       }
     });
@@ -188,15 +184,6 @@ module.exports = function (server) {
     socket.on('get_online_users', () => {
       console.log("user id ", onlineUsers)
       io.emit('update_online_status', Array.from(onlineUsers.keys()));
-    });
-
-    socket.on("disconnect", () => {
-      onlineUsers.forEach((value, key) => {
-        if (value === socket.id) {
-          onlineUsers.delete(key);
-        }
-      });
-      io.emit("update_online_status", Array.from(onlineUsers.keys()));
     });
 
     // Listen for a new chat message
@@ -278,7 +265,17 @@ module.exports = function (server) {
 
     // User goes offline
     socket.on("disconnect", () => {
-      console.log("User disconnected", socket.id);
+      console.log(`Socket disconnected: ${socket.id}`);
+
+      // Remove the socket ID from userSockets on disconnect
+      for (const [user_id, socketId] of Object.entries(userSockets)) {
+        if (socketId === socket.id) {
+          delete userSockets[user_id]; // Remove the disconnected user's socket
+          onlineUsers.delete(user_id); // Optionally remove the user from onlineUsers
+          break; // Exit once the user is found and removed
+        }
+      }
+      io.emit("update_online_status", Array.from(onlineUsers.keys()));
     });
   });
 
