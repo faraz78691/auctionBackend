@@ -38,21 +38,34 @@ module.exports = function (server) {
   // Set up a connection event listener for incoming sockets
   io.on("connection", (socket) => {
     console.log("A user connected");
-
     socket.on("newBid", async (data) => {
       try {
         const userResult = await fetchUserById(data.user_id);
         if (userResult.length > 0 && userResult[0].block_status == '1') {
-          io.emit("updateBid", {
-            success: false,
-            message: userResult.length > 0 ? userResult[0].block_reason : null,
-            userDetails: {
-              block_status: userResult.length > 0 ? userResult[0].block_status : null,
-              block_reason: userResult.length > 0 ? userResult[0].block_reason : null
-            },
-            error: true,
-            status: 200,
-          });
+          const userSocketId = userSockets[data.user_id];          
+          if (userSocketId) {            
+            io.to(userSocketId).emit("updateBid", {
+              success: false,
+              message: userResult.length > 0 ? userResult[0].block_reason : null,
+              userDetails: {
+                block_status: userResult.length > 0 ? userResult[0].block_status : null,
+                block_reason: userResult.length > 0 ? userResult[0].block_reason : null
+              },
+              error: true,
+              status: 200,
+            });
+            console.log(`updateBid event sent to user: ${userSocketId}`);
+          }
+          // io.emit("updateBid", {
+          //   success: false,
+          //   message: userResult.length > 0 ? userResult[0].block_reason : null,
+          //   userDetails: {
+          //     block_status: userResult.length > 0 ? userResult[0].block_status : null,
+          //     block_reason: userResult.length > 0 ? userResult[0].block_reason : null
+          //   },
+          //   error: true,
+          //   status: 200,
+          // });
         } else {
           await createNewBid(data);
           const count = await getBitCountByOfferId(data);
