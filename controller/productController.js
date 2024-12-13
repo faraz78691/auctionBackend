@@ -810,6 +810,7 @@ exports.getOffers = async (req, res) => {
       var offers = await getOffersByWhereClause(whereClause, user_id, page_size, offset);
     }
 
+    let maxStartPrice = Math.max(...offers.map(element => element.start_price));          
     for (element of offers) {
       var startDateTime = element.start_date.toString();
       element.start_date = startDateTime;
@@ -900,6 +901,7 @@ exports.getOffers = async (req, res) => {
       return res.json({
         success: true,
         message: "Offer Sorted by time",
+        maxStartPrice: maxStartPrice,
         categoryName: organizedOffers[0].category_name,
         productName: organizedOffers[0].product_name,
         userDetails: {
@@ -913,6 +915,7 @@ exports.getOffers = async (req, res) => {
       return res.json({
         success: false,
         message: "Offer Sorted by time only category name and product name find",
+        maxStartPrice: maxStartPrice,
         categoryName: categoryNameRes.length > 0 ? categoryNameRes[0].cat_name : null,
         productName: categoryRes.length > 0 ? categoryRes[0].name : null,
         userDetails: {
