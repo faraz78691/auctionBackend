@@ -810,7 +810,7 @@ exports.getOffers = async (req, res) => {
       var offers = await getOffersByWhereClause(whereClause, user_id, page_size, offset);
     }
 
-    let maxStartPrice = Math.max(...offers.map(element => element.start_price));          
+    let maxStartPrice = Math.max(...offers.map(element => element.start_price));
     for (element of offers) {
       var startDateTime = element.start_date.toString();
       element.start_date = startDateTime;
@@ -2383,27 +2383,10 @@ exports.getOfferAdvancedFilter = async (req, res) => {
       }
     };
 
-    // const attributesArray = JSON.parse(attributes);
-    // Parse attributes, condition, and auctionType safely
     const parsedAttributes = safeParseJSON(attributes, []);
     const parsedCondition = safeParseJSON(condition, []);
     const parsedAuctionType = safeParseJSON(auctionType, []);
     const parsePrice = safeParseJSON(price, []);
-
-    // Function to get offer IDs for attributes
-    const getOfferIdsForAttributes = async (product_id, attributes) => {
-
-      if (!attributes || attributes.length === 0) return [];
-      const allOfferIds = [];
-      for (const { key, ids } of attributes) {
-        const result = await getOfferIdByAttributes(product_id, ids);
-
-        const offerIds = result.map(row => row.offer_id);
-        allOfferIds.push(offerIds);
-      }
-      // Find the intersection of all offer ID arrays for attributes
-      return allOfferIds.reduce((acc, curr) => acc.filter(id => curr.includes(id)), allOfferIds[0] || []);
-    };
 
     // Function to get offer IDs for a given filter type
     const getOfferIds = async (product_id, ids, queryFunc) => {
@@ -2416,11 +2399,6 @@ exports.getOfferAdvancedFilter = async (req, res) => {
       }
     };
 
-    // Get offer IDs for attributes if attributes are provided
-    const attributeOfferIds = parsedAttributes.length > 0
-      ? await getOfferIdsForAttributes(product_id, parsedAttributes)
-      : null;
-
     // Get offer IDs for conditions if condition is provided
     const conditionOfferIds = parsedCondition.length > 0
       ? await getOfferIds(product_id, parsedCondition, getOfferIdByConditions)
@@ -2431,32 +2409,11 @@ exports.getOfferAdvancedFilter = async (req, res) => {
       ? await getOfferIds(product_id, parsedAuctionType, getOfferIdByAuctionType)
       : null;
 
-    // Check if any filter is provided but has no results
-    // if (
-    //   (parsedCondition.length > 0 && (conditionOfferIds === null || conditionOfferIds.length === 0)) ||
-    //   (parsedAttributes.length > 0 && (attributeOfferIds === null || attributeOfferIds.length === 0)) ||
-    //   (parsedAuctionType.length > 0 && (auctionTypeOfferIds === null || auctionTypeOfferIds.length === 0))
-    // ) {
-    //   return res.json({
-    //     success: false,
-    //     offer_ids: [],
-    //   });
-    // }
-
     // Combine all non-null offer ID arrays
     const allOfferIds = [
-      attributeOfferIds,
       conditionOfferIds,
       auctionTypeOfferIds
     ].filter(ids => ids !== null);
-
-    // // If no filters are provided, return an empty array
-    // if (allOfferIds.length === 0) {
-    //   return res.json({
-    //     success: false,
-    //     offer_ids: [],
-    //   });
-    // }
 
     // Find the intersection of all non-null offer ID arrays
     const commonOfferIds = allOfferIds.reduce((acc, curr) => acc.filter(id => curr.includes(id)), allOfferIds[0]);
@@ -2469,6 +2426,56 @@ exports.getOfferAdvancedFilter = async (req, res) => {
       page_size,
       offset
     );
+
+    const filterOffersByAttributes = (offers, parsedAttributes) => {
+      return offers.filter((offer) => {
+        return parsedAttributes.every((filterAttr) => {
+          // Check if the offer has an attribute matching the filter attribute_id
+          return offer.attributes.some((offerAttr) => {
+            return filterAttr.ids.includes(offerAttr.attribute_id);
+          });
+        });
+      });
+    };
+
+    // Attach attribute details to each offer
+    offers = await Promise.all(
+      offers.map(async (offer) => {
+        const attributeDetails = await getOfferAttributesDetailsByID(offer.id);
+
+        const attributes = await Promise.all(attributeDetails.map(async (elem) => {
+          const attributesValues = await getProductAttributeTypeMappingByIDP(offer.product_id, elem.attribute_id);
+
+          // Skip empty attributes
+          if (attributesValues.length === 0) return null;
+
+          const { attribute_id: attributeId, attribute_value_name: attributeName, sub_attribute_heading: subAttributesHeading } = attributesValues[0];
+          const tempDetails = await getProductTypeAttribute(offer.product_id, attributeId);
+
+          let subAttributeName = "";
+          if (elem.subattribute_id > 0) {
+            const result = await getSubAttributesByIID(elem.subattribute_id);
+            if (result.length > 0) {
+              subAttributeName = result[0].value;
+            }
+          }
+
+          return {
+            ...elem,
+            ...tempDetails[0],
+            attributeName,
+            subAttributesHeading,
+            subAttributeName,
+          };
+        }));
+
+        // Filter out null attributes
+        offer.attributes = attributes.filter(attr => attr !== null);
+        return offer;
+      })
+    );
+
+    offers = filterOffersByAttributes(offers, parsedAttributes);
 
     for (element of offers) {
       var startDateTime = element.start_date.toString();

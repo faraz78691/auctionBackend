@@ -11,7 +11,7 @@ router.post('/getPriceSuggestedForBuyer', auth, buyerSellerController.getPriceSu
 router.get('/getSellingSectionForSeller', auth, buyerSellerController.getSellingSectionForSeller);
 router.post('/uploadBuyerQuestion', auth, buyerSellerController.uploadBuyerQuestion);
 router.post('/uploadSellerAnswer', auth, buyerSellerController.uploadSellerAnswer);
-router.post('/getQuestionAnswerForBuyer', auth, buyerSellerController.getQuestionAnswerForBuyer);
+router.post('/getQuestionAnswerForBuyer', buyerSellerController.getQuestionAnswerForBuyer);
 router.get('/getQuestionAnswerForSeller', auth, buyerSellerController.getQuestionAnswerForSeller);
 router.get('/getSoldSectionForSeller', auth, buyerSellerController.getSoldSectionForSeller);
 router.get('/getOffersByBuyer', auth, buyerSellerController.getOffersByBuyer);

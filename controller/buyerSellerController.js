@@ -797,40 +797,41 @@ exports.getQuestionAnswerForSeller = async (req, res) => {
 exports.getQuestionAnswerForBuyer = async (req, res) => {
   try {
     const { offer_id, sellerId } = req.body;
-    const user_id = req.user.id;
-    if (user_id === null || user_id === undefined || user_id === "") {
-      return res.json({
-        success: false,
-        message: "user id is Null",
-        error: err,
-        status: 500,
-      });
-    }
     const schema = Joi.alternatives(
       Joi.object({
         sellerId: Joi.number().required().empty(),
         offer_id: Joi.number().required().empty()
       })
     );
-
-    const questionAnswer = await getQuestionAnsForBuyer(offer_id, sellerId, user_id);
-
-    if (questionAnswer.length > 0) {
+    const result = schema.validate(req.body);
+    if (result.error) {
+      const message = result.error.details.map((i) => i.message).join(",");
       return res.json({
-        success: true,
-        data: questionAnswer,
-        message: "No Data Found",
-        status: 400,
+        message: result.error.details[0].message,
+        error: message,
+        missingParams: result.error.details[0].message,
+        status: 200,
+        success: false,
       });
     } else {
-      return res.json({
-        success: false,
-        message: "No Data Found",
-        status: 400,
-      });
+      const questionAnswer = await getQuestionAnsForBuyer(offer_id);
+
+      if (questionAnswer.length > 0) {
+        return res.json({
+          success: true,
+          data: questionAnswer,
+          message: "No Data Found",
+          status: 400,
+        });
+      } else {
+        return res.json({
+          success: false,
+          message: "No Data Found",
+          status: 400,
+        });
+      }
     }
   } catch (err) {
-    console.log(err);
     return res.json({
       success: false,
       message: "Internal server error",
@@ -899,7 +900,7 @@ exports.uploadBuyerQuestion = async (req, res) => {
 
 exports.uploadSellerAnswer = async (req, res) => {
   try {
-    const { id, offer_id, answer } = req.body;
+    const { id, offer_id, answer, public } = req.body;
     const user_id = req.user.id;
     if (user_id === null || user_id === undefined || user_id === "") {
       return res.json({
@@ -914,6 +915,7 @@ exports.uploadSellerAnswer = async (req, res) => {
         id: Joi.number().required().empty(),
         offer_id: Joi.number().required().empty(),
         answer: Joi.string().required().empty(),
+        public: Joi.number().valid(0, 1).required()
       })
     );
     const result = schema.validate(req.body);
@@ -929,7 +931,8 @@ exports.uploadSellerAnswer = async (req, res) => {
     }
 
     const userData = {
-      answer: answer
+      answer: answer,
+      public_status: public
     };
 
     const updateResult = await updateData('question_answer', `where id =${id} and offer_id =${offer_id}`, userData);

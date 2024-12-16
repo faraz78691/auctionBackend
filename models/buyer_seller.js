@@ -120,7 +120,7 @@ END AS is_favorite FROM offers_created LEFT JOIN favourites_offer ON favourites_
   `
     );
   },
-  getQuestionAnsForBuyer: async (offerId, sellerID, buyerId) => {
+  getQuestionAnsForBuyer: async (offerId) => {
     return db.query(
       `SELECT 
       qa.id,
@@ -132,6 +132,7 @@ END AS is_favorite FROM offers_created LEFT JOIN favourites_offer ON favourites_
       qa.question,
       qa.answer,
       qa.status,
+      qa.public_status,
       qa.created_at,
       qa.updated_at
   FROM 
@@ -140,12 +141,7 @@ END AS is_favorite FROM offers_created LEFT JOIN favourites_offer ON favourites_
       users seller ON qa.seller_id = seller.id
   JOIN 
       users buyer ON qa.buyer_id = buyer.id
-  WHERE 
-      qa.seller_id = ${sellerID}
-  AND 
-      qa.offer_id = ${offerId}
-  AND 
-      qa.buyer_id = ${buyerId};
+  WHERE qa.offer_id = ${offerId};
   `
     );
   },
