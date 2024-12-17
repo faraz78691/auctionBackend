@@ -2226,12 +2226,12 @@ exports.addResport = async (req, res) => {
       }
       const insertResult = await addResport(data);
       if (insertResult.insertId > 0) {
-        return res.status(200).json({ error: false, message: "Report add successfully", status: 200, success: true });
+        return res.status(200).json({ error: false, message: "Offer Reported!", status: 200, success: true });
       } else {
-        return res.status(200).json({ error: true, message: "Failed report add", status: 200, success: false });
+        return res.status(200).json({ error: true, message: "Failed offer reported!", status: 200, success: false });
       }
     }
   } catch (error) {
     return res.status(500).json({ error: true, message: `Internal server error + ' ' + ${error}`, status: 500, success: false });
   }
-}
+};
