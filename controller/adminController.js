@@ -183,7 +183,7 @@ exports.getAllUsers = async (req, res) => {
                 data: [],
             });
         }
-    } catch (error) {
+    } catch (error) {        
         return res.json({
             success: false,
             message: "Internal server error",

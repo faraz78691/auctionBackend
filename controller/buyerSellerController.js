@@ -225,7 +225,7 @@ exports.acceptPrice = async (req, res) => {
         if (userBidsResult.length > 0) {
           for (let elem of userBidsResult) {
             const getSellerID = await getSelectedColumn(`offers_created`, `LEFT JOIN product ON product.id = offers_created.product_id where offers_created.id = ${offer_id}`, 'offers_created.user_id, offers_created.title, product.name AS product_name');
-            const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${elem.user_id}`, 'users.id, users.fcm_token, tbl_user_notifications.item_sold');
+            const getFCM = await getSelectedColumn(`users`, `LEFT JOIN tbl_user_notifications ON tbl_user_notifications.user_id = users.id WHERE users.id = ${elem.user_id}`, 'users.id, users.fcm_token, tbl_user_notifications.auction_not_won');
             if (getFCM[0].auction_not_won == 1) {
               const message = {
                 notification: {

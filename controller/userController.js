@@ -54,7 +54,7 @@ const { initializeApp } = require("firebase/app");
 const { getMessaging, getToken, isSupported } = require("firebase/messaging");
 const { hashPassword } = require('../helper/hashPassword');
 const twilio = require('twilio');
-const client = new twilio('ACe774c39e2862faba9af9474ca1a29f2b', '3492605a86030175f22bdb020e8f159f')
+const client = new twilio('ACe774c39e2862faba9af9474ca1a29f2b', 'fa70751ced45945b40f99f2b780d2eeb')
 var moment = require('moment-timezone');
 const { error } = require("console");
 require('dotenv').config();
